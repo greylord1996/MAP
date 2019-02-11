@@ -25,7 +25,8 @@ JacFUv = F_vec.jacobian(Uv)
 JacGX = G_vec.jacobian(X)
 JacGUv = G_vec.jacobian(Uv)
 
+
 Ys = (JacGX/(j*Omega_a*eye(len(X)) - JacFX))*JacFUv + JacGUv
 #Ys = simplify(Ys)
 
-Ys_computational = lambdify((del_a, w_a, Ef_a, D_Ya, M_Ya, X_Ya, Pm_a, Omega, Vm_a, Va_a, Omega_a), Ys, 'numpy')
+Ys_compute = lambdify((w_a, Ef_a, D_Ya, M_Ya, X_Ya, Pm_a, Omega, Omega_a, Va_a, Vm_a, del_a), Ys, 'numpy')
