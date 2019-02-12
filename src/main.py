@@ -1,4 +1,5 @@
 import os
+import os.path
 import sys
 import json
 import numpy as np
@@ -11,14 +12,16 @@ import matplotlib.pyplot as plt
 
 from PyQt5 import QtWidgets
 import pyqtgraph
-# import singleton
 
 import settings
-import main_window_design
+import designs.main_window_design
+import utils
 
 
-# TODO: make singleton
-class MainWindow(QtWidgets.QMainWindow, main_window_design.Ui_MainWindow):
+
+@utils.singleton
+class MainWindow(QtWidgets.QMainWindow,
+                 designs.main_window_design.Ui_MainWindow):
     """A singleton representing main window of the GUI app."""
     def __init__(self):
         """Initialize main window."""
@@ -119,9 +122,15 @@ class MainWindow(QtWidgets.QMainWindow, main_window_design.Ui_MainWindow):
 
     def load_params(self):
         """Load parameters from file."""
-        path_to_file = QtWidgets.QFileDialog.getOpenFileName()[0]
-        if path_to_file:
-            with open(path_to_file) as params_input:
+        path_to_this_file = os.path.abspath(os.path.dirname(__file__))
+        path_to_loading_file = QtWidgets.QFileDialog.getOpenFileName(
+            self,
+            'Choose a file containing a workspace',
+            os.path.join(path_to_this_file, '..', 'data', 'workspaces'),
+            '*.json'
+        )[0]
+        if os.path.isfile(path_to_loading_file):
+            with open(path_to_loading_file) as params_input:
                 new_params = json.load(params_input)
                 self.set_params_to_gui(new_params)
 
@@ -134,7 +143,7 @@ class MainWindow(QtWidgets.QMainWindow, main_window_design.Ui_MainWindow):
         x = np.arange(-20.0, 20.0, 0.05)
         y = x**2 - 2*x + 1.0
 
-        plot_color = pyqtgraph.hsvColor(1, alpha=.3)
+        plot_color = pyqtgraph.hsvColor(1, alpha=.8)
         pen = pyqtgraph.mkPen(color=plot_color, width=7)
         self.plot_view.plot(x, y, pen=pen, clear=True)
 
@@ -142,9 +151,14 @@ class MainWindow(QtWidgets.QMainWindow, main_window_design.Ui_MainWindow):
     def save_params(self):
         """Save parameters to file."""
         data_to_save = self.get_params_from_gui()
-        path_to_file = QtWidgets.QFileDialog.getOpenFileName()[0]
-        if path_to_file:
-            with open(path_to_file, 'w') as params_output:
+        path_to_this_file = os.path.abspath(os.path.dirname(__file__))
+        path_to_saving_file = QtWidgets.QFileDialog.getSaveFileName(
+            self,
+            'Please, specify the file for saving your current workspace',
+            os.path.join(path_to_this_file, '..', 'data', 'workspaces')
+        )[0]
+        if path_to_saving_file:
+            with open(path_to_saving_file, 'w') as params_output:
                 json.dump(data_to_save, params_output)
 
 
@@ -159,7 +173,7 @@ def main():
     app = QtWidgets.QApplication(sys.argv)
     main_window = MainWindow()
     main_window.show()
-    app.exec_()
+    sys.exit(app.exec_())
 
 
 if __name__ == '__main__':

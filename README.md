@@ -25,3 +25,9 @@ source mapenv/bin/activate
 ```
 pip install --upgrade pip -r requirements.txt 
 ```
+
+#### Finally, run *src/main.py* using python3
+```
+python3 src/main.py
+```
+
