@@ -5,7 +5,7 @@ import numpy as np
 j = np.complex(0, 1)
 
 del_a, w_a, Ef_a, D_Ya, M_Ya, X_Ya, Pm_a, Omega, Vm_a, Va_a = symbols('del_a w_a Ef_a D_Ya M_Ya X_Ya Pm_a Omega Vm_a Va_a')
-X = symbols('X')
+# X = symbols('X')
 X = Array([del_a, w_a])
 Uv = Array([Vm_a, Va_a])
 

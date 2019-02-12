@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'qt/designer/main_window.ui'
+# Form implementation generated from reading ui file '../data/qt/main_window.ui'
 #
-# Created by: PyQt5 UI code generator 5.9.2
+# Created by: PyQt5 UI code generator 5.12
 #
 # WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -137,13 +138,13 @@ class Ui_MainWindow(object):
         self.label_ic_t1 = QtWidgets.QLabel(self.centralwidget)
         self.label_ic_t1.setObjectName("label_ic_t1")
         self.formLayout_6.setWidget(2, QtWidgets.QFormLayout.LabelRole, self.label_ic_t1)
-        self.doubleSpinBox_21 = QtWidgets.QDoubleSpinBox(self.centralwidget)
-        self.doubleSpinBox_21.setDecimals(1)
-        self.doubleSpinBox_21.setMaximum(9.9)
-        self.doubleSpinBox_21.setSingleStep(0.1)
-        self.doubleSpinBox_21.setProperty("value", 0.5)
-        self.doubleSpinBox_21.setObjectName("doubleSpinBox_21")
-        self.formLayout_6.setWidget(2, QtWidgets.QFormLayout.FieldRole, self.doubleSpinBox_21)
+        self.ic_t1 = QtWidgets.QDoubleSpinBox(self.centralwidget)
+        self.ic_t1.setDecimals(1)
+        self.ic_t1.setMaximum(9.9)
+        self.ic_t1.setSingleStep(0.1)
+        self.ic_t1.setProperty("value", 0.5)
+        self.ic_t1.setObjectName("ic_t1")
+        self.formLayout_6.setWidget(2, QtWidgets.QFormLayout.FieldRole, self.ic_t1)
         self.label_27 = QtWidgets.QLabel(self.centralwidget)
         self.label_27.setAlignment(QtCore.Qt.AlignCenter)
         self.label_27.setObjectName("label_27")
@@ -351,9 +352,9 @@ class Ui_MainWindow(object):
         self.horizontalLayout_3.addLayout(self.verticalLayout_9)
         spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.horizontalLayout_3.addItem(spacerItem)
-        self.graphicsView = QtWidgets.QGraphicsView(self.centralwidget)
-        self.graphicsView.setObjectName("graphicsView")
-        self.horizontalLayout_3.addWidget(self.graphicsView)
+        self.plot_view = PlotWidget(self.centralwidget)
+        self.plot_view.setObjectName("plot_view")
+        self.horizontalLayout_3.addWidget(self.plot_view)
         self.verticalLayout_11.addLayout(self.horizontalLayout_3)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
@@ -402,3 +403,5 @@ class Ui_MainWindow(object):
         self.btn_save.setText(_translate("MainWindow", "Save"))
         self.btn_exit.setText(_translate("MainWindow", "Exit"))
 
+
+from pyqtgraph import PlotWidget

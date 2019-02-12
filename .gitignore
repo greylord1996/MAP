@@ -106,3 +106,6 @@ venv.bak/
 # virtual environment
 mapenv/
 
+# ignore IDE files
+.idea/
+
