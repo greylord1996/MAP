@@ -171,7 +171,7 @@ class MainWindow(QtWidgets.QMainWindow,
 
 
     def save_params(self):
-        """Saves parameters to file.adjusted
+        """Saves parameters to a file.
 
         Constructs an absolute path to the directory '../data/workspaces/'
         and asks the user to choose a file for saving his current workspace
@@ -191,7 +191,6 @@ class MainWindow(QtWidgets.QMainWindow,
 
     def exit_app(self):
         """Quits the app."""
-        # self.close()
         QtWidgets.QApplication.quit()
 
 
