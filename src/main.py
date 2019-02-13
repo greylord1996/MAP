@@ -22,9 +22,17 @@ import utils
 @utils.singleton
 class MainWindow(QtWidgets.QMainWindow,
                  designs.main_window_design.Ui_MainWindow):
-    """A singleton representing main window of the GUI app."""
+    """A singleton representing main window of the GUI app.
+    
+    Attributes:
+        There are a bunch of different generated attributes here,
+        but they shouldn't be read or written outside this class.
+        Communicate with a single instance of this class
+        only via its public methods (starting with single underscore _).
+    """
+
     def __init__(self):
-        """Initialize main window."""
+        """Initializes main window."""
         pyqtgraph.setConfigOption('background', 'w')  # before loading widget
         super().__init__()
         self.setupUi(self)
@@ -45,7 +53,11 @@ class MainWindow(QtWidgets.QMainWindow,
 
 
     def get_params_from_gui(self):
-        """Return a dict containing parameters from GUI."""
+        """Returns a dict containing parameters from GUI.
+
+        Retrieves all parameters listed below directly from GUI
+        and returns all of them in a two-level dictionary.
+        """
         return {
             'FreqData': {
                 'lower_fb': self.lower_fb.value(),
@@ -84,7 +96,12 @@ class MainWindow(QtWidgets.QMainWindow,
 
 
     def set_params_to_gui(self, new_params):
-        """Update params in GUI."""
+        """Updates params in GUI.
+
+        Args:
+            new_params (dict of dicts): new values of the all parameters
+                which will be updated in GUI
+        """
         # self._freq_data.set_values(new_params['FreqData'])
         # self._opt_set.set_values(new_params['OptimizerSettings'])
         # self._gen_params.set_values(new_params['GeneratorParameters'])
@@ -121,7 +138,12 @@ class MainWindow(QtWidgets.QMainWindow,
 
 
     def load_params(self):
-        """Load parameters from file."""
+        """Loads parameters from a json file.
+
+        Constructs an absolute path to the directory '../data/workspaces/'
+        and asks the user to choose a .json file which contains a workspace
+        (bunch of handpicked parameters).
+        """
         path_to_this_file = os.path.abspath(os.path.dirname(__file__))
         path_to_loading_file = QtWidgets.QFileDialog.getOpenFileName(
             self,
@@ -136,7 +158,7 @@ class MainWindow(QtWidgets.QMainWindow,
 
 
     def run_computations(self):
-        """Run computations and drawing plots."""
+        """Runs computations and drawing plots (not implemented yet)."""
         # self.get_params_from_gui()
         # plot_title = self.title.text()
 
@@ -149,7 +171,12 @@ class MainWindow(QtWidgets.QMainWindow,
 
 
     def save_params(self):
-        """Save parameters to file."""
+        """Saves parameters to file.adjusted
+
+        Constructs an absolute path to the directory '../data/workspaces/'
+        and asks the user to choose a file for saving his current workspace
+        (bunch of parameters) using json format.
+        """
         data_to_save = self.get_params_from_gui()
         path_to_this_file = os.path.abspath(os.path.dirname(__file__))
         path_to_saving_file = QtWidgets.QFileDialog.getSaveFileName(
@@ -163,7 +190,7 @@ class MainWindow(QtWidgets.QMainWindow,
 
 
     def exit_app(self):
-        """Quit the app."""
+        """Quits the app."""
         # self.close()
         QtWidgets.QApplication.quit()
 
