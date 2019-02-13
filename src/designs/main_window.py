@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '../data/qt/main_window.ui'
+# Form implementation generated from reading ui file 'data/qt/main_window.ui'
 #
 # Created by: PyQt5 UI code generator 5.12
 #
@@ -87,6 +87,7 @@ class Ui_MainWindow(object):
         self.line_3.setObjectName("line_3")
         self.verticalLayout_7.addWidget(self.line_3)
         self.verticalLayout_4 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_4.setSizeConstraint(QtWidgets.QLayout.SetFixedSize)
         self.verticalLayout_4.setObjectName("verticalLayout_4")
         self.formLayout_4 = QtWidgets.QFormLayout()
         self.formLayout_4.setSizeConstraint(QtWidgets.QLayout.SetFixedSize)
@@ -156,6 +157,7 @@ class Ui_MainWindow(object):
         self.line.setObjectName("line")
         self.verticalLayout_7.addWidget(self.line)
         self.verticalLayout_6 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_6.setSizeConstraint(QtWidgets.QLayout.SetFixedSize)
         self.verticalLayout_6.setObjectName("verticalLayout_6")
         self.formLayout_5 = QtWidgets.QFormLayout()
         self.formLayout_5.setSizeConstraint(QtWidgets.QLayout.SetFixedSize)
@@ -183,8 +185,10 @@ class Ui_MainWindow(object):
         self.line_5.setObjectName("line_5")
         self.horizontalLayout.addWidget(self.line_5)
         self.verticalLayout_8 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_8.setSizeConstraint(QtWidgets.QLayout.SetFixedSize)
         self.verticalLayout_8.setObjectName("verticalLayout_8")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_2.setSizeConstraint(QtWidgets.QLayout.SetFixedSize)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.formLayout_2 = QtWidgets.QFormLayout()
         self.formLayout_2.setSizeConstraint(QtWidgets.QLayout.SetFixedSize)
@@ -273,6 +277,7 @@ class Ui_MainWindow(object):
         self.line_4.setObjectName("line_4")
         self.verticalLayout_8.addWidget(self.line_4)
         self.verticalLayout_3 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_3.setSizeConstraint(QtWidgets.QLayout.SetFixedSize)
         self.verticalLayout_3.setObjectName("verticalLayout_3")
         self.formLayout_3 = QtWidgets.QFormLayout()
         self.formLayout_3.setSizeConstraint(QtWidgets.QLayout.SetFixedSize)

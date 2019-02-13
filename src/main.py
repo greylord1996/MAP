@@ -4,8 +4,6 @@ import sys
 import json
 import numpy as np
 
-# from matplotlib.figure import Figure
-# from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as Canvas
 import matplotlib
 matplotlib.use('QT5Agg')  # Ensure using PyQt5 backend
 import matplotlib.pyplot as plt
@@ -14,26 +12,25 @@ from PyQt5 import QtWidgets
 import pyqtgraph
 
 import settings
-import designs.main_window_design
+import designs.main_window
 import utils
 
 
 
 @utils.singleton
-class MainWindow(QtWidgets.QMainWindow,
-                 designs.main_window_design.Ui_MainWindow):
+class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
     """A singleton representing main window of the GUI app.
     
     Attributes:
         There are a bunch of different generated attributes here,
         but they shouldn't be read or written outside this class.
         Communicate with a single instance of this class
-        only via its public methods (starting with single underscore _).
+        only via its public methods.
     """
 
     def __init__(self):
         """Initializes main window."""
-        pyqtgraph.setConfigOption('background', 'w')  # before loading widget
+        pyqtgraph.setConfigOption('background', 'w')
         super().__init__()
         self.setupUi(self)
         self.plot_view.plotItem.showGrid(True, True, 0.7)
@@ -41,7 +38,7 @@ class MainWindow(QtWidgets.QMainWindow,
         self.btn_load.clicked.connect(self.load_params)
         self.btn_run.clicked.connect(self.run_computations)
         self.btn_save.clicked.connect(self.save_params)
-        self.btn_exit.clicked.connect(self.exit_app)
+        self.btn_exit.clicked.connect(self.confirm_exit)
 
         # params = self.get_params_from_gui()
         # self._freq_data = settings.FreqData(**params['FreqData'])
@@ -189,9 +186,26 @@ class MainWindow(QtWidgets.QMainWindow,
                 json.dump(data_to_save, params_output)
 
 
-    def exit_app(self):
-        """Quits the app."""
-        QtWidgets.QApplication.quit()
+    def closeEvent(self, event):
+        """Handles pushing X button of the main window.
+
+        It overrides the method in the base class.
+        When a user clicks the X title bar button
+        the main window shouldn't be closed immediately.
+        We want to ask the user to confirm exiting."""
+        event.ignore()
+        self.confirm_exit()
+
+
+    def confirm_exit(self):
+        """Opens a dialog asking whether exit or not."""
+        btn_reply = QtWidgets.QMessageBox.question(
+            self, 'Exiting...', "Are you sure you want to exit?",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+            QtWidgets.QMessageBox.No
+        )
+        if btn_reply == QtWidgets.QMessageBox.Yes:
+            QtWidgets.QApplication.quit()
 
 
 

@@ -156,6 +156,9 @@
               </item>
               <item>
                <layout class="QVBoxLayout" name="verticalLayout_4">
+                <property name="sizeConstraint">
+                 <enum>QLayout::SetFixedSize</enum>
+                </property>
                 <item>
                  <layout class="QFormLayout" name="formLayout_4">
                   <property name="sizeConstraint">
@@ -300,6 +303,9 @@
               </item>
               <item>
                <layout class="QVBoxLayout" name="verticalLayout_6">
+                <property name="sizeConstraint">
+                 <enum>QLayout::SetFixedSize</enum>
+                </property>
                 <item>
                  <layout class="QFormLayout" name="formLayout_5">
                   <property name="sizeConstraint">
@@ -353,8 +359,14 @@
             </item>
             <item>
              <layout class="QVBoxLayout" name="verticalLayout_8">
+              <property name="sizeConstraint">
+               <enum>QLayout::SetFixedSize</enum>
+              </property>
               <item>
                <layout class="QVBoxLayout" name="verticalLayout_2">
+                <property name="sizeConstraint">
+                 <enum>QLayout::SetFixedSize</enum>
+                </property>
                 <item>
                  <layout class="QFormLayout" name="formLayout_2">
                   <property name="sizeConstraint">
@@ -550,6 +562,9 @@
               </item>
               <item>
                <layout class="QVBoxLayout" name="verticalLayout_3">
+                <property name="sizeConstraint">
+                 <enum>QLayout::SetFixedSize</enum>
+                </property>
                 <item>
                  <layout class="QFormLayout" name="formLayout_3">
                   <property name="sizeConstraint">
