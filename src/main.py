@@ -162,7 +162,7 @@ class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
                 new_params = json.load(params_input)
                 self.set_params_to_gui(new_params)
 
-
+    # look here !!!!!! REFAAAAACTOR NEED TO DO
     def run_computations(self):
         """Runs computations and drawing plots (not implemented yet)."""
         # self.get_params_from_gui()
@@ -173,13 +173,15 @@ class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
         b = form_initial_data.OdeSolver(a['WhiteNoise'], a['GeneratorParameters'],
                                         a['OscillationParameters'], a['IntegrationSettings'])
         b.solve()
+        #b.show_T1t_in_test_mode()
+        b.show_V1t_in_test_mode()
         c = b.get_appropr_data_to_gui()
         #x = np.arange(-20.0, 20.0, 0.05)
         #y = x**2 - 2*x + 1.0
         print("###")
         plot_color = pyqtgraph.hsvColor(1, alpha=.9)
         pen = pyqtgraph.mkPen(color=plot_color, width=0.4)
-        self.plot_view.plot(c['t_vec'], c['d2'], pen=pen, clear=True)
+        self.plot_view.plot(c['t_vec'], c['w2'], pen=pen, clear=True)
 
 
     def save_params(self):

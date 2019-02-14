@@ -70,8 +70,8 @@ class OdeSolver():
         w2 = x[0]
         d2 = x[1]
 
-        #V1c = self.V1t(t) * np.exp(j * self.T1t(t)) !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        V1c = 1.0 * np.exp(j * 1.0)
+        V1c = self.V1t(t) * np.exp(j * self.T1t(t))
+        #V1c = 1.0 * np.exp(j * 1.0)
         V2c = self.generator_param.e_2 * np.exp(j * d2)
 
         Pe2 = np.real(V2c * np.conj((V2c - V1c) / (j * self.generator_param.x_d2)))
