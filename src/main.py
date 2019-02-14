@@ -91,6 +91,10 @@ class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
                 'ic_v1': self.ic_v1.value(),
                 'ic_t1': self.ic_t1.value(),
             },
+            'IntegrationSettings': {
+                'df_length': self.df_length.value(),
+                'dt_step': self.dt_step.value(),
+            }
         }
 
 
@@ -135,6 +139,9 @@ class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
         self.ic_v1.setValue(new_params['InfBusInitializer']['ic_v1'])
         self.ic_t1.setValue(new_params['InfBusInitializer']['ic_t1'])
 
+        self.df_length.setValue(new_params['IntegrationSettings']['df_length'])
+        self.dt_step.setValue(new_params['IntegrationSettings']['dt_step'])
+
 
     def load_params(self):
         """Loads parameters from a json file.
@@ -166,11 +173,11 @@ class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
         b = form_initial_data.OdeSolver(a['WhiteNoise'], a['GeneratorParameters'],
                                         a['OscillationParameters'])
         b.solve()
-        c =b.get_appropr_data_to_gui()
+        c = b.get_appropr_data_to_gui()
         #x = np.arange(-20.0, 20.0, 0.05)
         #y = x**2 - 2*x + 1.0
         print("###")
-        plot_color = pyqtgraph.hsvColor(1, alpha=.8)
+        plot_color = pyqtgraph.hsvColor(1, alpha=.9)
         pen = pyqtgraph.mkPen(color=plot_color, width=0.4)
         self.plot_view.plot(c['t_vec'], c['w2'], pen=pen, clear=True)
 
@@ -200,7 +207,8 @@ class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
         It overrides the method in the base class.
         When a user clicks the X title bar button
         the main window shouldn't be closed immediately.
-        We want to ask the user to confirm exiting."""
+        We want to ask the user to confirm exiting.
+        """
         event.ignore()
         self.confirm_exit()
 
