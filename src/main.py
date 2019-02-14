@@ -179,7 +179,7 @@ class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
         print("###")
         plot_color = pyqtgraph.hsvColor(1, alpha=.9)
         pen = pyqtgraph.mkPen(color=plot_color, width=0.4)
-        self.plot_view.plot(c['t_vec'], c['w2'], pen=pen, clear=True)
+        self.plot_view.plot(c['t_vec'], c['d2'], pen=pen, clear=True)
 
 
     def save_params(self):

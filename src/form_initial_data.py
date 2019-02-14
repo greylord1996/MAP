@@ -70,14 +70,15 @@ class OdeSolver():
         w2 = x[0]
         d2 = x[1]
 
-        V1c = self.V1t(t) * np.exp(j * self.T1t(t))
-        V2c = 1.0 * np.exp(j * d2)
+        #V1c = self.V1t(t) * np.exp(j * self.T1t(t)) !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        V1c = 1.0 * np.exp(j * 1.0)
+        V2c = self.generator_param.e_2 * np.exp(j * d2)
 
         Pe2 = np.real(V2c * np.conj((V2c - V1c) / (j * self.generator_param.x_d2)))
-        Pm2t = self.Pm2_0 + 2.00 * np.sin(2 * np.pi * 0.001 * t)
+        Pm2t = self.Pm2_0 + self.osc_param.osc_amp * np.sin(2 * np.pi * self.osc_param.osc_freq * t)
 
         # Define the system
-        dw2dt = Pm2t - Pe2 - 0.25 * w2 / 1.0
+        dw2dt = Pm2t - Pe2 - self.generator_param.d_2 * w2 / self.generator_param.m_2
         d2dt = w2
 
         return [dw2dt, d2dt]
@@ -91,7 +92,7 @@ class OdeSolver():
 
     def get_appropr_data_to_gui(self):
         return {'t_vec': self.t_vec, 'w2': self.w2, 'd2': self.d2,
-                'V1t': self.V1t, 'T1t': self.T1t}
+                'V1t': self.V1t(self.t_vec), 'T1t': self.T1t(self.t_vec)}
 
     def show_results_in_test_mode(self):
         plt.plot(self.t_vec, self.w2)
