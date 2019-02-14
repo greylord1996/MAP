@@ -1,20 +1,9 @@
 import numpy as np
-import scipy
 from scipy.interpolate import interp1d
-from scipy.integrate import odeint
 from scipy.integrate import *
 import matplotlib.pyplot as plt
 from settings import GeneratorParameters, OscillationParameters, WhiteNoise
-from numba import jit
-import numba
-import time
-from numba import cuda, njit
-from multiprocessing import Pool
-from time import time
-from scipy.integrate import Radau, OdeSolver, RK45, RK23, BDF
-import Cython as cp
 
-print(cuda.gpus)
 i = 0
 j = np.complex(0, 1)
 
