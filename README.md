@@ -2,6 +2,8 @@ First of all, you should have ```python3```, ```git``` and ```virtualenv``` to w
 
 ## How to deploy it:
 
+Note: If you use Windows, you should start a command line (which has python3 in PATH) with administrator's privileges.
+
 #### First of all, clone this repository:
 ```
 git clone https://github.com/greylord1996/MAP.git
@@ -18,7 +20,8 @@ python3 -m venv mapenv
 
 #### Activate the environment
 ```
-source mapenv/bin/activate
+on Linux: source mapenv/bin/activate
+on Windows: mapenv/Scripts/activate
 ```
 
 #### Install required dependencies

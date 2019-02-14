@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>800</width>
-    <height>600</height>
+    <height>727</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -311,6 +311,9 @@
                   <property name="sizeConstraint">
                    <enum>QLayout::SetFixedSize</enum>
                   </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
                   <item row="0" column="0" colspan="2">
                    <widget class="QLabel" name="label_23">
                     <property name="text">
@@ -542,7 +545,7 @@
                   <item row="0" column="0" colspan="2">
                    <widget class="QLabel" name="label_6">
                     <property name="text">
-                     <string>Optimizer's settings</string>
+                     <string>OptimizerSettings</string>
                     </property>
                     <property name="alignment">
                      <set>Qt::AlignCenter</set>
@@ -573,7 +576,7 @@
                   <item row="0" column="0" colspan="2">
                    <widget class="QLabel" name="label_19">
                     <property name="text">
-                     <string>Generator's parameters</string>
+                     <string>GeneratorParameters</string>
                     </property>
                     <property name="alignment">
                      <set>Qt::AlignCenter</set>
@@ -662,6 +665,74 @@
                     </property>
                     <property name="value">
                      <double>1.000000000000000</double>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <widget class="Line" name="line_7">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_14">
+                <property name="sizeConstraint">
+                 <enum>QLayout::SetFixedSize</enum>
+                </property>
+                <property name="bottomMargin">
+                 <number>0</number>
+                </property>
+                <item>
+                 <layout class="QFormLayout" name="formLayout_7">
+                  <property name="sizeConstraint">
+                   <enum>QLayout::SetFixedSize</enum>
+                  </property>
+                  <item row="1" column="0">
+                   <widget class="QLabel" name="label_df_length">
+                    <property name="text">
+                     <string>df_length</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="2" column="0">
+                   <widget class="QLabel" name="label_dt_step">
+                    <property name="text">
+                     <string>dt_step</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="1">
+                   <widget class="QDoubleSpinBox" name="df_length">
+                    <property name="maximum">
+                     <double>999.990000000000009</double>
+                    </property>
+                    <property name="value">
+                     <double>100.000000000000000</double>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="2" column="1">
+                   <widget class="QDoubleSpinBox" name="dt_step">
+                    <property name="singleStep">
+                     <double>0.010000000000000</double>
+                    </property>
+                    <property name="value">
+                     <double>0.050000000000000</double>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="0" colspan="2">
+                   <widget class="QLabel" name="label_3">
+                    <property name="text">
+                     <string>IntegrationSettings</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignCenter</set>
                     </property>
                    </widget>
                   </item>

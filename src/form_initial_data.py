@@ -1,95 +1,105 @@
 import numpy as np
 from scipy.interpolate import interp1d
-from scipy.integrate import odeint
 from scipy.integrate import *
 import matplotlib.pyplot as plt
-from settings import GeneratorParameters, OscillationParameters
+from settings import GeneratorParameters, OscillationParameters, WhiteNoise
 
+i = 0
 j = np.complex(0, 1)
-gp = GeneratorParameters()
-osc_p = OscillationParameters()
-
-E2 = 1
-Xd2 = 0.01
-M2 = 1
-D2 = 0.25
-
-"""
-Initial calculations
-"""
-IC_T1 = 0.5
-IC_V1 = 1
-IC_d2 = 1
-V1c = IC_V1 * np.exp(j * IC_T1)   # Bus Voltage (complex)
-V2c = gp.e_2 * np.exp(j * IC_d2)  # Generator Voltage (complex)
-Pm2_0 = np.real(V2c * np.conj((V2c - V1c)/(j * gp.x_d2)))
-print("Pm2_0 = ", Pm2_0)
 
 
-"""
-Define Power Functions
-In this section we add normal noise to constant mode to fluctuate 
-constant and interpolate by cubic this discrete values
-"""
-# White Noise
-Rnd_Amp = 0.02
+class OdeSolver():
 
-# Simulation Length
-dt = 0.005
-tf = 100
-test_length = np.arange(0, tf, dt)
+    #def __init__(self, rnd_amp, d_2, e_2, m_2, x_d2, ic_d2, osc_amp, osc_freq):
+    def __init__(self, white_noise, gen_param, osc_param):
+        self.white_noise = WhiteNoise(white_noise['rnd_amp'])
+        self.generator_param = GeneratorParameters(gen_param['d_2'], gen_param['e_2'],
+                                                   gen_param['m_2'], gen_param['x_d2'],
+                                                   gen_param['ic_d2'])
+        self.osc_param = OscillationParameters(osc_param['osc_amp'], osc_param['osc_freq'])
 
-vn_vec = np.random.normal(0, 1, test_length.size) * Rnd_Amp + IC_V1
-tn_vec = np.random.normal(0, 1, test_length.size) * Rnd_Amp + IC_T1
+        # self.white_noise = WhiteNoise(rnd_amp)
+        # self.generator_param = GeneratorParameters(d_2, e_2,
+        #                                            m_2, x_d2,
+        #                                            ic_d2)
+        # self.osc_param = OscillationParameters(osc_amp, osc_freq)
 
-t_vec = np.linspace(0, tf, test_length.size)
-V1t = interp1d(t_vec, vn_vec, kind='cubic', fill_value="extrapolate")
-T1t = interp1d(t_vec, tn_vec, kind='cubic', fill_value="extrapolate")
+        self.IC_T1 = 0.5
+        self.IC_V1 = 1.0
+        self.IC_d2 = 1.0
+        self.dt = 0.05
+        self.tf = 100.00
+        self.test_length = np.arange(0, self.tf, self.dt)
+        self.t_vec = np.linspace(0, self.tf, self.test_length.size)
+        self.Pm2_0 = self.calculate_Pm2_0()
+        self.V1t = self.get_V1t()
+        self.T1t = self.get_T1t()
+        self.w2 = None
+        self.d2 = None
 
-plt.plot(t_vec, V1t(t_vec))
-plt.legend(['V1(t)'])
-plt.show()
+    def calculate_Pm2_0(self):
+        V1c = self.IC_V1 * np.exp(j * self.IC_T1)  # Bus Voltage (complex)
+        V2c = self.generator_param.e_2 * np.exp(j * self.IC_d2)  # Generator Voltage (complex)
+        Pm2_0 = np.real(V2c * np.conj((V2c - V1c) / (j * self.generator_param.x_d2)))
+        return Pm2_0
 
-plt.plot(t_vec, T1t(t_vec))
-plt.legend(['T1(t)'])
-plt.show()
+    def get_V1t(self):
+        vn_vec = np.random.normal(0, 1, self.test_length.size) * self.white_noise.rnd_amp + self.IC_V1
+        V1t = interp1d(self.t_vec, vn_vec, kind='cubic', fill_value="extrapolate")
+        return V1t
 
-"""
-In this section we define the system of ODE with variables [w2(t); d2(t)]
-"""
+    def show_V1t_in_test_mode(self):
+        plt.plot(self.t_vec, self.V1t(self.t_vec))
+        plt.legend(['V1t'])
+        plt.show()
 
-def get_system(x, t):
+    def get_T1t(self):
+        tn_vec = np.random.normal(0, 1, self.test_length.size) * self.white_noise.rnd_amp + self.IC_T1
+        T1t = interp1d(self.t_vec, tn_vec, kind='cubic', fill_value="extrapolate")
+        return T1t
 
-    w2 = x[0]
-    d2 = x[1]
+    def get_t_vec(self):
+        return self.t_vec
 
-    V1c = V1t(t) * np.exp(j * T1t(t))
-    V2c = gp.e_2 * np.exp(j * d2)
-    Pe2 = np.real(V2c * np.conj((V2c - V1c)/(j * Xd2)))
+    def show_T1t_in_test_mode(self):
+        plt.plot(self.t_vec, self.T1t(self.t_vec))
+        plt.legend(['T1t'])
+        plt.show()
 
-    Pm2t = Pm2_0 + osc_p.osc_amp * np.sin(2 * np.pi * osc_p.osc_freq * t)
+    def get_system(self, x, t):
+        w2 = x[0]
+        d2 = x[1]
 
-    dw2dt = Pm2t - Pe2 - gp.d_2 * w2 / gp.m_2
-    d2dt = w2
+        V1c = self.V1t(t) * np.exp(j * self.T1t(t))
+        V2c = 1.0 * np.exp(j * d2)
 
-    return [dw2dt, d2dt]
+        Pe2 = np.real(V2c * np.conj((V2c - V1c) / (j * self.generator_param.x_d2)))
+        Pm2t = self.Pm2_0 + 2.00 * np.sin(2 * np.pi * 0.001 * t)
 
+        # Define the system
+        dw2dt = Pm2t - Pe2 - 0.25 * w2 / 1.0
+        d2dt = w2
 
-"""
-Solve ODE
-"""
+        return [dw2dt, d2dt]
 
-y0 = [0, 1]
-t = np.linspace(0, tf, test_length.size)
-sol = odeint(get_system, y0, t_vec)
-#sol = solve_ivp(get_system, [0, tf], y0)
+    def solve(self):
+        y0 = [0, 1.0]
+        sol = odeint(self.get_system, y0, self.t_vec)
+        self.w2 = sol[:, 0]
+        self.d2 = sol[:, 1]
+        return {'w2': self.w2, 'd2': self.d2}
 
-w2 = sol[:, 0]
-d2 = sol[:, 1]
+    def get_appropr_data_to_gui(self):
+        return {'t_vec': self.t_vec, 'w2': self.w2, 'd2': self.d2,
+                'V1t': self.V1t, 'T1t': self.T1t}
 
-plt.plot(t, w2)
-plt.legend(['w2(t)'])
-plt.show()
-plt.plot(t, d2)
-plt.legend(['d2(t)'])
-plt.show()
+    def show_results_in_test_mode(self):
+        plt.plot(self.t_vec, self.w2)
+        plt.legend(['w2(t)'])
+        plt.show()
+        plt.plot(self.t_vec, self.d2)
+        plt.legend(['d2(t)'])
+        plt.show()
+
+#solver = OdeSolver(0.02, 0.25, 1.0, 1.0, 0.01, 1, 2, 0.005)
+#solver.solve()

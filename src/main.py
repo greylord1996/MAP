@@ -14,7 +14,9 @@ import pyqtgraph
 import settings
 import designs.main_window
 import utils
+import form_initial_data
 
+import time
 
 
 @utils.singleton
@@ -79,8 +81,8 @@ class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
                 'ic_d2': self.ic_d2.value(),
             },
             'OscillationParameters': {
-                'osc_amp': self.d_2.value(),
-                'osc_freq': self.d_2.value(),
+                'osc_amp': self.osc_amp.value(),
+                'osc_freq': self.osc_freq.value(),
             },
             'WhiteNoise': {
                 'rnd_amp': self.rnd_amp.value(),
@@ -89,6 +91,10 @@ class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
                 'ic_v1': self.ic_v1.value(),
                 'ic_t1': self.ic_t1.value(),
             },
+            'IntegrationSettings': {
+                'df_length': self.df_length.value(),
+                'dt_step': self.dt_step.value(),
+            }
         }
 
 
@@ -133,6 +139,9 @@ class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
         self.ic_v1.setValue(new_params['InfBusInitializer']['ic_v1'])
         self.ic_t1.setValue(new_params['InfBusInitializer']['ic_t1'])
 
+        self.df_length.setValue(new_params['IntegrationSettings']['df_length'])
+        self.dt_step.setValue(new_params['IntegrationSettings']['dt_step'])
+
 
     def load_params(self):
         """Loads parameters from a json file.
@@ -158,13 +167,19 @@ class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
         """Runs computations and drawing plots (not implemented yet)."""
         # self.get_params_from_gui()
         # plot_title = self.title.text()
+        a = self.get_params_from_gui()
+        print(a['WhiteNoise'])
 
-        x = np.arange(-20.0, 20.0, 0.05)
-        y = x**2 - 2*x + 1.0
-
-        plot_color = pyqtgraph.hsvColor(1, alpha=.8)
-        pen = pyqtgraph.mkPen(color=plot_color, width=7)
-        self.plot_view.plot(x, y, pen=pen, clear=True)
+        b = form_initial_data.OdeSolver(a['WhiteNoise'], a['GeneratorParameters'],
+                                        a['OscillationParameters'])
+        b.solve()
+        c = b.get_appropr_data_to_gui()
+        #x = np.arange(-20.0, 20.0, 0.05)
+        #y = x**2 - 2*x + 1.0
+        print("###")
+        plot_color = pyqtgraph.hsvColor(1, alpha=.9)
+        pen = pyqtgraph.mkPen(color=plot_color, width=0.4)
+        self.plot_view.plot(c['t_vec'], c['w2'], pen=pen, clear=True)
 
 
     def save_params(self):
@@ -192,7 +207,8 @@ class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
         It overrides the method in the base class.
         When a user clicks the X title bar button
         the main window shouldn't be closed immediately.
-        We want to ask the user to confirm exiting."""
+        We want to ask the user to confirm exiting.
+        """
         event.ignore()
         self.confirm_exit()
 
@@ -210,10 +226,13 @@ class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
 
 
 def main():
+    start_time = time.time()
+    print("--- %s seconds ---" % (time.time() - start_time))
     app = QtWidgets.QApplication(sys.argv)
     main_window = MainWindow()
     main_window.show()
     sys.exit(app.exec_())
+    print("--- %s seconds ---" % (time.time() - start_time))
 
 
 if __name__ == '__main__':
