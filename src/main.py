@@ -16,6 +16,7 @@ import designs.main_window
 import utils
 import form_initial_data
 
+import time
 
 
 @utils.singleton
@@ -160,15 +161,18 @@ class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
         # self.get_params_from_gui()
         # plot_title = self.title.text()
         a = self.get_params_from_gui()
-        #print(a['WhiteNoise'])
+        print(a['WhiteNoise'])
 
-        b = form_initial_data.solver()
+        b = form_initial_data.OdeSolver(a['WhiteNoise'], a['GeneratorParameters'],
+                                        a['OscillationParameters'])
+        b.solve()
+        c =b.get_appropr_data_to_gui()
         #x = np.arange(-20.0, 20.0, 0.05)
         #y = x**2 - 2*x + 1.0
-
+        print("###")
         plot_color = pyqtgraph.hsvColor(1, alpha=.8)
         pen = pyqtgraph.mkPen(color=plot_color, width=0.4)
-        self.plot_view.plot(b['t'], b['w2'], pen=pen, clear=True)
+        self.plot_view.plot(c['t_vec'], c['w2'], pen=pen, clear=True)
 
 
     def save_params(self):
@@ -214,10 +218,13 @@ class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
 
 
 def main():
+    start_time = time.time()
+    print("--- %s seconds ---" % (time.time() - start_time))
     app = QtWidgets.QApplication(sys.argv)
     main_window = MainWindow()
     main_window.show()
     sys.exit(app.exec_())
+    print("--- %s seconds ---" % (time.time() - start_time))
 
 
 if __name__ == '__main__':
