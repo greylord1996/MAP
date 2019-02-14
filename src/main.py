@@ -171,7 +171,7 @@ class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
         print(a['WhiteNoise'])
 
         b = form_initial_data.OdeSolver(a['WhiteNoise'], a['GeneratorParameters'],
-                                        a['OscillationParameters'])
+                                        a['OscillationParameters'], a['IntegrationSettings'])
         b.solve()
         c = b.get_appropr_data_to_gui()
         #x = np.arange(-20.0, 20.0, 0.05)

@@ -11,7 +11,7 @@ j = np.complex(0, 1)
 class OdeSolver():
 
     #def __init__(self, rnd_amp, d_2, e_2, m_2, x_d2, ic_d2, osc_amp, osc_freq):
-    def __init__(self, white_noise, gen_param, osc_param):
+    def __init__(self, white_noise, gen_param, osc_param, integr_param):
         self.white_noise = WhiteNoise(white_noise['rnd_amp'])
         self.generator_param = GeneratorParameters(gen_param['d_2'], gen_param['e_2'],
                                                    gen_param['m_2'], gen_param['x_d2'],
@@ -27,8 +27,8 @@ class OdeSolver():
         self.IC_T1 = 0.5
         self.IC_V1 = 1.0
         self.IC_d2 = 1.0
-        self.dt = 0.05
-        self.tf = 100.00
+        self.dt = integr_param['dt_step']
+        self.tf = integr_param['df_length']
         self.test_length = np.arange(0, self.tf, self.dt)
         self.t_vec = np.linspace(0, self.tf, self.test_length.size)
         self.Pm2_0 = self.calculate_Pm2_0()
