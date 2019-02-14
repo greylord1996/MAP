@@ -11,6 +11,28 @@ Complex Unit
 j = np.complex(0, 1)
 
 """
+Integration steps
+"""
+
+
+class IntegrationSettings:
+
+    def __init__(self, df_length, dt_step):
+        self.df_length = df_length
+        self.dt_step = dt_step
+
+    def get_list_of_values(self):
+        return [self.df_length, self.dt_step]
+
+    def set_values(self, new_values):
+        self.df_length = new_values['df_length']
+        self.dt_step = new_values['df_step']
+
+    def get_values(self):
+        return {'df_length': self.df_length, 'df_step': self.dt_step}
+
+
+"""
 Frequency settings
 """
 
