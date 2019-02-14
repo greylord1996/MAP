@@ -14,6 +14,7 @@ import pyqtgraph
 import settings
 import designs.main_window
 import utils
+import form_initial_data
 
 
 
@@ -79,8 +80,8 @@ class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
                 'ic_d2': self.ic_d2.value(),
             },
             'OscillationParameters': {
-                'osc_amp': self.d_2.value(),
-                'osc_freq': self.d_2.value(),
+                'osc_amp': self.osc_amp.value(),
+                'osc_freq': self.osc_freq.value(),
             },
             'WhiteNoise': {
                 'rnd_amp': self.rnd_amp.value(),
@@ -158,13 +159,16 @@ class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
         """Runs computations and drawing plots (not implemented yet)."""
         # self.get_params_from_gui()
         # plot_title = self.title.text()
+        a = self.get_params_from_gui()
+        #print(a['WhiteNoise'])
 
-        x = np.arange(-20.0, 20.0, 0.05)
-        y = x**2 - 2*x + 1.0
+        b = form_initial_data.solver()
+        #x = np.arange(-20.0, 20.0, 0.05)
+        #y = x**2 - 2*x + 1.0
 
         plot_color = pyqtgraph.hsvColor(1, alpha=.8)
-        pen = pyqtgraph.mkPen(color=plot_color, width=7)
-        self.plot_view.plot(x, y, pen=pen, clear=True)
+        pen = pyqtgraph.mkPen(color=plot_color, width=0.4)
+        self.plot_view.plot(b['t'], b['w2'], pen=pen, clear=True)
 
 
     def save_params(self):
