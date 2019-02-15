@@ -14,7 +14,7 @@ import pyqtgraph
 import settings
 import designs.main_window
 import utils
-import form_initial_data
+import dynamic_equations_to_simulate
 
 import time
 
@@ -22,7 +22,7 @@ import time
 @utils.singleton
 class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
     """A singleton representing main window of the GUI app.
-    
+
     Attributes:
         There are a bunch of different generated attributes here,
         but they shouldn't be read or written outside this class.
@@ -41,14 +41,6 @@ class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
         self.btn_run.clicked.connect(self.run_computations)
         self.btn_save.clicked.connect(self.save_params)
         self.btn_exit.clicked.connect(self.confirm_exit)
-
-        # params = self.get_params_from_gui()
-        # self._freq_data = settings.FreqData(**params['FreqData'])
-        # self._opt_set = settings.OptimizerSettings(**params['OptimizerSettings'])
-        # self._gen_params = settings.GeneratorParameters(**params['GeneratorParameters'])
-        # self._osc_params = settings.OscillationParameters(**params['OscillationParameters'])
-        # self._white_noise_params = settings.WhiteNoise(**params['WhiteNoise'])
-        # self._inf_bus_params = settings.InfBusInitializer(**params['InfBusInitializer'])
 
 
     def get_params_from_gui(self):
@@ -105,13 +97,6 @@ class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
             new_params (dict of dicts): new values of the all parameters
                 which will be updated in GUI
         """
-        # self._freq_data.set_values(new_params['FreqData'])
-        # self._opt_set.set_values(new_params['OptimizerSettings'])
-        # self._gen_params.set_values(new_params['GeneratorParameters'])
-        # self._osc_params.set_values(new_params['OscillationParameters'])
-        # self._white_noise_params.set_values(new_params['WhiteNoise'])
-        # self._inf_bus_params.set_values(new_params['InfBusInitializer'])
-
         self.lower_fb.setValue(new_params['FreqData']['lower_fb'])
         self.upper_fb.setValue(new_params['FreqData']['upper_fb'])
         self.max_freq.setValue(new_params['FreqData']['max_freq'])
@@ -170,8 +155,9 @@ class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
         a = self.get_params_from_gui()
         print(a['WhiteNoise'])
 
-        b = form_initial_data.OdeSolver(a['WhiteNoise'], a['GeneratorParameters'],
-                                        a['OscillationParameters'], a['IntegrationSettings'])
+        b = dynamic_equations_to_simulate.OdeSolver(
+                a['WhiteNoise'], a['GeneratorParameters'],
+                a['OscillationParameters'], a['IntegrationSettings'])
         b.solve()
         #b.show_T1t_in_test_mode()
         b.show_V1t_in_test_mode()

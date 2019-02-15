@@ -30,3 +30,4 @@ Ys = (JacGX/(j*Omega_a*eye(len(X)) - JacFX))*JacFUv + JacGUv
 #Ys = simplify(Ys)
 
 Ys_compute = lambdify((w_a, Ef_a, D_Ya, M_Ya, X_Ya, Pm_a, Omega, Omega_a, Va_a, Vm_a, del_a), Ys, 'numpy')
+
