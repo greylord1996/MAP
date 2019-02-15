@@ -1,8 +1,10 @@
-First of all, you should have ```python3```, ```git``` and ```virtualenv``` to work with this project.
+![](data/demo.png)
 
 ## How to deploy it:
 
-Note: If you use Windows, you should start a command line (which has python3 in PATH) with administrator's privileges.
+First of all, you should have ```python3``` and ```git``` in your PATH variable to work with this project.
+
+Note: If you use Windows, you should start a command line with administrator's privileges.
 
 #### First of all, clone this repository:
 ```
