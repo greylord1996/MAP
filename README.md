@@ -2,13 +2,14 @@
 
 ![](data/demo.png)
 
+*Note for Windows users*: There is the binary file *MAPSetup.exe* in *bin/* directory. You can just download it and run *MAPSetup.exe* ignoring all steps below.
+
 ## How to deploy it:
 
 First of all, you should have ```python 3.x``` and ```git``` in your PATH variable to work with this project.
 
-*Note for Windows users*: If you want to use python to run it, you should start a command line with administrator's privileges. There is also the binary *MAPSetup.exe* in *bin/* directory. You can just clone this repository and run *MAPSetup.exe* ignoring all steps below.
+*Note for Windows users*: You should start a command line with administrator's privileges. 
 
-## Deploying this project on your local machine:
 First of all, clone the repository:
 
     git clone https://github.com/greylord1996/MAP.git
