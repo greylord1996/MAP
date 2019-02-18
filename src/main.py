@@ -152,22 +152,16 @@ class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
         """Runs computations and drawing plots (not implemented yet)."""
         # self.get_params_from_gui()
         # plot_title = self.title.text()
-        a = self.get_params_from_gui()
-        print(a['WhiteNoise'])
+        parameters_from_gui = self.get_params_from_gui()
 
-        b = dynamic_equations_to_simulate.OdeSolver(
-                a['WhiteNoise'], a['GeneratorParameters'],
-                a['OscillationParameters'], a['IntegrationSettings'])
-        b.solve()
-        #b.show_T1t_in_test_mode()
-        b.show_V1t_in_test_mode()
-        c = b.get_appropr_data_to_gui()
-        #x = np.arange(-20.0, 20.0, 0.05)
-        #y = x**2 - 2*x + 1.0
-        print("###")
+        ode_solver_object = dynamic_equations_to_simulate.OdeSolver(
+            parameters_from_gui['WhiteNoise'], parameters_from_gui['GeneratorParameters'],
+            parameters_from_gui['OscillationParameters'], parameters_from_gui['IntegrationSettings'])
+        ode_solver_object.solve()
+        appropriate_data = ode_solver_object.get_appropr_data_to_gui()
         plot_color = pyqtgraph.hsvColor(1, alpha=.9)
         pen = pyqtgraph.mkPen(color=plot_color, width=0.4)
-        self.plot_view.plot(c['t_vec'], c['w2'], pen=pen, clear=True)
+        self.plot_view.plot(appropriate_data['t_vec'], appropriate_data['w2'], pen=pen, clear=True)
 
 
     def save_params(self):
@@ -212,15 +206,11 @@ class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
             QtWidgets.QApplication.quit()
 
 
-
 def main():
-    start_time = time.time()
-    print("--- %s seconds ---" % (time.time() - start_time))
     app = QtWidgets.QApplication(sys.argv)
     main_window = MainWindow()
     main_window.show()
     sys.exit(app.exec_())
-    print("--- %s seconds ---" % (time.time() - start_time))
 
 
 if __name__ == '__main__':
