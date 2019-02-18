@@ -3,12 +3,13 @@ from scipy.interpolate import interp1d
 from scipy.integrate import *
 import matplotlib.pyplot as plt
 from settings import GeneratorParameters, OscillationParameters, WhiteNoise
+import time
 
 i = 0
 j = np.complex(0, 1)
 
 
-class OdeSolver():
+class OdeSolver:
 
     #def __init__(self, rnd_amp, d_2, e_2, m_2, x_d2, ic_d2, osc_amp, osc_freq):
     def __init__(self, white_noise, gen_param, osc_param, integr_param):
@@ -34,6 +35,7 @@ class OdeSolver():
         self.Pm2_0 = self.calculate_Pm2_0()
         self.V1t = self.get_V1t()
         self.T1t = self.get_T1t()
+        self.sol = None
         self.w2 = None
         self.d2 = None
 
@@ -66,12 +68,10 @@ class OdeSolver():
         plt.legend(['T1t'])
         plt.show()
 
-    def get_system(self, x, t):
+    def get_system(self, t, x):
         w2 = x[0]
         d2 = x[1]
-
         V1c = self.V1t(t) * np.exp(j * self.T1t(t))
-        #V1c = 1.0 * np.exp(j * 1.0)
         V2c = self.generator_param.e_2 * np.exp(j * d2)
 
         Pe2 = np.real(V2c * np.conj((V2c - V1c) / (j * self.generator_param.x_d2)))
@@ -85,13 +85,16 @@ class OdeSolver():
 
     def solve(self):
         y0 = [0, 1.0]
-        sol = odeint(self.get_system, y0, self.t_vec)
-        self.w2 = sol[:, 0]
-        self.d2 = sol[:, 1]
+        start_time = time.time()
+        print("--- %s seconds ---" % (time.time() - start_time))
+        self.sol = solve_ivp(fun=self.get_system, t_span=[0, self.tf], y0=y0, t_eval=self.t_vec)
+        print("--- %s seconds ---" % (time.time() - start_time))
+        self.w2 = self.sol.y[0, :]
+        self.d2 = self.sol.y[1, :]
         return {'w2': self.w2, 'd2': self.d2}
 
     def get_appropr_data_to_gui(self):
-        return {'t_vec': self.t_vec, 'w2': self.w2, 'd2': self.d2,
+        return {'t_vec': self.sol.t, 'w2': self.w2, 'd2': self.d2,
                 'V1t': self.V1t(self.t_vec), 'T1t': self.T1t(self.t_vec)}
 
     def show_results_in_test_mode(self):
@@ -102,5 +105,15 @@ class OdeSolver():
         plt.legend(['d2(t)'])
         plt.show()
 
-#solver = OdeSolver(0.02, 0.25, 1.0, 1.0, 0.01, 1, 2, 0.005)
-#solver.solve()
+
+# Test mode, just for checking appropriate working
+"""
+WN = {'rnd_amp': 0.0}
+GP = {'d_2': 0.25, 'e_2': 1, 'm_2': 1, 'x_d2': 0.01, 'ic_d2': 1}
+IP = {'dt_step': 0.05, 'df_length': 100}
+OP = {'osc_amp': 2.00, 'osc_freq': 0.005}
+
+
+solver = OdeSolver(WN, GP, OP, IP)
+solver.solve()
+"""
