@@ -2,7 +2,7 @@
 
 ![](data/demo.png)
 
-There are installers for Windows and Ubuntu/Debian ((see releases)[https://github.com/greylord1996/MAP/releases]). You can just download appropriate installer and run it ignoring all steps below.
+There are installers for Windows and Ubuntu/Debian ([see releases](https://github.com/greylord1996/MAP/releases)). You can just download appropriate installer and run it ignoring all steps below.
 
 ## How to deploy it:
 
