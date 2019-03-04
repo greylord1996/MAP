@@ -16,6 +16,7 @@ X_Ya = symbols('X_Ya', real=True)
 M_Ya = symbols('M_Ya', real=True)
 
 Omega_a = symbols('Omega_a', real=True)
+X_params = Array([D_Ya, Ef_a, M_Ya, X_Ya])
 
 
 
@@ -34,7 +35,9 @@ class AdmittanceMatrix:
     """
 
     def __init__(self, is_actual=True):
+        path_to_this_file = os.path.abspath(os.path.dirname(__file__))
         path_to_matrix_file = os.path.join(
+            path_to_this_file,
             '..', 'data', 'precomputed', 'admittance_matrix.pickle'
         )
         if not is_actual:
@@ -80,7 +83,6 @@ class AdmittanceMatrix:
 
 
 
-X_params = Array([D_Ya, Ef_a, M_Ya, X_Ya])
 Ys = AdmittanceMatrix().Ys
 
 Y11 = Ys[0, 0]
@@ -119,7 +121,7 @@ Grad_Pr = Prtemp.jacobian(X_params)
 Grad_Pi = Pitemp.jacobian(X_params)
 
 
-Mr_compute = lambdify((D_Ya, Ef_a, M_Ya, X_Ya, Omega_a, Imrs, Vmrs, Vmis, Vars, Vais), Mr)
+Mr_compute = lambdify((D_Ya, Ef_a, M_Ya, X_Ya, Omega_a, Imrs, Vmrs, Vmis, Vars, Vais), Mr, 'numpy')
 Mi_compute = lambdify((Imis, Vmrs, Vmis, Vars, Vais, D_Ya, Ef_a, M_Ya, X_Ya, Omega_a), Mi, 'numpy')
 Pr_compute = lambdify((Iars, Vmrs, Vmis, Vars, Vais, D_Ya, Ef_a, M_Ya, X_Ya, Omega_a), Pr, 'numpy')
 Pi_compute = lambdify((Iais, Vmrs, Vmis, Vars, Vais, D_Ya, Ef_a, M_Ya, X_Ya, Omega_a), Pi, 'numpy')
