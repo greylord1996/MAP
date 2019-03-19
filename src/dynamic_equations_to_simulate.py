@@ -112,6 +112,12 @@ class OdeSolver:
         plt.plot(self.t_vec, self.d2)
         plt.legend(['d2(t)'])
         plt.show()
+        plt.plot(self.t_vec, self.Ig)
+        plt.legend(['Ig(t)'])
+        plt.show()
+        plt.plot(self.t_vec, self.Vc1)
+        plt.legend(['Vc1(t)'])
+        plt.show()
 
     def simulate_time_data(self):
         self.solve()
@@ -126,7 +132,7 @@ class OdeSolver:
 
 # Test mode, just for checking appropriate working
 
-WN = {'rnd_amp': 0.001}
+WN = {'rnd_amp': 0.00}
 GP = {'d_2': 0.25, 'e_2': 1, 'm_2': 1, 'x_d2': 0.01, 'ic_d2': 1}
 IP = {'dt_step': 0.05, 'df_length': 100}
 OP = {'osc_amp': 2.00, 'osc_freq': 0.005}
