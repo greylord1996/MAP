@@ -10,15 +10,15 @@ class Data(abc.ABC):
 
     Attributes:
         Vm (np.array): voltage magnitudes depending on time or frequency
-        Im (np.array): current magnitudes depending on time or frequency
         Va (np.array): voltage phases depending on time or frequency
+        Im (np.array): current magnitudes depending on time or frequency
         Ia (np.array): current phases depending on time or frequency
     """
 
-    def __init__(self, Vm_data, Im_data, Va_data, Ia_data):
+    def __init__(self, Vm_data, Va_data, Im_data, Ia_data):
         self.Vm = Vm_data
-        self.Im = Im_data
         self.Va = Va_data
+        self.Im = Im_data
         self.Ia = Ia_data
 
 
@@ -27,13 +27,18 @@ class Data(abc.ABC):
 class TimeData(Data):
     """Represents data in the time domain."""
 
-    def __init__(self, Vm_time_data, Im_time_data, Va_time_data, Ia_time_data):
+    def __init__(self, Vm_time_data, Va_time_data, Im_time_data, Ia_time_data):
         """"""
-        super().__init__(Vm_time_data, Im_time_data, Va_time_data, Ia_time_data)
+        super().__init__(
+            Vm_data=Vm_time_data,
+            Va_data=Va_time_data,
+            Im_data=Im_time_data,
+            Ia_data=Ia_time_data
+        )
 
 
-    def apply_white_noise(self, snr, d_coi=0.0):
-        """Constructs.
+    def apply_white_noise(self, snr, d_coi):
+        """Applies Additive white Gaussian noise (AWGN) to storing data.
 
         Args:
             snr (float): desired Signal to Noise Ratio (SNR) in dB (decibels)
@@ -76,12 +81,17 @@ class TimeData(Data):
 class FreqData(Data):
     """Represents data in the frequency domain."""
 
-    def __init__(self, Vm_freq_data, Im_freq_data, Va_freq_data, Ia_freq_data):
+    def __init__(self, Vm_freq_data, Va_freq_data, Im_freq_data, Ia_freq_data):
         """"""
-        super().__init__(Vm_freq_data, Im_freq_data, Va_freq_data, Ia_freq_data)
+        super().__init__(
+            Vm_data=Vm_freq_data,
+            Va_data=Va_freq_data,
+            Im_data=Im_freq_data,
+            Ia_data=Ia_freq_data
+        )
 
 
-    def no_idea_how_to_name_this_method(self):
+    def have_no_idea_how_to_name_this_method(self):
         # See MAP_MeasNoise.m
         # std_w.Vm = STD_ns.Vm * sqrt(2 / N);
         # std_w.Va = STD_ns.Va * sqrt(2 / N);

@@ -2,6 +2,7 @@ import os
 import os.path
 import sys
 import json
+import time
 import numpy as np
 
 import matplotlib
@@ -13,10 +14,9 @@ import pyqtgraph
 
 import settings
 import designs.main_window
+import baseline
 import utils
-import dynamic_equations_to_simulate
 
-import time
 
 
 @utils.singleton
@@ -147,21 +147,19 @@ class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
                 new_params = json.load(params_input)
                 self.set_params_to_gui(new_params)
 
+
     # look here !!!!!! REFAAAAACTOR NEED TO DO
     def run_computations(self):
         """Runs computations and drawing plots (not implemented yet)."""
         # self.get_params_from_gui()
         # plot_title = self.title.text()
-        parameters_from_gui = self.get_params_from_gui()
 
-        ode_solver_object = dynamic_equations_to_simulate.OdeSolver(
-            parameters_from_gui['WhiteNoise'], parameters_from_gui['GeneratorParameters'],
-            parameters_from_gui['OscillationParameters'], parameters_from_gui['IntegrationSettings'])
-        ode_solver_object.solve()
-        appropriate_data = ode_solver_object.get_appropr_data_to_gui()
+        params_from_gui = self.get_params_from_gui()
+        data_to_gui = baseline.run_all_computations(params_from_gui)
+
         plot_color = pyqtgraph.hsvColor(1, alpha=.9)
         pen = pyqtgraph.mkPen(color=plot_color, width=0.4)
-        self.plot_view.plot(appropriate_data['t_vec'], appropriate_data['w2'], pen=pen, clear=True)
+        self.plot_view.plot(data_to_gui['t_vec'], data_to_gui['w2'], pen=pen, clear=True)
 
 
     def save_params(self):
