@@ -103,8 +103,7 @@ Vmrs, Vmis, Vars, Vais, Imrs, Imis, Iars, Iais = symbols('Vmrs Vmis Vars Vais Im
 Inj_mrs, Inj_mis, Inj_prs, Inj_pis = symbols('Inj_mrs Inj_mis Inj_prs Inj_pis')
 
 
-Mr = (Imrs - Y11r * Vmrs + Y11i * Vmis - Y12r * Vars + Y12i * Vais)
-Mr = Matrix([Mr])
+Mr = Imrs - Y11r * Vmrs + Y11i * Vmis - Y12r * Vars + Y12i * Vais
 Mi = Imis - Y11i * Vmrs - Y11r * Vmis - Y12i * Vars - Y12r * Vais
 Pr = Iars - Y21r * Vmrs + Y21i * Vmis - Y22r * Vars + Y22i * Vais
 Pi = Iais - Y21i * Vmrs - Y21r * Vmis - Y22i * Vars - Y22r * Vais
