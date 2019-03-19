@@ -72,7 +72,7 @@ class AdmittanceMatrix:
 
             # Ys = simplify(Ys)
             # self.Ys_compute = lambdify((Ef_a, D_Ya, M_Ya, X_Ya, Omega_a), Ys, 'numpy')
-            # Ys_compute = lambdify(
+            # self.Ys_compute = lambdify(
             #     (w_a, Ef_a, D_Ya, M_Ya, X_Ya, Pm_a, Omega, Omega_a, Va_a, Vm_a, del_a),
             #     Ys, 'numpy'
             # )
@@ -84,6 +84,7 @@ class AdmittanceMatrix:
 
 
 Ys = AdmittanceMatrix().Ys
+Ys_compute = lambdify((Ef_a, D_Ya, M_Ya, X_Ya, Omega_a), Ys, 'numpy')
 
 Y11 = Ys[0, 0]
 Y12 = Ys[0, 1]

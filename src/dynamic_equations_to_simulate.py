@@ -38,6 +38,14 @@ class OdeSolver:
         self.sol = None
         self.w2 = None
         self.d2 = None
+        self.T1t_to_simulate = None
+        self.Ig = None
+        self.Vc1 = None
+        self.Ec2 = None
+        self.Ig_abs = None
+        self.Ig_angle = None
+        self.Vc1_abs = None
+        self.Vc1_angle = None
 
     def calculate_Pm2_0(self):
         V1c = self.IC_V1 * np.exp(j * self.IC_T1)  # Bus Voltage (complex)
@@ -105,10 +113,20 @@ class OdeSolver:
         plt.legend(['d2(t)'])
         plt.show()
 
+    def simulate_time_data(self):
+        self.solve()
+        self.T1t_to_simulate = self.T1t.y + self.osc_param.osc_amp*np.sin(2*np.pi*self.osc_param.osc_freq*self.test_length)
+        self.Ec2 = self.generator_param.e_2 * np.exp(j * self.d2)
+        self.Vc1 = self.V1t.y * np.exp(j * self.T1t_to_simulate)
+        self.Ig = (self.Vc1 - self.Ec2) / (j * self.generator_param.x_d2)
+        self.Ig_abs = np.abs(self.Ig)
+        self.Vc1_abs = np.abs(self.Vc1)
+        self.Ig_angle = np.angle(self.Ig)
+        self.Vc1_angle = np.angle(self.Vc1)
 
 # Test mode, just for checking appropriate working
-"""
-WN = {'rnd_amp': 0.0}
+
+WN = {'rnd_amp': 0.001}
 GP = {'d_2': 0.25, 'e_2': 1, 'm_2': 1, 'x_d2': 0.01, 'ic_d2': 1}
 IP = {'dt_step': 0.05, 'df_length': 100}
 OP = {'osc_amp': 2.00, 'osc_freq': 0.005}
@@ -116,4 +134,4 @@ OP = {'osc_amp': 2.00, 'osc_freq': 0.005}
 
 solver = OdeSolver(WN, GP, OP, IP)
 solver.solve()
-"""
+
