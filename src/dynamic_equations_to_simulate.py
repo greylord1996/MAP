@@ -30,7 +30,7 @@ class OdeSolver:
         self.IC_d2 = 1.0
         self.dt = integr_param['dt_step']
         self.tf = integr_param['df_length']
-        self.test_length = np.arange(0, self.tf, self.dt)
+        self.test_length = np.arange(0, self.tf+self.dt, self.dt)
         self.t_vec = np.linspace(0, self.tf, self.test_length.size)
         self.Pm2_0 = self.calculate_Pm2_0()
         self.V1t = self.get_V1t()
