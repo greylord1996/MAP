@@ -130,13 +130,11 @@ class FreqData(Data):
         time_points_len = len(time_points)
         assert(time_points_len % 2 == 1)
 
-        freq_points_len = (time_points_len - 1) // 2
+        freq_points_len = (time_points_len + 1) // 2
         freq_points = np.fft.fft(
             scipy.signal.detrend(time_points) / time_points_len
         )
         freq_points = freq_points[0:freq_points_len]
-        assert(len(freq_points) == freq_points_len)
-        # freq_points[0] = 0.0  # equivalent to subtracting mean value before FFT
+        # freq_points[0] = 0.0  # equivalent to subtracting mean value before FFT?
         return freq_points
-
 
