@@ -22,10 +22,6 @@ class Data(abc.ABC):
     """
 
     def __init__(self, Vm_data, Va_data, Im_data, Ia_data):
-        # print('*** len(Vm_data) =', len(Vm_data))
-        # print('*** len(Va_data) =', len(Va_data))
-        # print('*** len(Im_data) =', len(Im_data))
-        # print('*** len(Ia_data) =', len(Ia_data))
         assert(len(Vm_data) == len(Im_data))
         assert(len(Im_data) == len(Va_data))
         assert(len(Va_data) == len(Ia_data))
@@ -106,7 +102,7 @@ class FreqData(Data):
         #         'You have to construct ' + self.__class__.__name__
         #         + ' only from an instance of TimeData.'
         #     )
-        # print('************', type(time_data))
+        # print('@@@@@************', type(time_data))
 
         dt = time_data.dt  # time step between signal data points
         fs = 1.0 / dt  # sampling frequency
@@ -132,7 +128,6 @@ class FreqData(Data):
 
     def _apply_dft(self, time_points, dt):
         time_points_len = len(time_points)
-        fs = 1.0 / dt  # Sampling frequency
         assert(time_points_len % 2 == 1)
 
         freq_points_len = (time_points_len - 1) // 2
@@ -142,40 +137,6 @@ class FreqData(Data):
         freq_points = freq_points[0:freq_points_len]
         assert(len(freq_points) == freq_points_len)
         # freq_points[0] = 0.0  # equivalent to subtracting mean value before FFT
-
         return freq_points
 
-
-
-# if __name__ == '__main__':
-#     Vm_data = np.array([10.0, 20.0, 30.0, 40.0, 50.0])
-#     Im_data = np.array([10.0, 20.0, 30.0, 40.0, 50.0])
-#     Va_data = np.array([10.0, 20.0, 30.0, 40.0, 50.0])
-#     Ia_data = np.array([10.0, 20.0, 30.0, 40.0, 50.0])
-#     time_data = TimeData(
-#         Vm_data, Im_data, Va_data, Ia_data
-#     )
-#     time_data.apply_white_noise(2.0)
-#     print('Vm_data =', time_data.Vm)
-#     print('Im_data =', time_data.Im)
-#     print('Va_data =', time_data.Va)
-#     print('Ia_data =', time_data.Ia)
-
-
-
-# class Dft:
-#
-#     def __init__(self, signal, tstep, N):
-#         self.signal = signal
-#         self.tstep = tstep
-#         self.point_number = N - 1 if N % 2 == 0 else N
-#         self.y_fft = None
-#         self.fs = 1 / self.tstep
-#         self.f_vec = self.fs / self.point_number * np.arange(0, (self.point_number + 1) / 2, 1)
-#
-#     def map_dft(self):
-#
-#         self.y_fft = np.fft.fft(self.signal/self.point_number, self.point_number)
-#         self.y_fft = self.y_fft[0:int((self.point_number+1)/2)]
-#         self.y_fft[1:] = 2.0 * self.y_fft[1:]
 
