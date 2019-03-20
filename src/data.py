@@ -44,7 +44,15 @@ class TimeData(Data):
 
     def __init__(self, Vm_time_data, Va_time_data,
                  Im_time_data, Ia_time_data, dt):
-        """"""
+        """Inits data in time domain.
+
+        Args:
+            Vm_time_data (np.array): time domain voltage magnitudes
+            Va_time_data (np.array): time domain voltage phases
+            Im_time_data (np.array): time domain current magnitudes
+            Ia_time_data (np.array): time domain current phases
+            dt (float): time step between signal data points
+        """
         super().__init__(
             Vm_data=Vm_time_data,
             Va_data=Va_time_data,
@@ -96,14 +104,15 @@ class FreqData(Data):
     """Represents data in the frequency domain."""
 
     def __init__(self, time_data):
-        """"""
-        # if not isinstance(time_data, TimeData):
-        #     raise Exception(
-        #         'You have to construct ' + self.__class__.__name__
-        #         + ' only from an instance of TimeData.'
-        #     )
-        # print('@@@@@************', type(time_data))
+        """Inits data in frequency domain based on data in time domain.
 
+        It takes (2K + 1) points in time domain
+        and constructs (K + 1) points of data in frequency domain
+        (via Discrete Fourier transform).
+
+        Args:
+            time_data (TimeData): holding data in time domain
+        """
         dt = time_data.dt  # time step between signal data points
         fs = 1.0 / dt  # sampling frequency
         time_points_len = len(time_data.Vm)  # N = number of data points
