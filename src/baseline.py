@@ -17,7 +17,8 @@ def run_all_computations(all_params):
         Vm_time_data=ode_solver_object.Vc1_abs,
         Va_time_data=ode_solver_object.Vc1_angle,
         Im_time_data=ode_solver_object.Ig_abs,
-        Ia_time_data=ode_solver_object.Ig_angle
+        Ia_time_data=ode_solver_object.Ig_angle,
+        dt=all_params['FreqData']['dt']  # ???
     )
     time_data.apply_white_noise(snr=45.0, d_coi=0.0)
 
@@ -25,5 +26,12 @@ def run_all_computations(all_params):
     print('Im_time_data =', time_data.Im)
     print('Va_time_data =', time_data.Va)
     print('Ia_time_data =', time_data.Ia)
+
+    freq_data = data.FreqData(time_data)
+
+    print('Vm_freq_data =', freq_data.Vm)
+    print('Im_freq_data =', freq_data.Im)
+    print('Va_freq_data =', freq_data.Va)
+    print('Ia_freq_data =', freq_data.Ia)
 
     return ode_solver_object.get_appropr_data_to_gui()
