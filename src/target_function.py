@@ -1,6 +1,7 @@
 import os
 import os.path
 import sympy
+import sympy.matrices
 import pickle
 
 from dynamic_equations_to_simulate import OdeSolver
@@ -114,20 +115,29 @@ class CovarianceMatrix:
             gamma_QiNi = gamma_NiQi
 
             QiQi = (
-                    std_eps_Ia**2
-                    + std_eps_Vm**2 * (Y21i**2 + Y21r**2)
-                    + std_eps_Va**2 * (Y22r**2 + Y22i**2)
+                std_eps_Ia**2
+                + std_eps_Vm**2 * (Y21i**2 + Y21r**2)
+                + std_eps_Va**2 * (Y22r**2 + Y22i**2)
             )
             gamma_QiQi = sympy.zeros(len(freqs))
             for i in range(len(freqs)):
                 gamma_QiQi[i, i] = QiQi.subs('Omega_a', freqs[i])
 
-            # pickle.dump(self.gamma, open(path_to_matrix_file, 'wb'))
+            zero_matrix = sympy.zeros(len(freqs))
+            raw_gamma = sympy.Matrix([
+                [gamma_NrNr, zero_matrix, gamma_NrQr, gamma_NrQi],
+                [zero_matrix, gamma_NiNi, gamma_NiQr, gamma_NiQi],
+                [gamma_QrNr, gamma_QrNi, gamma_QrQr, zero_matrix],
+                [gamma_QiNr, gamma_QiNi, zero_matrix, gamma_QiQi]
+            ])
+            self.gamma = sympy.lambdify(
+                ('Ef_a', 'D_Ya', 'M_Ya', 'X_Ya'), raw_gamma, 'numpy'
+            )
+            pickle.dump(self.gamma, open(path_to_matrix_file, 'wb'))
 
         else:
             # Load from disk
-            # self.gamma = pickle.load(open(path_to_matrix_file, 'rb'))
-            pass
+            self.gamma = pickle.load(open(path_to_matrix_file, 'rb'))
 
 
     def compute(self, generator_params):
@@ -153,12 +163,12 @@ solver.solve()
 
 solver.simulate_time_data()
 time_data = data.TimeData(
-        Vm_time_data=solver.Vc1_abs,
-        Va_time_data=solver.Vc1_angle,
-        Im_time_data=solver.Ig_abs,
-        Ia_time_data=solver.Ig_angle,
-        dt=solver.dt
-    )
+    Vm_time_data=solver.Vc1_abs,
+    Va_time_data=solver.Vc1_angle,
+    Im_time_data=solver.Ig_abs,
+    Ia_time_data=solver.Ig_angle,
+    dt=solver.dt
+)
 
 time_data.apply_white_noise(snr=45.0, d_coi=0.0)
 
@@ -169,4 +179,4 @@ print('Ia_time_data =', time_data.Ia)
 
 freq_data = data.FreqData(time_data)
 
-cov_obj = CovarianceMatrix(freq_data)
+cov_obj = CovarianceMatrix(freq_data, is_actual=False)
