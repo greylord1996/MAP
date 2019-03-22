@@ -1,5 +1,5 @@
 from create_admittance_matrix import AdmittanceMatrix
-from sympy import *
+import sympy
 from dynamic_equations_to_simulate import OdeSolver
 import data
 import numpy as np
@@ -18,28 +18,25 @@ class CovarianceMatrix:
         self.std_eps_Im = freq_data.std_w_Im
         self.std_eps_Ia = freq_data.std_w_Ia
         self.freqs = freq_data.freqs
-        self.time_points_len = len(self.freqs)
-
+        # self.time_points_len = len(self.freqs)
 
         self.admittance_matrix = AdmittanceMatrix().Ys
-        self.admittance_matrix_compute = lambdify(('Ef_a', 'D_Ya', 'M_Ya', 'X_Ya', 'Omega_a'), self.admittance_matrix, 'numpy')
+        # self.admittance_matrix_compute = lambdify(('Ef_a', 'D_Ya', 'M_Ya', 'X_Ya', 'Omega_a'), self.admittance_matrix, 'numpy')
 
         self.Y11 = self.admittance_matrix[0, 0]
         self.Y12 = self.admittance_matrix[0, 1]
         self.Y21 = self.admittance_matrix[1, 0]
         self.Y22 = self.admittance_matrix[1, 1]
 
-        self.Y11r = re(self.Y11)
-        self.Y11i = im(self.Y11)
-        self.Y12r = re(self.Y12)
-        self.Y12i = im(self.Y12)
-        self.Y21r = re(self.Y21)
-        self.Y21i = im(self.Y21)
-        self.Y22r = re(self.Y22)
-        self.Y22i = im(self.Y22)
+        self.Y11r = sympy.re(self.Y11)
+        self.Y11i = sympy.im(self.Y11)
+        self.Y12r = sympy.re(self.Y12)
+        self.Y12i = sympy.im(self.Y12)
+        self.Y21r = sympy.re(self.Y21)
+        self.Y21i = sympy.im(self.Y21)
+        self.Y22r = sympy.re(self.Y22)
+        self.Y22i = sympy.im(self.Y22)
 
-        self.gamma_NrNr = None
-        self.gamma_NrQr = None
 
     def _init_gamma_NrNr(self):
         NrNr = (
@@ -48,18 +45,11 @@ class CovarianceMatrix:
             + self.std_eps_Va**2 * (self.Y12r**2 + self.Y12i**2)
         )
 
-        # NrNr_compute_omega = lambdify('Omega_a', NrNr, 'numpy')
+        self.gamma_NrNr = sympy.zeros(len(self.freqs))
+        for i in range(len(self.freqs)):
+            self.gamma_NrNr[i, i] = NrNr.subs('Omega_a', self.freqs[i])
 
-        self.gamma_NrNr = zeros((self.time_points_len + 1) // 2)
-        for i in range((self.time_points_len + 1) // 2):
-            for j in range((self.time_points_len + 1) // 2):
-                if i == j:
-                    self.gamma_NrNr[i, j] = NrNr.subs('Omega_a', self.freqs[i])
 
-        # self.gamma_NrNr = self.gamma_NrNr.subs('Omega_a', omega)
-
-    def _init_gamma_NrQr(self):
-        pass
 
 
 WN = {'rnd_amp': 0.00}
