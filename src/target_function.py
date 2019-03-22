@@ -18,37 +18,82 @@ class ResidualVector:
 class CovarianceMatrix:
 
     def __init__(self, freq_data, is_actual=True):
-        self.std_eps_Vm = freq_data.std_w_Vm
-        self.std_eps_Va = freq_data.std_w_Va
-        self.std_eps_Im = freq_data.std_w_Im
-        self.std_eps_Ia = freq_data.std_w_Ia
+        std_eps_Vm = freq_data.std_w_Vm
+        std_eps_Va = freq_data.std_w_Va
+        std_eps_Im = freq_data.std_w_Im
+        std_eps_Ia = freq_data.std_w_Ia
 
-        self.freqs = freq_data.freqs
-        self.admittance_matrix = AdmittanceMatrix().Ys
+        freqs = freq_data.freqs
+        admittance_matrix = AdmittanceMatrix().Ys
 
-        self.Y11 = self.admittance_matrix[0, 0]
-        self.Y12 = self.admittance_matrix[0, 1]
-        self.Y21 = self.admittance_matrix[1, 0]
-        self.Y22 = self.admittance_matrix[1, 1]
+        Y11 = admittance_matrix[0, 0]
+        Y12 = admittance_matrix[0, 1]
+        Y21 = admittance_matrix[1, 0]
+        Y22 = admittance_matrix[1, 1]
 
-        self.Y11r = sympy.re(self.Y11)
-        self.Y11i = sympy.im(self.Y11)
-        self.Y12r = sympy.re(self.Y12)
-        self.Y12i = sympy.im(self.Y12)
-        self.Y21r = sympy.re(self.Y21)
-        self.Y21i = sympy.im(self.Y21)
-        self.Y22r = sympy.re(self.Y22)
-        self.Y22i = sympy.im(self.Y22)
+        Y11r = sympy.re(Y11)
+        Y11i = sympy.im(Y11)
+        Y12r = sympy.re(Y12)
+        Y12i = sympy.im(Y12)
+        Y21r = sympy.re(Y21)
+        Y21i = sympy.im(Y21)
+        Y22r = sympy.re(Y22)
+        Y22i = sympy.im(Y22)
 
         if not is_actual:
             NrNr = (
-                self.std_eps_Im ** 2
-                + self.std_eps_Vm ** 2 * (self.Y11r ** 2 + self.Y11i ** 2)
-                + self.std_eps_Va ** 2 * (self.Y12r ** 2 + self.Y12i ** 2)
+                std_eps_Im ** 2
+                + std_eps_Vm ** 2 * (Y11r ** 2 + Y11i ** 2)
+                + std_eps_Va ** 2 * (Y12r ** 2 + Y12i ** 2)
             )
-            self.gamma_NrNr = sympy.zeros(len(self.freqs))
-            for i in range(len(self.freqs)):
-                self.gamma_NrNr[i, i] = NrNr.subs('Omega_a', self.freqs[i])
+            self.gamma_NrNr = sympy.zeros(len(freqs))
+            for i in range(len(freqs)):
+                self.gamma_NrNr[i, i] = NrNr.subs('Omega_a', freqs[i])
+
+            NrQr = (
+                std_eps_Vm ** 2 * (Y11r * Y21r + Y11i * Y21i)
+                + std_eps_Va ** 2 * (Y12r * Y22r + Y12i * Y22i)
+            )
+            self.gamma_NrQr = sympy.zeros(len(freqs))
+            for i in range(len(freqs)):
+                self.gamma_NrQr[i, i] = NrQr.subs('Omega_a', freqs[i])
+
+            NrQi = (
+                std_eps_Vm ** 2 * (Y11r * Y21i - Y11i * Y21r)
+                + std_eps_Va ** 2 * (Y12r * Y22i - Y12i * Y22r)
+            )
+            self.gamma_NrQi = sympy.zeros(len(freqs))
+            for i in range(len(freqs)):
+                self.gamma_NrQi[i, i] = NrQi.subs('Omega_a', freqs[i])
+
+            NiNi = (
+                std_eps_Ia ** 2
+                + std_eps_Vm ** 2 * (Y11r ** 2 + Y11i ** 2)
+                + std_eps_Va ** 2 * (Y12r ** 2 + Y12i ** 2)
+            )
+            self.gamma_NiNi = sympy.zeros(len(freqs))
+            for i in range(len(freqs)):
+                self.gamma_NiNi[i, i] = NiNi.subs('Omega_a', freqs[i])
+
+            NiQr = (
+                std_eps_Vm ** 2 * (Y11i * Y21r - Y11r * Y21i)
+                + std_eps_Va ** 2 * (Y12i * Y22i + Y12r * Y22r)
+            )
+            self.gamma_NiQr = sympy.zeros(len(freqs))
+            for i in range(len(freqs)):
+                self.gamma_NiQr[i, i] = NiQr.subs('Omega_a', freqs[i])
+
+            NiQi = (
+                std_eps_Vm ** 2 * (Y11i * Y21i + Y11r * Y21r)
+                + std_eps_Va ** 2 * (Y12i * Y22i + Y12r * Y22r)
+            )
+            self.gamma_NiQi = sympy.zeros(len(freqs))
+            for i in range(len(freqs)):
+                self.gamma_NiQi[i, i] = NiQi.subs('Omega_a', freqs[i])
+
+
+
+
 
         else:
             # Load from disk
