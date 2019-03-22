@@ -1,8 +1,12 @@
-from create_admittance_matrix import AdmittanceMatrix
-import sympy
-from dynamic_equations_to_simulate import OdeSolver
-import data
 import numpy as np
+import sympy
+import pickle
+
+from dynamic_equations_to_simulate import OdeSolver
+from create_admittance_matrix import AdmittanceMatrix
+import data
+
+
 
 class ResidualVector:
 
@@ -10,18 +14,17 @@ class ResidualVector:
         pass
 
 
+
 class CovarianceMatrix:
 
-    def __init__(self, freq_data):
+    def __init__(self, freq_data, is_actual=True):
         self.std_eps_Vm = freq_data.std_w_Vm
         self.std_eps_Va = freq_data.std_w_Va
         self.std_eps_Im = freq_data.std_w_Im
         self.std_eps_Ia = freq_data.std_w_Ia
-        self.freqs = freq_data.freqs
-        # self.time_points_len = len(self.freqs)
 
+        self.freqs = freq_data.freqs
         self.admittance_matrix = AdmittanceMatrix().Ys
-        # self.admittance_matrix_compute = lambdify(('Ef_a', 'D_Ya', 'M_Ya', 'X_Ya', 'Omega_a'), self.admittance_matrix, 'numpy')
 
         self.Y11 = self.admittance_matrix[0, 0]
         self.Y12 = self.admittance_matrix[0, 1]
@@ -37,17 +40,29 @@ class CovarianceMatrix:
         self.Y22r = sympy.re(self.Y22)
         self.Y22i = sympy.im(self.Y22)
 
+        if not is_actual:
+            NrNr = (
+                self.std_eps_Im ** 2
+                + self.std_eps_Vm ** 2 * (self.Y11r ** 2 + self.Y11i ** 2)
+                + self.std_eps_Va ** 2 * (self.Y12r ** 2 + self.Y12i ** 2)
+            )
+            self.gamma_NrNr = sympy.zeros(len(self.freqs))
+            for i in range(len(self.freqs)):
+                self.gamma_NrNr[i, i] = NrNr.subs('Omega_a', self.freqs[i])
 
-    def _init_gamma_NrNr(self):
-        NrNr = (
-            self.std_eps_Im**2
-            + self.std_eps_Vm**2 * (self.Y11r**2 + self.Y11i**2)
-            + self.std_eps_Va**2 * (self.Y12r**2 + self.Y12i**2)
-        )
+        else:
+            # Load from disk
+            pass
 
-        self.gamma_NrNr = sympy.zeros(len(self.freqs))
-        for i in range(len(self.freqs)):
-            self.gamma_NrNr[i, i] = NrNr.subs('Omega_a', self.freqs[i])
+
+    def compute(self, generator_params):
+        pass
+
+
+    def compute_and_inverse(self, generator_params):
+        pass
+
+
 
 
 
