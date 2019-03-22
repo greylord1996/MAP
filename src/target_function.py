@@ -1,4 +1,5 @@
-import numpy as np
+import os
+import os.path
 import sympy
 import pickle
 
@@ -40,63 +41,92 @@ class CovarianceMatrix:
         Y22r = sympy.re(Y22)
         Y22i = sympy.im(Y22)
 
+        path_to_this_file = os.path.abspath(os.path.dirname(__file__))
+        path_to_matrix_file = os.path.join(
+            path_to_this_file,
+            '..', 'data', 'precomputed', 'covariance_matrix.pickle'
+        )
+
         if not is_actual:
             NrNr = (
-                std_eps_Im ** 2
-                + std_eps_Vm ** 2 * (Y11r ** 2 + Y11i ** 2)
-                + std_eps_Va ** 2 * (Y12r ** 2 + Y12i ** 2)
+                std_eps_Im**2
+                + std_eps_Vm**2 * (Y11r**2 + Y11i**2)
+                + std_eps_Va**2 * (Y12r**2 + Y12i**2)
             )
-            self.gamma_NrNr = sympy.zeros(len(freqs))
+            gamma_NrNr = sympy.zeros(len(freqs))
             for i in range(len(freqs)):
-                self.gamma_NrNr[i, i] = NrNr.subs('Omega_a', freqs[i])
+                gamma_NrNr[i, i] = NrNr.subs('Omega_a', freqs[i])
 
             NrQr = (
-                std_eps_Vm ** 2 * (Y11r * Y21r + Y11i * Y21i)
-                + std_eps_Va ** 2 * (Y12r * Y22r + Y12i * Y22i)
+                std_eps_Vm**2 * (Y11r*Y21r + Y11i*Y21i) +
+                std_eps_Va**2 * (Y12r*Y22r + Y12i*Y22i)
             )
-            self.gamma_NrQr = sympy.zeros(len(freqs))
+            gamma_NrQr = sympy.zeros(len(freqs))
             for i in range(len(freqs)):
-                self.gamma_NrQr[i, i] = NrQr.subs('Omega_a', freqs[i])
+                gamma_NrQr[i, i] = NrQr.subs('Omega_a', freqs[i])
 
             NrQi = (
-                std_eps_Vm ** 2 * (Y11r * Y21i - Y11i * Y21r)
-                + std_eps_Va ** 2 * (Y12r * Y22i - Y12i * Y22r)
+                std_eps_Vm**2 * (Y11r*Y21i - Y11i*Y21r) +
+                std_eps_Va**2 * (Y12r*Y22i - Y12i*Y22r)
             )
-            self.gamma_NrQi = sympy.zeros(len(freqs))
+            gamma_NrQi = sympy.zeros(len(freqs))
             for i in range(len(freqs)):
-                self.gamma_NrQi[i, i] = NrQi.subs('Omega_a', freqs[i])
+                gamma_NrQi[i, i] = NrQi.subs('Omega_a', freqs[i])
 
             NiNi = (
-                std_eps_Ia ** 2
-                + std_eps_Vm ** 2 * (Y11r ** 2 + Y11i ** 2)
-                + std_eps_Va ** 2 * (Y12r ** 2 + Y12i ** 2)
+                std_eps_Im**2
+                + std_eps_Vm**2 * (Y11r**2 + Y11i**2)
+                + std_eps_Va**2 * (Y12r**2 + Y12i**2)
             )
-            self.gamma_NiNi = sympy.zeros(len(freqs))
+            gamma_NiNi = sympy.zeros(len(freqs))
             for i in range(len(freqs)):
-                self.gamma_NiNi[i, i] = NiNi.subs('Omega_a', freqs[i])
+                gamma_NiNi[i, i] = NiNi.subs('Omega_a', freqs[i])
 
             NiQr = (
-                std_eps_Vm ** 2 * (Y11i * Y21r - Y11r * Y21i)
-                + std_eps_Va ** 2 * (Y12i * Y22i + Y12r * Y22r)
+                std_eps_Vm**2 * (Y11i*Y21r - Y11r*Y21i) +
+                std_eps_Va**2 * (Y12i*Y22r - Y12r*Y22i)
             )
-            self.gamma_NiQr = sympy.zeros(len(freqs))
+            gamma_NiQr = sympy.zeros(len(freqs))
             for i in range(len(freqs)):
-                self.gamma_NiQr[i, i] = NiQr.subs('Omega_a', freqs[i])
+                gamma_NiQr[i, i] = NiQr.subs('Omega_a', freqs[i])
 
             NiQi = (
-                std_eps_Vm ** 2 * (Y11i * Y21i + Y11r * Y21r)
-                + std_eps_Va ** 2 * (Y12i * Y22i + Y12r * Y22r)
+                std_eps_Vm**2 * (Y11i*Y21i + Y11r*Y21r) +
+                std_eps_Va**2 * (Y12i*Y22i + Y12r*Y22r)
             )
-            self.gamma_NiQi = sympy.zeros(len(freqs))
+            gamma_NiQi = sympy.zeros(len(freqs))
             for i in range(len(freqs)):
-                self.gamma_NiQi[i, i] = NiQi.subs('Omega_a', freqs[i])
+                gamma_NiQi[i, i] = NiQi.subs('Omega_a', freqs[i])
 
+            gamma_QrNr = gamma_NrQr
+            gamma_QrNi = gamma_NiQr
 
+            QrQr = (
+                std_eps_Ia**2
+                + std_eps_Vm**2 * (Y21r**2 + Y21i**2)
+                + std_eps_Va**2 * (Y22r**2 + Y22i**2)
+            )
+            gamma_QrQr = sympy.zeros(len(freqs))
+            for i in range(len(freqs)):
+                gamma_QrQr[i, i] = QrQr.subs('Omega_a', freqs[i])
 
+            gamma_QiNr = gamma_NrQi
+            gamma_QiNi = gamma_NiQi
 
+            QiQi = (
+                    std_eps_Ia**2
+                    + std_eps_Vm**2 * (Y21i**2 + Y21r**2)
+                    + std_eps_Va**2 * (Y22r**2 + Y22i**2)
+            )
+            gamma_QiQi = sympy.zeros(len(freqs))
+            for i in range(len(freqs)):
+                gamma_QiQi[i, i] = QiQi.subs('Omega_a', freqs[i])
+
+            # pickle.dump(self.gamma, open(path_to_matrix_file, 'wb'))
 
         else:
             # Load from disk
+            # self.gamma = pickle.load(open(path_to_matrix_file, 'rb'))
             pass
 
 
