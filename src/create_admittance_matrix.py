@@ -2,7 +2,6 @@ import os
 import os.path
 import pickle
 import sympy
-from sympy import *
 
 import utils
 
@@ -22,7 +21,7 @@ class AdmittanceMatrix:
         Ys: admittance matrix
     """
 
-    def __init__(self, is_actual=False):
+    def __init__(self, is_actual=False):  # False now just for debugging
         path_to_this_file = os.path.abspath(os.path.dirname(__file__))
         path_to_matrix_file = os.path.join(
             path_to_this_file,
@@ -45,19 +44,19 @@ class AdmittanceMatrix:
             Uv = sympy.Array([Vm_a, Va_a])
 
             # System DAE Model
-            Pe = Vm_a * Ef_a * sin(del_a - Va_a) / X_Ya
+            Pe = Vm_a * Ef_a * sympy.sin(del_a - Va_a) / X_Ya
 
             F_vec = sympy.Matrix([w_a, (Pm_a - Pe - D_Ya*w_a)/M_Ya])
 
             # Output => [abs(I); angle(I)], where I flows into the generator
             G_vec = sympy.Matrix([
-                (1/X_Ya) * sqrt(
-                    Vm_a**2 + Ef_a**2 - 2*Ef_a*Vm_a*cos(Va_a-del_a)
+                (1/X_Ya) * sympy.sqrt(
+                    Vm_a**2 + Ef_a**2 - 2*Ef_a*Vm_a*sympy.cos(Va_a - del_a)
                 ),
-                atan(
-                    (Vm_a*sin(Va_a) - Ef_a*sin(del_a))
-                    / (Vm_a*cos(Va_a) - Ef_a*cos(del_a))
-                ) - pi
+                sympy.atan(
+                    (Vm_a*sympy.sin(Va_a) - Ef_a*sympy.sin(del_a))
+                    / (Vm_a*sympy.cos(Va_a) - Ef_a*sympy.cos(del_a))
+                ) - sympy.pi
             ])
 
             JacFX = F_vec.jacobian(X)
@@ -65,7 +64,7 @@ class AdmittanceMatrix:
             JacGX = G_vec.jacobian(X)
             JacGUv = G_vec.jacobian(Uv)
 
-            Ys = (JacGX/(j*Omega_a*eye(len(X)) - JacFX))*JacFUv + JacGUv
+            Ys = (JacGX/(j*Omega_a*sympy.eye(len(X))-JacFX)) * JacFUv + JacGUv
             Ys = Ys.subs(Va_a, 0.5)
             Ys = Ys.subs(del_a, 1)
             Ys = Ys.subs(Vm_a, 1)

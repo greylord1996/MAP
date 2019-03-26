@@ -1,6 +1,6 @@
 import numpy as np
-import sympy
 import scipy as sp
+import sympy
 
 from dynamic_equations_to_simulate import OdeSolver
 from create_admittance_matrix import AdmittanceMatrix
@@ -12,22 +12,19 @@ import time
 class ResidualVector:
 
     def __init__(self, freq_data, is_actual=True):
-        freqs = freq_data.freqs
-        admittance_matrix = AdmittanceMatrix().Ys
+        """"""
+        self.freqs = freq_data.freqs
+        self.admittance_matrix = AdmittanceMatrix().Ys
 
-        Y11 = admittance_matrix[0, 0]
-        Y12 = admittance_matrix[0, 1]
-        Y21 = admittance_matrix[1, 0]
-        Y22 = admittance_matrix[1, 1]
+        Y11 = self.admittance_matrix[0, 0]
+        Y12 = self.admittance_matrix[0, 1]
+        Y21 = self.admittance_matrix[1, 0]
+        Y22 = self.admittance_matrix[1, 1]
 
-        Y11r = sympy.re(Y11)
-        Y11i = sympy.im(Y11)
-        Y12r = sympy.re(Y12)
-        Y12i = sympy.im(Y12)
-        Y21r = sympy.re(Y21)
-        Y21i = sympy.im(Y21)
-        Y22r = sympy.re(Y22)
-        Y22i = sympy.im(Y22)
+        Y11r, Y11i = sympy.re(Y11), sympy.im(Y11)
+        Y12r, Y12i = sympy.re(Y12), sympy.im(Y12)
+        Y21r, Y21i = sympy.re(Y21), sympy.im(Y21)
+        Y22r, Y22i = sympy.re(Y22), sympy.im(Y22)
 
         Vmr = np.real(freq_data.Vm)
         Vmi = np.imag(freq_data.Vm)
@@ -49,6 +46,31 @@ class ResidualVector:
 class CovarianceMatrix:
 
     def __init__(self, freq_data):
+        """Prepares for computing the covariance matrix.
+
+        Args:
+            freq_data (class FreqData): data in frequency domain
+
+        Attributes:
+            freqs (list of floats): frequencies in frequency domain
+            admittance_matrix (class AdmittanceMatrix): admittance_matrix
+            NrNr (function): for computing diagonal elements of gamma_NrNr
+            NrQr (function): for computing diagonal elements of gamma_NrQr
+            NrQi (function): for computing diagonal elements of gamma_NrQi
+            NiNi (function): for computing diagonal elements of gamma_NiNi
+            NiQr (function): for computing diagonal elements of gamma_NiQr
+            NiQi (function): for computing diagonal elements of gamma_NiQi
+            QrQr (function): for computing diagonal elements of gamma_QrQr
+            QiQi (function): for computing diagonal elements of gamma_QiQi
+
+            Note: attributes QrNr, QrNi, QiNr, QiNi are absent.
+            It is not necessary to store them due to the following equations:
+                gamma_QrNr = gamma_NrQr
+                gamma_QrNi = gamma_NiQr
+                gamma_QiNr = gamma_NrQi
+                gamma_QiNi = gamma_NiQi
+            This fact will be used in the 'compute' method.
+        """
         std_eps_Vm = freq_data.std_w_Vm
         std_eps_Va = freq_data.std_w_Va
         std_eps_Im = freq_data.std_w_Im
@@ -127,8 +149,8 @@ class CovarianceMatrix:
             modules='numexpr'
         )
 
-        self.QrNr = self.NrQr
-        self.QrNi = self.NiQr
+        # self.QrNr = self.NrQr
+        # self.QrNi = self.NiQr
 
         self.QrQr = sympy.lambdify(
             [Ef_a, D_Ya, M_Ya, X_Ya, Omega_a],
@@ -140,8 +162,8 @@ class CovarianceMatrix:
             modules='numexpr'
         )
 
-        self.QiNr = self.NrQi
-        self.QiNi = self.NiQi
+        # self.QiNr = self.NrQi
+        # self.QiNi = self.NiQi
 
         self.QiQi = sympy.lambdify(
             [Ef_a, D_Ya, M_Ya, X_Ya, Omega_a],
@@ -155,6 +177,19 @@ class CovarianceMatrix:
 
 
     def compute(self, generator_params):
+        """Computes the covariance matrix in the 'generator_params' point.
+
+        Builds and computes the numerical value of the covariance matrix
+        in the point specified by 'generator_params'. The result matrix
+        will have sizes (4K+4) * (4K+4) and contain only numbers (not symbols).
+
+        Args:
+            generator_params (class GeneratorParameters): current parameters
+                of a generator (at the current step of an optimization routine)
+
+        Returns:
+            gamma (numpy.ndarray): value of the covariance matrix
+        """
         gamma_NrNr = np.diag([
             self.NrNr(*generator_params, freq) for freq in self.freqs
         ])
@@ -165,26 +200,26 @@ class CovarianceMatrix:
             self.NrQi(*generator_params, freq) for freq in self.freqs
         ])
         gamma_NiNi = np.diag([
-            self.NrNr(*generator_params, freq) for freq in self.freqs
+            self.NiNi(*generator_params, freq) for freq in self.freqs
         ])
         gamma_NiQr = np.diag([
-            self.NrNr(*generator_params, freq) for freq in self.freqs
+            self.NiQr(*generator_params, freq) for freq in self.freqs
         ])
         gamma_NiQi = np.diag([
-            self.NrNr(*generator_params, freq) for freq in self.freqs
+            self.NiQi(*generator_params, freq) for freq in self.freqs
         ])
         gamma_QrQr = np.diag([
-            self.NrNr(*generator_params, freq) for freq in self.freqs
+            self.QrQr(*generator_params, freq) for freq in self.freqs
         ])
         gamma_QiQi = np.diag([
-            self.NrNr(*generator_params, freq) for freq in self.freqs
+            self.QiQi(*generator_params, freq) for freq in self.freqs
         ])
         gamma_QrNr = gamma_NrQr
         gamma_QrNi = gamma_NiQr
         gamma_QiNr = gamma_NrQi
         gamma_QiNi = gamma_NiQi
 
-        zero_matrix = np.zeros((len(self.freqs), len(self.freqs)), dtype=np.float)
+        zero_matrix = np.zeros((len(self.freqs), len(self.freqs)))
         gamma = np.block([
             [gamma_NrNr, zero_matrix, gamma_NrQr, gamma_NrQi],
             [zero_matrix, gamma_NiNi, gamma_NiQr, gamma_NiQi],
@@ -196,6 +231,18 @@ class CovarianceMatrix:
 
 
     def compute_and_inverse(self, generator_params):
+        """Computes the inversed covariance matrix.
+
+        Does exactly the same as 'compute' method but after computing
+        the covariance matrix this method make it inversed and returns
+
+        Args:
+            generator_params (class GeneratorParameters): current parameters
+                of a generator (at the current step of an optimization routine)
+
+        Returns:
+            gamma (numpy.ndarray): value of the inversed covariance matrix
+        """
         return np.linalg.inv(self.compute(generator_params))
 
 
