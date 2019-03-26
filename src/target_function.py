@@ -1,5 +1,6 @@
 import numpy as np
 import sympy
+import scipy as sp
 
 from dynamic_equations_to_simulate import OdeSolver
 from create_admittance_matrix import AdmittanceMatrix
@@ -235,8 +236,23 @@ cov_obj = CovarianceMatrix(freq_data)
 start_time = time.time()
 print('-------------------')
 
-cov_obj.compute([1.99987878, 2.1234567, 3.786787868, 4.123232])
+x_test = cov_obj.compute([1.99987878, 2.1234567, 3.786787868, 4.123232])
 # cov_obj.compute_and_inverse([1, 2, 3, 4])
 
-print("@@@ %s seconds ---" % (time.time() - start_time))
+print("@@@ %s seconds --- covariance matrix" % (time.time() - start_time))
+print('-------------------')
+
+
+start_time = time.time()
+print('-------------------')
+
+x_test_inv = sp.linalg.inv(x_test)
+print("@@@ %s seconds --- covariance matrix inverse" % (time.time() - start_time))
+print('-------------------')
+
+start_time = time.time()
+print('-------------------')
+
+x_test_inv_sparse = sp.sparse.linalg.inv(sp.sparse.csc_matrix(x_test))
+print("@@@ %s seconds --- covariance matrix inverse sparse" % (time.time() - start_time))
 print('-------------------')
