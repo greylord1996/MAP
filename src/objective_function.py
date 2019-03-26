@@ -10,6 +10,7 @@ import time
 
 
 class ResidualVector:
+    """"""
 
     def __init__(self, freq_data, is_actual=True):
         """"""
@@ -44,6 +45,7 @@ class ResidualVector:
 
 
 class CovarianceMatrix:
+    """Wrapper for calculations of covariance matrix."""
 
     def __init__(self, freq_data):
         """Prepares for computing the covariance matrix.
@@ -94,8 +96,8 @@ class CovarianceMatrix:
         )
 
         self.NrNr = sympy.lambdify(
-            [Ef_a, D_Ya, M_Ya, X_Ya, Omega_a],
-            (
+            args=[Ef_a, D_Ya, M_Ya, X_Ya, Omega_a],
+            expr=(
                 std_eps_Im**2
                 + std_eps_Vm**2 * (Y11r**2 + Y11i**2)
                 + std_eps_Va**2 * (Y12r**2 + Y12i**2)
@@ -104,8 +106,8 @@ class CovarianceMatrix:
         )
 
         self.NrQr = sympy.lambdify(
-            [Ef_a, D_Ya, M_Ya, X_Ya, Omega_a],
-            (
+            args=[Ef_a, D_Ya, M_Ya, X_Ya, Omega_a],
+            expr=(
                 std_eps_Vm**2 * (Y11r*Y21r + Y11i*Y21i) +
                 std_eps_Va**2 * (Y12r*Y22r + Y12i*Y22i)
             ),
@@ -113,8 +115,8 @@ class CovarianceMatrix:
         )
 
         self.NrQi = sympy.lambdify(
-            [Ef_a, D_Ya, M_Ya, X_Ya, Omega_a],
-            (
+            args=[Ef_a, D_Ya, M_Ya, X_Ya, Omega_a],
+            expr=(
                 std_eps_Vm**2 * (Y11r*Y21i - Y11i*Y21r) +
                 std_eps_Va**2 * (Y12r*Y22i - Y12i*Y22r)
             ),
@@ -122,8 +124,8 @@ class CovarianceMatrix:
         )
 
         self.NiNi = sympy.lambdify(
-            [Ef_a, D_Ya, M_Ya, X_Ya, Omega_a],
-            (
+            args=[Ef_a, D_Ya, M_Ya, X_Ya, Omega_a],
+            expr=(
                 std_eps_Im**2
                 + std_eps_Vm**2 * (Y11r**2 + Y11i**2)
                 + std_eps_Va**2 * (Y12r**2 + Y12i**2)
@@ -132,8 +134,8 @@ class CovarianceMatrix:
         )
 
         self.NiQr = sympy.lambdify(
-            [Ef_a, D_Ya, M_Ya, X_Ya, Omega_a],
-            (
+            args=[Ef_a, D_Ya, M_Ya, X_Ya, Omega_a],
+            expr=(
                 std_eps_Vm**2 * (Y11i*Y21r - Y11r*Y21i) +
                 std_eps_Va**2 * (Y12i*Y22r - Y12r*Y22i)
             ),
@@ -141,8 +143,8 @@ class CovarianceMatrix:
         )
 
         self.NiQi = sympy.lambdify(
-            [Ef_a, D_Ya, M_Ya, X_Ya, Omega_a],
-            (
+            args=[Ef_a, D_Ya, M_Ya, X_Ya, Omega_a],
+            expr=(
                 std_eps_Vm**2 * (Y11i*Y21i + Y11r*Y21r) +
                 std_eps_Va**2 * (Y12i*Y22i + Y12r*Y22r)
             ),
@@ -153,8 +155,8 @@ class CovarianceMatrix:
         # self.QrNi = self.NiQr
 
         self.QrQr = sympy.lambdify(
-            [Ef_a, D_Ya, M_Ya, X_Ya, Omega_a],
-            (
+            args=[Ef_a, D_Ya, M_Ya, X_Ya, Omega_a],
+            expr=(
                 std_eps_Ia**2
                 + std_eps_Vm**2 * (Y21r**2 + Y21i**2)
                 + std_eps_Va**2 * (Y22r**2 + Y22i**2)
@@ -166,8 +168,8 @@ class CovarianceMatrix:
         # self.QiNi = self.NiQi
 
         self.QiQi = sympy.lambdify(
-            [Ef_a, D_Ya, M_Ya, X_Ya, Omega_a],
-            (
+            args=[Ef_a, D_Ya, M_Ya, X_Ya, Omega_a],
+            expr=(
                 std_eps_Ia**2
                 + std_eps_Vm**2 * (Y21i**2 + Y21r**2)
                 + std_eps_Va**2 * (Y22r**2 + Y22i**2)
@@ -243,8 +245,9 @@ class CovarianceMatrix:
         Returns:
             gamma (numpy.ndarray): value of the inversed covariance matrix
         """
-        return np.linalg.inv(self.compute(generator_params))
-
+        return sp.sparse.linalg.inv(sp.sparse.csc_matrix(
+            self.compute(generator_params)
+        )).toarray()
 
 
 
@@ -300,6 +303,6 @@ print('-------------------')
 start_time = time.time()
 print('-------------------')
 
-x_test_inv_sparse = sp.sparse.linalg.inv(sp.sparse.csc_matrix(x_test))
+x_test_inv_sparse = cov_obj.compute_and_inverse([1, 2, 3, 4])
 print("@@@ %s seconds --- covariance matrix inverse sparse" % (time.time() - start_time))
 print('-------------------')
