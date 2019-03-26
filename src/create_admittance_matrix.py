@@ -1,22 +1,10 @@
 import os
 import os.path
 import pickle
-
-import sympy as sp
+import sympy
 from sympy import *
-import numpy as np
 
 import utils
-
-
-
-Ef_a = symbols('Ef_a', real=True)
-D_Ya = symbols('D_Ya', real=True)
-X_Ya = symbols('X_Ya', real=True)
-M_Ya = symbols('M_Ya', real=True)
-
-Omega_a = symbols('Omega_a', real=True)
-X_params = Array([D_Ya, Ef_a, M_Ya, X_Ya])
 
 
 
@@ -34,30 +22,42 @@ class AdmittanceMatrix:
         Ys: admittance matrix
     """
 
-    def __init__(self, is_actual=True):
+    def __init__(self, is_actual=False):
         path_to_this_file = os.path.abspath(os.path.dirname(__file__))
         path_to_matrix_file = os.path.join(
             path_to_this_file,
             '..', 'data', 'precomputed', 'admittance_matrix.pickle'
         )
         if not is_actual:
-            j = np.complex(0, 1)
-            del_a, w_a, Pm_a, Omega, Vm_a, Va_a = symbols(
+            # j = np.complex(0, 1)
+            j = sympy.I
+            Ef_a, D_Ya, X_Ya, M_Ya, Omega_a = sympy.symbols(
+                'Ef_a D_Ya X_Ya M_Ya Omega_a',
+                real=True
+            )
+            # X_params = Array([D_Ya, Ef_a, M_Ya, X_Ya])
+
+            del_a, w_a, Pm_a, Omega, Vm_a, Va_a = sympy.symbols(
                 'del_a w_a Pm_a Omega Vm_a Va_a'
             )
 
-            X = Array([del_a, w_a])
-            Uv = Array([Vm_a, Va_a])
+            X = sympy.Array([del_a, w_a])
+            Uv = sympy.Array([Vm_a, Va_a])
 
             # System DAE Model
-            Pe = Vm_a*Ef_a*sin(del_a-Va_a)/X_Ya
+            Pe = Vm_a * Ef_a * sin(del_a - Va_a) / X_Ya
 
-            F_vec = Matrix([w_a, (Pm_a - Pe - D_Ya*w_a)/M_Ya])
+            F_vec = sympy.Matrix([w_a, (Pm_a - Pe - D_Ya*w_a)/M_Ya])
 
             # Output => [abs(I); angle(I)], where I flows into the generator
-            G_vec = Matrix([
-                (1/X_Ya)*sqrt(Vm_a**2 + Ef_a**2 - 2*Ef_a*Vm_a*cos(Va_a-del_a)),
-                atan((Vm_a*sin(Va_a)-Ef_a*sin(del_a))/(Vm_a*cos(Va_a)-Ef_a*cos(del_a)))-pi
+            G_vec = sympy.Matrix([
+                (1/X_Ya) * sqrt(
+                    Vm_a**2 + Ef_a**2 - 2*Ef_a*Vm_a*cos(Va_a-del_a)
+                ),
+                atan(
+                    (Vm_a*sin(Va_a) - Ef_a*sin(del_a))
+                    / (Vm_a*cos(Va_a) - Ef_a*cos(del_a))
+                ) - pi
             ])
 
             JacFX = F_vec.jacobian(X)
@@ -68,14 +68,9 @@ class AdmittanceMatrix:
             Ys = (JacGX/(j*Omega_a*eye(len(X)) - JacFX))*JacFUv + JacGUv
             Ys = Ys.subs(Va_a, 0.5)
             Ys = Ys.subs(del_a, 1)
-            self.Ys = Ys.subs(Vm_a, 1)
+            Ys = Ys.subs(Vm_a, 1)
 
-            # Ys = simplify(Ys)
-            # self.Ys_compute = lambdify((Ef_a, D_Ya, M_Ya, X_Ya, Omega_a), Ys, 'numpy')
-            # self.Ys_compute = lambdify(
-            #     (w_a, Ef_a, D_Ya, M_Ya, X_Ya, Pm_a, Omega, Omega_a, Va_a, Vm_a, del_a),
-            #     Ys, 'numpy'
-            # )
+            self.Ys = Ys
             pickle.dump(self.Ys, open(path_to_matrix_file, 'wb'))
 
         else:
@@ -84,7 +79,15 @@ class AdmittanceMatrix:
 
 
 # Ys = AdmittanceMatrix().Ys
-# Ys_compute = lambdify((Ef_a, D_Ya, M_Ya, X_Ya, Omega_a), Ys, 'numpy')
+
+#
+# Ef_a, D_Ya, X_Ya, M_Ya, Omega_a = sympy.symbols(
+#     'Ef_a D_Ya X_Ya M_Ya Omega_a',
+#     real=True
+# )
+# # X_params = Array([D_Ya, Ef_a, M_Ya, X_Ya])
+#
+# Ys_compute = lambdify([Ef_a, D_Ya, M_Ya, X_Ya, Omega_a], Ys, 'numexpr')
 #
 # Y11 = Ys[0, 0]
 # Y12 = Ys[0, 1]
