@@ -1,5 +1,6 @@
 import dynamic_equations_to_simulate
 import data
+import objective_function
 
 
 
@@ -23,5 +24,17 @@ def run_all_computations(all_params):
     time_data.apply_white_noise(snr=45.0, d_coi=0.0)
 
     freq_data = data.FreqData(time_data)
+
+    prior_generator_params = objective_function.UncertainGeneratorParameters(
+        Ef_a=1.0, D_Ya=2.0, X_Ya=3.0, M_Ya=4.0,
+        std_var_Ef_a=0.1, std_var_D_Ya=0.2, std_var_X_Ya=0.3, std_var_M_Ya=0.4
+    )
+
+    objective_function = objective_function.ObjectiveFunction(
+        freq_data=freq_data,
+        prior_generator_params=prior_generator_params
+    )
+
+    objective_function.compute(prior_generator_params)
 
     return ode_solver_object.get_appropr_data_to_gui()
