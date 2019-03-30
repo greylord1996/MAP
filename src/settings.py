@@ -106,7 +106,7 @@ Generator Parameters
 class GeneratorParameters:
 
     def __init__(self, d_2, e_2, m_2, x_d2, ic_d2):
-        self.d_2 = d_2  # X_d^'
+        self.d_2 = d_2  # X_d^'  transient reactance
         self.e_2 = e_2
         self.m_2 = m_2  # M
         self.x_d2 = x_d2

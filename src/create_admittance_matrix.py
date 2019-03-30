@@ -7,7 +7,6 @@ import utils
 
 
 
-@utils.singleton
 class AdmittanceMatrix:
     """A singletone representing the admittance matrix.
 
@@ -34,10 +33,12 @@ class AdmittanceMatrix:
                 'Ef_a D_Ya X_Ya M_Ya Omega_a',
                 real=True
             )
+
+            # X_params -- Vector of Uncertain Generator Paramerers
             # X_params = Array([D_Ya, Ef_a, M_Ya, X_Ya])
 
-            del_a, w_a, Pm_a, Omega, Vm_a, Va_a = sympy.symbols(
-                'del_a w_a Pm_a Omega Vm_a Va_a'
+            del_a, w_a, Pm_a, Vm_a, Va_a = sympy.symbols(
+                'del_a w_a Pm_a Vm_a Va_a'
             )
 
             X = sympy.Array([del_a, w_a])
