@@ -3,8 +3,6 @@ import os.path
 import pickle
 import sympy
 
-import utils
-
 
 
 class AdmittanceMatrix:
@@ -14,7 +12,7 @@ class AdmittanceMatrix:
     every time when you create an instance of this class.
     But if you want to force recomputation from the scratch
     you should provide one argument for constructor:
-    >>> Ys = AdmittanceMatrix(is_actual=False).Ys
+    >>> admittance_matrix = AdmittanceMatrix(is_actual=False).Ys
 
     Attributes:
         Ys: admittance matrix

@@ -40,7 +40,15 @@ class Data(abc.ABC):
 
 @utils.singleton
 class TimeData(Data):
-    """Represents data in the time domain."""
+    """Represents data in time domain.
+
+    Attributes:
+        dt (float): time between two adjacent points in time domain
+        std_dev_Vm (float): standard deviation of voltage magnitude
+        std_dev_Im (float): standard deviation of voltage phase
+        std_dev_Va (float): standard deviation of current magnitude
+        std_dev_Ia (float): standard deviation of current phase
+    """
 
     def __init__(self, Vm_time_data, Va_time_data,
                  Im_time_data, Ia_time_data, dt):
@@ -60,6 +68,12 @@ class TimeData(Data):
             Ia_data=Ia_time_data
         )
         self.dt = dt
+
+        self.std_dev_Vm = None
+        self.std_dev_Va = None
+        self.std_dev_Im = None
+        self.std_dev_Ia = None
+
 
 
     def apply_white_noise(self, snr, d_coi):
@@ -101,14 +115,22 @@ class TimeData(Data):
 
 @utils.singleton
 class FreqData(Data):
-    """Represents data in the frequency domain."""
+    """Represents data in frequency domain.
+
+    Attributes:
+        freqs (np.array): frequencies in frequency domain
+        std_w_Vm (float): standard deviation of voltage magnitude
+        std_w_Va (float): standard deviation of voltage phase
+        std_w_Im (float): standard deviation of current magnitude
+        std_w_Ia (float): standard deviation of current phase
+    """
 
     def __init__(self, time_data):
-        """Inits data in frequency domain based on data in time domain.
+        """Initializes data in frequency domain based on data in time domain.
 
-        It takes (2K + 1) points in time domain
-        and constructs (K + 1) points of data in frequency domain
-        (via Discrete Fourier transform).
+        It takes (2K + 1) points in time domain (white noise
+        has been already applied) and constructs (K + 1) points of data
+        in frequency domain (applying Discrete Fourier transform).
 
         Args:
             time_data (TimeData): holding data in time domain

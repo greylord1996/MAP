@@ -25,16 +25,20 @@ def run_all_computations(all_params):
 
     freq_data = data.FreqData(time_data)
 
-    prior_generator_params = objective_function.UncertainGeneratorParameters(
+    prior_gen_params = objective_function.UncertainGeneratorParameters(
         Ef_a=1.0, D_Ya=2.0, X_Ya=3.0, M_Ya=4.0,
-        std_var_Ef_a=0.1, std_var_D_Ya=0.2, std_var_X_Ya=0.3, std_var_M_Ya=0.4
+        std_dev_Ef_a=0.1, std_dev_D_Ya=0.2, std_dev_X_Ya=0.3, std_dev_M_Ya=0.4
     )
 
-    objective_function = objective_function.ObjectiveFunction(
+    # f denotes the objective function
+    f = objective_function.ObjectiveFunction(
         freq_data=freq_data,
-        prior_generator_params=prior_generator_params
+        prior_gen_params=prior_gen_params
     )
 
-    objective_function.compute(prior_generator_params)
+    # Here we should minimize the objective function
+    f.compute(prior_gen_params)
+    # ...
 
+    # It is not clear now what should be returned
     return ode_solver_object.get_appropr_data_to_gui()

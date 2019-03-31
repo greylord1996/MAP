@@ -18,36 +18,36 @@ class UncertainGeneratorParameters:
     (you should pay attention to substitution of the fields to
     symbolic expressions). To sum up, this class is only for readability
     of the code and is not convenient for extensibility.
+
+    Attributes:
+        Ef_a (float): generator field voltage magnitude
+        D_Ya (float): generator damping
+        X_Ya (float): generator reactance (inductance)
+        M_Ya (float): ???
+
+        std_dev_Ef_a (float): standard variance of Ef_a
+        std_dev_D_Ya (float): standard variance of D_Ya
+        std_dev_X_Ya (float): standard variance of X_Ya
+        std_dev_M_Ya (float): standard variance of M_Ya
     """
 
     def __init__(self, Ef_a, D_Ya, X_Ya, M_Ya,
-                 std_var_Ef_a, std_var_D_Ya, std_var_X_Ya, std_var_M_Ya):
+                 std_dev_Ef_a, std_dev_D_Ya, std_dev_X_Ya, std_dev_M_Ya):
         """Inits all fields which are uncertain parameters of a generator.
 
         This method requires prior values of uncertain parameters of a
         generator and their standard variances. These values will be updated
         after finishing an optimization routine.
-
-        Args:
-            Ef_a (float): generator field voltage magnitude
-            D_Ya (float): generator damping
-            X_Ya (float): generator reactance (inductance)
-            M_Ya (float): ???
-
-            std_var_Ef_a (float): standard variance of Ef_a
-            std_var_D_Ya (float): standard variance of D_Ya
-            std_var_X_Ya (float): standard variance of X_Ya
-            std_var_M_Ya (float): standard variance of M_Ya
         """
         self.Ef_a = Ef_a
         self.D_Ya = D_Ya
         self.X_Ya = X_Ya
         self.M_Ya = M_Ya
 
-        self.std_var_Ef_a = std_var_Ef_a
-        self.std_var_D_Ya = std_var_D_Ya
-        self.std_var_X_Ya = std_var_X_Ya
-        self.std_var_M_Ya = std_var_M_Ya
+        self.std_dev_Ef_a = std_dev_Ef_a
+        self.std_dev_D_Ya = std_dev_D_Ya
+        self.std_dev_X_Ya = std_dev_X_Ya
+        self.std_dev_M_Ya = std_dev_M_Ya
 
 
 
@@ -56,7 +56,7 @@ class ResidualVector:
     """Wrapper for calculations of R (residual vector).
 
     Attributes:
-        freqs (list of floats): frequencies in frequency domain
+        freq_data (class FreqData): data in frequency domain
         NrNr (function): for computing diagonal elements of gamma_NrNr
         NrQr (function): for computing diagonal elements of gamma_NrQr
         NrQi (function): for computing diagonal elements of gamma_NrQi
@@ -67,8 +67,8 @@ class ResidualVector:
         QiQi (function): for computing diagonal elements of gamma_QiQi
 
     Note:
-        attributes QrNr, QrNi, QiNr, QiNi are absent.
-        It is not necessary to store them due to the following equations:
+        Attributes QrNr, QrNi, QiNr, QiNi are absent because
+        it is not necessary to store them due to the following equations:
             gamma_QrNr = gamma_NrQr
             gamma_QrNi = gamma_NiQr
             gamma_QiNr = gamma_NrQi
@@ -77,7 +77,7 @@ class ResidualVector:
     """
 
     def __init__(self, freq_data):
-        """Prepares for computing the covariance matrix.
+        """Prepares for computing the covariance matrix in a given point.
 
         Args:
             freq_data (class FreqData): data in frequency domain
@@ -131,12 +131,18 @@ class ResidualVector:
         )
 
 
-    def compute(self, uncertain_generator_params):
-        """Computes the residual vector in the given point."""
-        Ef_a = uncertain_generator_params.Ef_a
-        D_Ya = uncertain_generator_params.D_Ya
-        X_Ya = uncertain_generator_params.X_Ya
-        M_Ya = uncertain_generator_params.M_Ya
+    def compute(self, uncertain_gen_params):
+        """Computes the residual vector in the given point.
+
+        Args:
+            uncertain_gen_params (class UncertainGeneratorParameters):
+                current uncertain parameters of a generator
+                (at the current step of an optimization routine)
+        """
+        Ef_a = uncertain_gen_params.Ef_a
+        D_Ya = uncertain_gen_params.D_Ya
+        X_Ya = uncertain_gen_params.X_Ya
+        M_Ya = uncertain_gen_params.M_Ya
 
         freq_data_len = len(self.freq_data.freqs)
         Mr = np.zeros(freq_data_len)
@@ -173,7 +179,7 @@ class ResidualVector:
                 freq_data.freqs[i]
             )
 
-        # Build and return R -- residual vector
+        # Build and return R (residual vector)
         return np.concatenate([Mr, Mi, Pr, Pi])
 
 
@@ -183,7 +189,7 @@ class CovarianceMatrix:
     """Wrapper for calculations of covariance matrix.
 
     Attributes:
-        freqs (list of floats): frequencies in frequency domain
+        freqs (np.array): frequencies in frequency domain
         NrNr (function): for computing diagonal elements of gamma_NrNr
         NrQr (function): for computing diagonal elements of gamma_NrQr
         NrQi (function): for computing diagonal elements of gamma_NrQi
@@ -314,7 +320,7 @@ class CovarianceMatrix:
         # self.QiNi = self.NiQi
 
 
-    def compute(self, uncertain_generator_params):
+    def compute(self, uncertain_gen_params):
         """Computes the covariance matrix in the given point.
 
         Builds and computes the numerical value of the covariance matrix
@@ -322,17 +328,17 @@ class CovarianceMatrix:
         will have sizes (4K+4) * (4K+4) and contain only numbers (not symbols).
 
         Args:
-            uncertain_generator_params (class UncertainGeneratorParameters):
+            uncertain_gen_params (class UncertainGeneratorParameters):
                 current uncertain parameters of a generator
                 (at the current step of an optimization routine)
 
         Returns:
             gamma (numpy.ndarray): value of the covariance matrix
         """
-        Ef_a = uncertain_generator_params.Ef_a
-        D_Ya = uncertain_generator_params.D_Ya
-        X_Ya = uncertain_generator_params.X_Ya
-        M_Ya = uncertain_generator_params.M_Ya
+        Ef_a = uncertain_gen_params.Ef_a
+        D_Ya = uncertain_gen_params.D_Ya
+        X_Ya = uncertain_gen_params.X_Ya
+        M_Ya = uncertain_gen_params.M_Ya
 
         gamma_NrNr = np.diag([
             self.NrNr(Ef_a, D_Ya, X_Ya, M_Ya, freq) for freq in self.freqs
@@ -373,7 +379,7 @@ class CovarianceMatrix:
         return gamma_L
 
 
-    def compute_and_inverse(self, uncertain_generator_params):
+    def compute_and_inverse(self, uncertain_gen_params):
         """Computes the inversed covariance matrix in the given point.
 
         Does exactly the same as 'compute' method but after computing
@@ -381,7 +387,7 @@ class CovarianceMatrix:
         and returns it.
 
         Args:
-            uncertain_generator_params (class UncertainGeneratorParameters):
+            uncertain_gen_params (class UncertainGeneratorParameters):
                 current parameters of a generator (at the current step of
                 an optimization routine)
 
@@ -389,7 +395,7 @@ class CovarianceMatrix:
             gamma (numpy.ndarray): value of the inversed covariance matrix
         """
         return sp.sparse.linalg.inv(sp.sparse.csc_matrix(
-            self.compute(uncertain_generator_params)
+            self.compute(uncertain_gen_params)
         )).toarray()
 
 
@@ -399,64 +405,64 @@ class ObjectiveFunction:
     """Wrapper for calculations of objective function.
 
     Attributes:
-        prior_generator_params (class UncertainGeneratorParameters):
+        prior_gen_params (class UncertainGeneratorParameters):
         R (class ResidualVector):
         gamma_L (class CovarianceMatrix):
         reversed_gamma_g (np.ndarray):
     """
 
-    def __init__(self, freq_data, prior_generator_params):
+    def __init__(self, freq_data, prior_gen_params):
         """Prepares for computing the objective function in a given point.
 
         Args:
             freq_data (class FreqData): data in frequency domain
-            prior_generator_params (class UncertainGeneratorParameters):
+            prior_gen_params (class UncertainGeneratorParameters):
                 prior generator parameters of a generator (we are uncertain
                 in their values) and the standard variances (how much we are
                 uncertain in their values)
         """
-        # All these members must not be changed!
+        # All these members must not be changed after initialization!
         self.R = ResidualVector(freq_data)
         self.gamma_L = CovarianceMatrix(freq_data)
 
-        self.prior_generator_params = np.array([
-            prior_generator_params.Ef_a,
-            prior_generator_params.D_Ya,
-            prior_generator_params.X_Ya,
-            prior_generator_params.M_Ya
+        self.prior_gen_params = np.array([
+            prior_gen_params.Ef_a,
+            prior_gen_params.D_Ya,
+            prior_gen_params.X_Ya,
+            prior_gen_params.M_Ya
         ])
 
         self.reversed_gamma_g = np.diag([
-            prior_generator_params.std_var_Ef_a,
-            prior_generator_params.std_var_D_Ya,
-            prior_generator_params.std_var_X_Ya,
-            prior_generator_params.std_var_M_Ya
+            prior_gen_params.std_dev_Ef_a,
+            prior_gen_params.std_dev_D_Ya,
+            prior_gen_params.std_dev_X_Ya,
+            prior_gen_params.std_dev_M_Ya
         ])
 
 
-    def compute(self, uncertain_generator_params):
+    def compute(self, uncertain_gen_params):
         """Computes value of the objective function in the given point.
 
         Args:
-            uncertain_generator_params (class UncertainGeneratorParameters):
+            uncertain_gen_params (class UncertainGeneratorParameters):
                 current values of uncertain generator parameters (at current
                 iteration of an optimization routine)
         """
-        curr_generator_params = np.array([
-            uncertain_generator_params.Ef_a,
-            uncertain_generator_params.D_Ya,
-            uncertain_generator_params.X_Ya,
-            uncertain_generator_params.M_Ya
+        curr_gen_params = np.array([
+            uncertain_gen_params.Ef_a,
+            uncertain_gen_params.D_Ya,
+            uncertain_gen_params.X_Ya,
+            uncertain_gen_params.M_Ya
         ])
 
-        delta_params = curr_generator_params - self.prior_generator_params
-        computed_R = self.R.compute(uncertain_generator_params)
+        delta_params = curr_gen_params - self.prior_gen_params
+        computed_R = self.R.compute(uncertain_gen_params)
 
         return (
             delta_params @ self.reversed_gamma_g @ delta_params +
             (
                 computed_R @
-                self.gamma_L.compute_and_inverse(uncertain_generator_params) @
+                self.gamma_L.compute_and_inverse(uncertain_gen_params) @
                 computed_R
             )
         )
@@ -505,9 +511,9 @@ print('===========================================')
 # R = ResidualVector(freq_data)
 # print("constructing R : %s seconds" % (time.time() - start_time))
 
-uncertain_generator_params = UncertainGeneratorParameters(
+prior_gen_params = UncertainGeneratorParameters(
     Ef_a=1.0, D_Ya=2.0, X_Ya=3.0, M_Ya=4.0,
-    std_var_Ef_a=0.1, std_var_D_Ya=0.2, std_var_X_Ya=0.3, std_var_M_Ya=0.4
+    std_dev_Ef_a=0.1, std_dev_D_Ya=0.2, std_dev_X_Ya=0.3, std_dev_M_Ya=0.4
 )
 
 # start_time = time.time()
@@ -527,10 +533,10 @@ uncertain_generator_params = UncertainGeneratorParameters(
 start_time = time.time()
 objective_function = ObjectiveFunction(
     freq_data=freq_data,
-    prior_generator_params=uncertain_generator_params
+    prior_gen_params=prior_gen_params
 )
 print("constructing objective function : %s seconds" % (time.time() - start_time))
 
 start_time = time.time()
-objective_function.compute(uncertain_generator_params)
+objective_function.compute(prior_gen_params)
 print("calculating objective function : %s seconds" % (time.time() - start_time))
