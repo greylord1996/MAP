@@ -50,6 +50,11 @@ class UncertainGeneratorParameters:
         self.std_dev_M_Ya = std_dev_M_Ya
 
 
+    def get_as_array(self):
+        """Returns generator parameters in a numpy.array."""
+        return np.array([self.Ef_a, self.D_Ya, self.X_Ya, self.M_Ya])
+
+
 
 @utils.singleton
 class ResidualVector:
@@ -436,12 +441,10 @@ class ObjectiveFunction:
 
     def compute(self, uncertain_gen_params):
         """Computes value of the objective function in the given point.
-
         Args:
             uncertain_gen_params (class UncertainGeneratorParameters):
                 current values of uncertain generator parameters
                 (at the current iteration of an optimization routine)
-
         Returns:
             value (numpy.float64) of objective function in the given point
         """
@@ -464,6 +467,34 @@ class ObjectiveFunction:
             )
         )
 
+
+    def compute_by_array(self, uncertain_gen_params):
+        """Computes value of the objective function in the given point.
+
+        This method just calls self.compute method
+        transforming the sole argument from numpy.array to an instance
+        of class UncertainGeneratorParameters. It is necessary
+        to have such method because optimizers want to get an instance
+        of numpy.array.
+
+        Args:
+            uncertain_gen_params (numpy.array):
+                current values of uncertain generator parameters
+                (at the current iteration of an optimization routine)
+        Returns:
+            value (numpy.float64) of objective function in the given point
+        """
+        print('### optimizing... curr_point =', uncertain_gen_params)
+        return self.compute(UncertainGeneratorParameters(
+            Ef_a=uncertain_gen_params[0],
+            D_Ya=uncertain_gen_params[1],
+            X_Ya=uncertain_gen_params[2],
+            M_Ya=uncertain_gen_params[3],
+            std_dev_Ef_a=self._reversed_gamma_g[0][0],
+            std_dev_D_Ya=self._reversed_gamma_g[1][1],
+            std_dev_X_Ya=self._reversed_gamma_g[2][2],
+            std_dev_M_Ya=self._reversed_gamma_g[3][3]
+        ))
 
 
 # ----------------------------------------------------------------
@@ -534,7 +565,19 @@ f = ObjectiveFunction(
 )
 print("constructing objective function : %s seconds" % (time.time() - start_time))
 
-start_time = time.time()
-f0 = f.compute(prior_gen_params)
+# start_time = time.time()
+# f0 = f.compute(prior_gen_params)
 # print('f0 =', f0, type(f0))
-print("calculating objective function : %s seconds" % (time.time() - start_time))
+# print("calculating objective function : %s seconds" % (time.time() - start_time))
+
+
+opt_res = sp.optimize.minimize(
+    fun=f.compute_by_array,
+    x0=prior_gen_params.get_as_array(),
+    method='BFGS',
+    # tol=...?
+    options={
+        # 'maxiter': 1,
+        'disp': True
+    }
+)

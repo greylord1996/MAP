@@ -37,8 +37,16 @@ def run_all_computations(all_params):
     )
 
     # Here we should minimize the objective function
-    f.compute(prior_gen_params)
-    # ...
+    # opt_res = sp.optimize.minimize(
+    #     fun=f.compute_by_array,
+    #     x0=prior_gen_params.get_as_array(),
+    #     method='BFGS',
+    #     # tol=...?
+    #     options={
+    #         # 'maxiter': 1,
+    #         'disp': True
+    #     }
+    # )
 
     # It is not clear now what should be returned
     return ode_solver_object.get_appropr_data_to_gui()
