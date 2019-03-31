@@ -56,24 +56,11 @@ class ResidualVector:
     """Wrapper for calculations of R (residual vector).
 
     Attributes:
-        freq_data (class FreqData): data in frequency domain
-        NrNr (function): for computing diagonal elements of gamma_NrNr
-        NrQr (function): for computing diagonal elements of gamma_NrQr
-        NrQi (function): for computing diagonal elements of gamma_NrQi
-        NiNi (function): for computing diagonal elements of gamma_NiNi
-        NiQr (function): for computing diagonal elements of gamma_NiQr
-        NiQi (function): for computing diagonal elements of gamma_NiQi
-        QrQr (function): for computing diagonal elements of gamma_QrQr
-        QiQi (function): for computing diagonal elements of gamma_QiQi
-
-    Note:
-        Attributes QrNr, QrNi, QiNr, QiNi are absent because
-        it is not necessary to store them due to the following equations:
-            gamma_QrNr = gamma_NrQr
-            gamma_QrNi = gamma_NiQr
-            gamma_QiNr = gamma_NrQi
-            gamma_QiNi = gamma_NiQi
-        This fact will be used in the 'compute' method.
+        _freq_data (class FreqData): data in frequency domain
+        _Mr (function): for computing elements of vector Mr
+        _Mi (function): for computing elements of vector Mi
+        _Pr (function): for computing elements of vector Pr
+        _Pi (function): for computing elements of vector Pi
     """
 
     def __init__(self, freq_data):
@@ -82,7 +69,7 @@ class ResidualVector:
         Args:
             freq_data (class FreqData): data in frequency domain
         """
-        self.freq_data = freq_data
+        self._freq_data = freq_data
 
         admittance_matrix = AdmittanceMatrix().Ys
         Y11 = admittance_matrix[0, 0]
@@ -106,25 +93,25 @@ class ResidualVector:
             real=True
         )
 
-        self.Mr = sympy.lambdify(
+        self._Mr = sympy.lambdify(
             args=[Vm, Va, Im, Ia, Ef_a, D_Ya, X_Ya, M_Ya, Omega_a],
             expr=(Imr - Y11r*Vmr + Y11i*Vmi - Y12r*Var + Y12i*Vai),
             modules='numexpr'
         )
 
-        self.Mi = sympy.lambdify(
+        self._Mi = sympy.lambdify(
             args=[Vm, Va, Im, Ia, Ef_a, D_Ya, X_Ya, M_Ya, Omega_a],
             expr=(Imi - Y11i*Vmr - Y11r*Vmi - Y12i*Var - Y12r*Vai),
             modules='numexpr'
         )
 
-        self.Pr = sympy.lambdify(
+        self._Pr = sympy.lambdify(
             args=[Vm, Va, Im, Ia, Ef_a, D_Ya, X_Ya, M_Ya, Omega_a],
             expr=(Iar - Y21r*Vmr + Y21i*Vmi - Y22r*Var + Y22i*Vai),
             modules='numexpr'
         )
 
-        self.Pi = sympy.lambdify(
+        self._Pi = sympy.lambdify(
             args=[Vm, Va, Im, Ia, Ef_a, D_Ya, X_Ya, M_Ya, Omega_a],
             expr=(Iai - Y21i*Vmr - Y21r*Vmi - Y22i*Var - Y22r*Vai),
             modules='numexpr'
@@ -144,39 +131,39 @@ class ResidualVector:
         X_Ya = uncertain_gen_params.X_Ya
         M_Ya = uncertain_gen_params.M_Ya
 
-        freq_data_len = len(self.freq_data.freqs)
+        freq_data_len = len(self._freq_data.freqs)
         Mr = np.zeros(freq_data_len)
         Mi = np.zeros(freq_data_len)
         Pr = np.zeros(freq_data_len)
         Pi = np.zeros(freq_data_len)
 
         for i in range(freq_data_len):
-            Mr[i] = self.Mr(
-                freq_data.Vm[i], freq_data.Va[i],
-                freq_data.Im[i], freq_data.Ia[i],
+            Mr[i] = self._Mr(
+                self._freq_data.Vm[i], self._freq_data.Va[i],
+                self._freq_data.Im[i], self._freq_data.Ia[i],
                 Ef_a, D_Ya, X_Ya, M_Ya,
-                freq_data.freqs[i]
+                self._freq_data.freqs[i]
             )
 
-            Mi[i] = self.Mi(
-                freq_data.Vm[i], freq_data.Va[i],
-                freq_data.Im[i], freq_data.Ia[i],
+            Mi[i] = self._Mi(
+                self._freq_data.Vm[i], self._freq_data.Va[i],
+                self._freq_data.Im[i], self._freq_data.Ia[i],
                 Ef_a, D_Ya, X_Ya, M_Ya,
-                freq_data.freqs[i]
+                self._freq_data.freqs[i]
             )
 
-            Pr[i] = self.Pr(
-                freq_data.Vm[i], freq_data.Va[i],
-                freq_data.Im[i], freq_data.Ia[i],
+            Pr[i] = self._Pr(
+                self._freq_data.Vm[i], self._freq_data.Va[i],
+                self._freq_data.Im[i], self._freq_data.Ia[i],
                 Ef_a, D_Ya, X_Ya, M_Ya,
-                freq_data.freqs[i]
+                self._freq_data.freqs[i]
             )
 
-            Pi[i] = self.Pi(
-                freq_data.Vm[i], freq_data.Va[i],
-                freq_data.Im[i], freq_data.Ia[i],
+            Pi[i] = self._Pi(
+                self._freq_data.Vm[i], self._freq_data.Va[i],
+                self._freq_data.Im[i], self._freq_data.Ia[i],
                 Ef_a, D_Ya, X_Ya, M_Ya,
-                freq_data.freqs[i]
+                self._freq_data.freqs[i]
             )
 
         # Build and return R (residual vector)
@@ -189,18 +176,18 @@ class CovarianceMatrix:
     """Wrapper for calculations of covariance matrix.
 
     Attributes:
-        freqs (np.array): frequencies in frequency domain
-        NrNr (function): for computing diagonal elements of gamma_NrNr
-        NrQr (function): for computing diagonal elements of gamma_NrQr
-        NrQi (function): for computing diagonal elements of gamma_NrQi
-        NiNi (function): for computing diagonal elements of gamma_NiNi
-        NiQr (function): for computing diagonal elements of gamma_NiQr
-        NiQi (function): for computing diagonal elements of gamma_NiQi
-        QrQr (function): for computing diagonal elements of gamma_QrQr
-        QiQi (function): for computing diagonal elements of gamma_QiQi
+        _freqs (np.array): frequencies in frequency domain
+        _NrNr (function): for computing diagonal elements of gamma_NrNr
+        _NrQr (function): for computing diagonal elements of gamma_NrQr
+        _NrQi (function): for computing diagonal elements of gamma_NrQi
+        _NiNi (function): for computing diagonal elements of gamma_NiNi
+        _NiQr (function): for computing diagonal elements of gamma_NiQr
+        _NiQi (function): for computing diagonal elements of gamma_NiQi
+        _QrQr (function): for computing diagonal elements of gamma_QrQr
+        _QiQi (function): for computing diagonal elements of gamma_QiQi
 
     Note:
-        attributes QrNr, QrNi, QiNr, QiNi are absent.
+        attributes _QrNr, _QrNi, _QiNr, _QiNi are absent.
         It is not necessary to store them due to the following equations:
             gamma_QrNr = gamma_NrQr
             gamma_QrNi = gamma_NiQr
@@ -215,7 +202,7 @@ class CovarianceMatrix:
         Args:
             freq_data (class FreqData): data in frequency domain
         """
-        self.freqs = freq_data.freqs
+        self._freqs = freq_data.freqs
 
         std_eps_Vm = freq_data.std_w_Vm
         std_eps_Va = freq_data.std_w_Va
@@ -238,7 +225,7 @@ class CovarianceMatrix:
             real=True
         )
 
-        self.NrNr = sympy.lambdify(
+        self._NrNr = sympy.lambdify(
             args=[Ef_a, D_Ya, M_Ya, X_Ya, Omega_a],
             expr=(
                 std_eps_Im**2
@@ -248,7 +235,7 @@ class CovarianceMatrix:
             modules='numexpr'
         )
 
-        self.NrQr = sympy.lambdify(
+        self._NrQr = sympy.lambdify(
             args=[Ef_a, D_Ya, M_Ya, X_Ya, Omega_a],
             expr=(
                 std_eps_Vm**2 * (Y11r*Y21r + Y11i*Y21i) +
@@ -257,7 +244,7 @@ class CovarianceMatrix:
             modules='numexpr'
         )
 
-        self.NrQi = sympy.lambdify(
+        self._NrQi = sympy.lambdify(
             args=[Ef_a, D_Ya, M_Ya, X_Ya, Omega_a],
             expr=(
                 std_eps_Vm**2 * (Y11r*Y21i - Y11i*Y21r) +
@@ -266,7 +253,7 @@ class CovarianceMatrix:
             modules='numexpr'
         )
 
-        self.NiNi = sympy.lambdify(
+        self._NiNi = sympy.lambdify(
             args=[Ef_a, D_Ya, M_Ya, X_Ya, Omega_a],
             expr=(
                 std_eps_Im**2
@@ -276,7 +263,7 @@ class CovarianceMatrix:
             modules='numexpr'
         )
 
-        self.NiQr = sympy.lambdify(
+        self._NiQr = sympy.lambdify(
             args=[Ef_a, D_Ya, M_Ya, X_Ya, Omega_a],
             expr=(
                 std_eps_Vm**2 * (Y11i*Y21r - Y11r*Y21i) +
@@ -285,7 +272,7 @@ class CovarianceMatrix:
             modules='numexpr'
         )
 
-        self.NiQi = sympy.lambdify(
+        self._NiQi = sympy.lambdify(
             args=[Ef_a, D_Ya, M_Ya, X_Ya, Omega_a],
             expr=(
                 std_eps_Vm**2 * (Y11i*Y21i + Y11r*Y21r) +
@@ -294,7 +281,7 @@ class CovarianceMatrix:
             modules='numexpr'
         )
 
-        self.QrQr = sympy.lambdify(
+        self._QrQr = sympy.lambdify(
             args=[Ef_a, D_Ya, M_Ya, X_Ya, Omega_a],
             expr=(
                 std_eps_Ia**2
@@ -304,7 +291,7 @@ class CovarianceMatrix:
             modules='numexpr'
         )
 
-        self.QiQi = sympy.lambdify(
+        self._QiQi = sympy.lambdify(
             args=[Ef_a, D_Ya, M_Ya, X_Ya, Omega_a],
             expr=(
                 std_eps_Ia**2
@@ -341,35 +328,35 @@ class CovarianceMatrix:
         M_Ya = uncertain_gen_params.M_Ya
 
         gamma_NrNr = np.diag([
-            self.NrNr(Ef_a, D_Ya, X_Ya, M_Ya, freq) for freq in self.freqs
+            self._NrNr(Ef_a, D_Ya, X_Ya, M_Ya, freq) for freq in self._freqs
         ])
         gamma_NrQr = np.diag([
-            self.NrQr(Ef_a, D_Ya, X_Ya, M_Ya, freq) for freq in self.freqs
+            self._NrQr(Ef_a, D_Ya, X_Ya, M_Ya, freq) for freq in self._freqs
         ])
         gamma_NrQi = np.diag([
-            self.NrQi(Ef_a, D_Ya, X_Ya, M_Ya, freq) for freq in self.freqs
+            self._NrQi(Ef_a, D_Ya, X_Ya, M_Ya, freq) for freq in self._freqs
         ])
         gamma_NiNi = np.diag([
-            self.NiNi(Ef_a, D_Ya, X_Ya, M_Ya, freq) for freq in self.freqs
+            self._NiNi(Ef_a, D_Ya, X_Ya, M_Ya, freq) for freq in self._freqs
         ])
         gamma_NiQr = np.diag([
-            self.NiQr(Ef_a, D_Ya, X_Ya, M_Ya, freq) for freq in self.freqs
+            self._NiQr(Ef_a, D_Ya, X_Ya, M_Ya, freq) for freq in self._freqs
         ])
         gamma_NiQi = np.diag([
-            self.NiQi(Ef_a, D_Ya, X_Ya, M_Ya, freq) for freq in self.freqs
+            self._NiQi(Ef_a, D_Ya, X_Ya, M_Ya, freq) for freq in self._freqs
         ])
         gamma_QrQr = np.diag([
-            self.QrQr(Ef_a, D_Ya, X_Ya, M_Ya, freq) for freq in self.freqs
+            self._QrQr(Ef_a, D_Ya, X_Ya, M_Ya, freq) for freq in self._freqs
         ])
         gamma_QiQi = np.diag([
-            self.QiQi(Ef_a, D_Ya, X_Ya, M_Ya, freq) for freq in self.freqs
+            self._QiQi(Ef_a, D_Ya, X_Ya, M_Ya, freq) for freq in self._freqs
         ])
         gamma_QrNr = gamma_NrQr
         gamma_QrNi = gamma_NiQr
         gamma_QiNr = gamma_NrQi
         gamma_QiNi = gamma_NiQi
 
-        zero_matrix = np.zeros((len(self.freqs), len(self.freqs)))
+        zero_matrix = np.zeros((len(self._freqs), len(self._freqs)))
         gamma_L = np.block([
             [gamma_NrNr, zero_matrix, gamma_NrQr, gamma_NrQi],
             [zero_matrix, gamma_NiNi, gamma_NiQr, gamma_NiQi],
@@ -388,11 +375,12 @@ class CovarianceMatrix:
 
         Args:
             uncertain_gen_params (class UncertainGeneratorParameters):
-                current parameters of a generator (at the current step of
+                current parameters of a generator (at the current iteration of
                 an optimization routine)
 
         Returns:
-            gamma (numpy.ndarray): value of the inversed covariance matrix
+            gamma_L^(-1) (numpy.ndarray): inversed covariance matrix
+                in the given point
         """
         return sp.sparse.linalg.inv(sp.sparse.csc_matrix(
             self.compute(uncertain_gen_params)
@@ -405,10 +393,16 @@ class ObjectiveFunction:
     """Wrapper for calculations of objective function.
 
     Attributes:
-        prior_gen_params (class UncertainGeneratorParameters):
-        R (class ResidualVector):
-        gamma_L (class CovarianceMatrix):
-        reversed_gamma_g (np.ndarray):
+        _prior_gen_params (class UncertainGeneratorParameters):
+            start point for an optimization routine
+        _R (class ResidualVector): auxiliary member to simplify
+            calculations of vector R (residual vector)
+            at the current step of an optimization routine
+        _gamma_L (class CovarianceMatrix): auxiliary member to simplify
+            calculations of gamma_L (covariance matrix)
+            at the current step of an optimization routine
+        _reversed_gamma_g (numpy.ndarray): diagonal matrix containing
+            standard deviations of prior uncertain generator parameters
     """
 
     def __init__(self, freq_data, prior_gen_params):
@@ -422,17 +416,17 @@ class ObjectiveFunction:
                 uncertain in their values)
         """
         # All these members must not be changed after initialization!
-        self.R = ResidualVector(freq_data)
-        self.gamma_L = CovarianceMatrix(freq_data)
+        self._R = ResidualVector(freq_data)
+        self._gamma_L = CovarianceMatrix(freq_data)
 
-        self.prior_gen_params = np.array([
+        self._prior_gen_params = np.array([
             prior_gen_params.Ef_a,
             prior_gen_params.D_Ya,
             prior_gen_params.X_Ya,
             prior_gen_params.M_Ya
         ])
 
-        self.reversed_gamma_g = np.diag([
+        self._reversed_gamma_g = np.diag([
             prior_gen_params.std_dev_Ef_a,
             prior_gen_params.std_dev_D_Ya,
             prior_gen_params.std_dev_X_Ya,
@@ -445,8 +439,11 @@ class ObjectiveFunction:
 
         Args:
             uncertain_gen_params (class UncertainGeneratorParameters):
-                current values of uncertain generator parameters (at current
-                iteration of an optimization routine)
+                current values of uncertain generator parameters
+                (at the current iteration of an optimization routine)
+
+        Returns:
+            value (numpy.float64) of objective function in the given point
         """
         curr_gen_params = np.array([
             uncertain_gen_params.Ef_a,
@@ -455,14 +452,14 @@ class ObjectiveFunction:
             uncertain_gen_params.M_Ya
         ])
 
-        delta_params = curr_gen_params - self.prior_gen_params
-        computed_R = self.R.compute(uncertain_gen_params)
+        delta_params = curr_gen_params - self._prior_gen_params
+        computed_R = self._R.compute(uncertain_gen_params)
 
         return (
-            delta_params @ self.reversed_gamma_g @ delta_params +
+            delta_params @ self._reversed_gamma_g @ delta_params +
             (
                 computed_R @
-                self.gamma_L.compute_and_inverse(uncertain_gen_params) @
+                self._gamma_L.compute_and_inverse(uncertain_gen_params) @
                 computed_R
             )
         )
@@ -517,26 +514,27 @@ prior_gen_params = UncertainGeneratorParameters(
 )
 
 # start_time = time.time()
-# computed_R = R.compute(uncertain_generator_params)
+# computed_R = R.compute(prior_gen_params)
 # print('len(R) =', len(computed_R))
 # print(computed_R)
 # print("computing R : %s seconds" % (time.time() - start_time))
-#
+
 # start_time = time.time()
 # gamma_L = CovarianceMatrix(freq_data)
 # print("constructing gamma_L : %s seconds" % (time.time() - start_time))
 #
 # start_time = time.time()
-# computed_gamma_L = gamma_L.compute_and_inverse(uncertain_generator_params)
+# computed_gamma_L = gamma_L.compute_and_inverse(prior_gen_params)
 # print("calculating gamma_L : %s seconds" % (time.time() - start_time))
 
 start_time = time.time()
-objective_function = ObjectiveFunction(
+f = ObjectiveFunction(
     freq_data=freq_data,
     prior_gen_params=prior_gen_params
 )
 print("constructing objective function : %s seconds" % (time.time() - start_time))
 
 start_time = time.time()
-objective_function.compute(prior_gen_params)
+f0 = f.compute(prior_gen_params)
+# print('f0 =', f0, type(f0))
 print("calculating objective function : %s seconds" % (time.time() - start_time))
