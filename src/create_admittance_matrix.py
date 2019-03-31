@@ -6,7 +6,7 @@ import sympy
 
 
 class AdmittanceMatrix:
-    """A singletone representing the admittance matrix.
+    """Represents the admittance matrix.
 
     Normally, it is not necessary to recompute this matrix
     every time when you create an instance of this class.
@@ -27,8 +27,8 @@ class AdmittanceMatrix:
         if not is_actual:
             # j = np.complex(0, 1)
             j = sympy.I
-            Ef_a, D_Ya, X_Ya, M_Ya, Omega_a = sympy.symbols(
-                'Ef_a D_Ya X_Ya M_Ya Omega_a',
+            D_Ya, Ef_a, M_Ya, X_Ya, Omega_a = sympy.symbols(
+                'D_Ya Ef_a M_Ya X_Ya Omega_a',
                 real=True
             )
 

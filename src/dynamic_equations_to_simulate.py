@@ -11,26 +11,22 @@ j = np.complex(0, 1)
 
 class OdeSolver:
 
-    #def __init__(self, rnd_amp, d_2, e_2, m_2, x_d2, ic_d2, osc_amp, osc_freq):
     def __init__(self, white_noise, gen_param, osc_param, integr_param):
-        self.white_noise = WhiteNoise(white_noise['rnd_amp'])
-        self.generator_param = GeneratorParameters(gen_param['d_2'], gen_param['e_2'],
-                                                   gen_param['m_2'], gen_param['x_d2'],
-                                                   gen_param['ic_d2'])
-        self.osc_param = OscillationParameters(osc_param['osc_amp'], osc_param['osc_freq'])
-
-        # self.white_noise = WhiteNoise(rnd_amp)
-        # self.generator_param = GeneratorParameters(d_2, e_2,
-        #                                            m_2, x_d2,
-        #                                            ic_d2)
-        # self.osc_param = OscillationParameters(osc_amp, osc_freq)
+        self.white_noise = white_noise
+        self.generator_param = gen_param
+        self.osc_param = osc_param
+        # self.white_noise = WhiteNoise(white_noise['rnd_amp'])
+        # self.generator_param = GeneratorParameters(gen_param['d_2'], gen_param['e_2'],
+        #                                            gen_param['m_2'], gen_param['x_d2'],
+        #                                            gen_param['ic_d2'])
+        # self.osc_param = OscillationParameters(osc_param['osc_amp'], osc_param['osc_freq'])
 
         self.IC_T1 = 0.5
         self.IC_V1 = 1.0
         self.IC_d2 = 1.0
-        self.dt = integr_param['dt_step']
-        self.tf = integr_param['df_length']
-        self.test_length = np.arange(0, self.tf+self.dt, self.dt)
+        self.dt = integr_param.dt_step
+        self.tf = integr_param.df_length
+        self.test_length = np.arange(0, self.tf + self.dt, self.dt)
         self.t_vec = np.linspace(0, self.tf, self.test_length.size)
         self.Pm2_0 = self.calculate_Pm2_0()
         self.V1t = self.get_V1t()
@@ -130,14 +126,16 @@ class OdeSolver:
         self.Ig_angle = np.angle(self.Ig)
         self.Vc1_angle = np.angle(self.Vc1)
 
+
+
 # Test mode, just for checking appropriate working
-
-WN = {'rnd_amp': 0.00}
-GP = {'d_2': 0.25, 'e_2': 1, 'm_2': 1, 'x_d2': 0.01, 'ic_d2': 1}
-IP = {'dt_step': 0.05, 'df_length': 100}
-OP = {'osc_amp': 2.00, 'osc_freq': 0.005}
-
-
-solver = OdeSolver(WN, GP, OP, IP)
-solver.solve()
+#
+# WN = {'rnd_amp': 0.00}
+# GP = {'d_2': 0.25, 'e_2': 1, 'm_2': 1, 'x_d2': 0.01, 'ic_d2': 1}
+# IP = {'dt_step': 0.05, 'df_length': 100}
+# OP = {'osc_amp': 2.00, 'osc_freq': 0.005}
+#
+#
+# solver = OdeSolver(WN, GP, OP, IP)
+# solver.solve()
 

@@ -2,8 +2,6 @@ import os
 import os.path
 import sys
 import json
-import time
-import numpy as np
 
 import matplotlib
 matplotlib.use('QT5Agg')  # Ensure using PyQt5 backend
@@ -49,6 +47,7 @@ class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
         Retrieves all parameters listed below directly from GUI
         and returns all of them in a two-level dictionary.
         """
+        # TODO: replace dicts with instances of settings.WhiteNoise, ...
         return {
             'FreqData': {
                 'lower_fb': self.lower_fb.value(),
