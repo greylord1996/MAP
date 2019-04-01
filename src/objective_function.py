@@ -20,7 +20,7 @@ class UncertainGeneratorParameters:
     Attributes:
         D_Ya (float): generator damping
         Ef_a (float): generator field voltage magnitude
-        M_Ya (float): ???
+        M_Ya (float): what is M in papers???
         X_Ya (float): generator reactance (inductance)
 
         std_dev_D_Ya (float): standard variance of D_Ya
@@ -419,7 +419,6 @@ class ObjectiveFunction:
                 in their values) and the standard variances (how much we are
                 uncertain in their values)
         """
-        # All these members must not be changed after initialization!
         self._R = ResidualVector(freq_data)
         self._gamma_L = CovarianceMatrix(freq_data)
 
@@ -440,10 +439,12 @@ class ObjectiveFunction:
 
     def compute(self, uncertain_gen_params):
         """Computes value of the objective function in the given point.
+
         Args:
             uncertain_gen_params (class UncertainGeneratorParameters):
                 current values of uncertain generator parameters
                 (at the current iteration of an optimization routine)
+
         Returns:
             value (numpy.float64) of objective function in the given point
         """
@@ -480,6 +481,7 @@ class ObjectiveFunction:
             uncertain_gen_params (numpy.array):
                 current values of uncertain generator parameters
                 (at the current iteration of an optimization routine)
+
         Returns:
             value (numpy.float64) of objective function in the given point
         """

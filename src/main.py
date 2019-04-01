@@ -45,47 +45,50 @@ class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
         """Returns a dict containing parameters from GUI.
 
         Retrieves all parameters listed below directly from GUI
-        and returns all of them in a two-level dictionary.
+        and returns all of them in a dictionary of classes which are declared
+        in settings.py.
+
+        Returns:
+            dictionary of classes which are declared in settings.py
         """
-        # TODO: replace dicts with instances of settings.WhiteNoise, ...
         return {
-            'FreqData': {
-                'lower_fb': self.lower_fb.value(),
-                'upper_fb': self.upper_fb.value(),
-                'max_freq': self.max_freq.value(),
-                'dt': self.dt.value(),
-            },
-            'OptimizerSettings': {
-                'opt_tol': self.opt_tol.value(),
-                'fun_tol': self.fun_tol.value(),
-                'stp_tol': self.stp_tol.value(),
-                'max_its': self.max_its.value(),
-                'sol_mtd': self.sol_mtd.value(),
-                'opt_its': self.opt_its.value(),
-                'opt_mcp': self.opt_mcp.value(),
-            },
-            'GeneratorParameters': {
-                'd_2': self.d_2.value(),
-                'e_2': self.e_2.value(),
-                'm_2': self.m_2.value(),
-                'x_d2': self.x_d2.value(),
-                'ic_d2': self.ic_d2.value(),
-            },
-            'OscillationParameters': {
-                'osc_amp': self.osc_amp.value(),
-                'osc_freq': self.osc_freq.value(),
-            },
-            'WhiteNoise': {
-                'rnd_amp': self.rnd_amp.value(),
-            },
-            'InfBusInitializer': {
-                'ic_v1': self.ic_v1.value(),
-                'ic_t1': self.ic_t1.value(),
-            },
-            'IntegrationSettings': {
-                'df_length': self.df_length.value(),
-                'dt_step': self.dt_step.value(),
-            }
+            'FreqData': settings.FreqData(
+                lower_fb=self.lower_fb.value(),
+                upper_fb=self.upper_fb.value(),
+                max_freq=self.max_freq.value(),
+                dt=self.dt.value()
+             ),
+            'OptimizerSettings': settings.OptimizerSettings(
+                opt_tol=self.opt_tol.value(),
+                fun_tol=self.fun_tol.value(),
+                stp_tol=self.stp_tol.value(),
+                max_its=self.max_its.value(),
+                sol_mtd=self.sol_mtd.value(),
+                opt_its=self.opt_its.value(),
+                opt_mcp=self.opt_mcp.value()
+            ),
+            'GeneratorParameters': settings.GeneratorParameters(
+                d_2=self.d_2.value(),
+                e_2=self.e_2.value(),
+                m_2=self.m_2.value(),
+                x_d2=self.x_d2.value(),
+                ic_d2=self.ic_d2.value()
+            ),
+            'OscillationParameters': settings.OscillationParameters(
+                osc_amp=self.osc_amp.value(),
+                osc_freq=self.osc_freq.value()
+            ),
+            'WhiteNoise': settings.WhiteNoise(
+                rnd_amp=self.rnd_amp.value()
+            ),
+            'InfBusInitializer': settings.InfBusInitializer(
+                ic_v1=self.ic_v1.value(),
+                ic_t1=self.ic_t1.value()
+            ),
+            'IntegrationSettings': settings.IntegrationSettings(
+                df_length=self.df_length.value(),
+                dt_step=self.dt_step.value()
+            )
         }
 
 
@@ -93,38 +96,38 @@ class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
         """Updates params in GUI.
 
         Args:
-            new_params (dict of dicts): new values of the all parameters
-                which will be updated in GUI
+            new_params (dict of classes which declared in settings.py):
+                new values of the all parameters which will be updated in GUI
         """
-        self.lower_fb.setValue(new_params['FreqData']['lower_fb'])
-        self.upper_fb.setValue(new_params['FreqData']['upper_fb'])
-        self.max_freq.setValue(new_params['FreqData']['max_freq'])
-        self.dt.setValue(new_params['FreqData']['dt'])
+        self.lower_fb.setValue(new_params['FreqData'].lower_fb)
+        self.upper_fb.setValue(new_params['FreqData'].upper_fb)
+        self.max_freq.setValue(new_params['FreqData'].max_freq)
+        self.dt.setValue(new_params['FreqData'].dt)
 
-        self.opt_tol.setValue(new_params['OptimizerSettings']['opt_tol'])
-        self.fun_tol.setValue(new_params['OptimizerSettings']['fun_tol'])
-        self.stp_tol.setValue(new_params['OptimizerSettings']['stp_tol'])
-        self.max_its.setValue(new_params['OptimizerSettings']['max_its'])
-        self.sol_mtd.setValue(new_params['OptimizerSettings']['sol_mtd'])
-        self.opt_its.setValue(new_params['OptimizerSettings']['opt_its'])
-        self.opt_mcp.setValue(new_params['OptimizerSettings']['opt_mcp'])
+        self.opt_tol.setValue(new_params['OptimizerSettings'].opt_tol)
+        self.fun_tol.setValue(new_params['OptimizerSettings'].fun_tol)
+        self.stp_tol.setValue(new_params['OptimizerSettings'].stp_tol)
+        self.max_its.setValue(new_params['OptimizerSettings'].max_its)
+        self.sol_mtd.setValue(new_params['OptimizerSettings'].sol_mtd)
+        self.opt_its.setValue(new_params['OptimizerSettings'].opt_its)
+        self.opt_mcp.setValue(new_params['OptimizerSettings'].opt_mcp)
 
-        self.d_2.setValue(new_params['GeneratorParameters']['d_2'])
-        self.e_2.setValue(new_params['GeneratorParameters']['e_2'])
-        self.m_2.setValue(new_params['GeneratorParameters']['m_2'])
-        self.x_d2.setValue(new_params['GeneratorParameters']['x_d2'])
-        self.ic_d2.setValue(new_params['GeneratorParameters']['ic_d2'])
+        self.d_2.setValue(new_params['GeneratorParameters'].d_2)
+        self.e_2.setValue(new_params['GeneratorParameters'].e_2)
+        self.m_2.setValue(new_params['GeneratorParameters'].m_2)
+        self.x_d2.setValue(new_params['GeneratorParameters'].x_d2)
+        self.ic_d2.setValue(new_params['GeneratorParameters'].ic_d2)
 
-        self.osc_amp.setValue(new_params['OscillationParameters']['osc_amp'])
-        self.osc_freq.setValue(new_params['OscillationParameters']['osc_freq'])
+        self.osc_amp.setValue(new_params['OscillationParameters'].osc_amp)
+        self.osc_freq.setValue(new_params['OscillationParameters'].osc_freq)
 
-        self.rnd_amp.setValue(new_params['WhiteNoise']['rnd_amp'])
+        self.rnd_amp.setValue(new_params['WhiteNoise'].rnd_amp)
 
-        self.ic_v1.setValue(new_params['InfBusInitializer']['ic_v1'])
-        self.ic_t1.setValue(new_params['InfBusInitializer']['ic_t1'])
+        self.ic_v1.setValue(new_params['InfBusInitializer'].ic_v1)
+        self.ic_t1.setValue(new_params['InfBusInitializer'].ic_t1)
 
-        self.df_length.setValue(new_params['IntegrationSettings']['df_length'])
-        self.dt_step.setValue(new_params['IntegrationSettings']['dt_step'])
+        self.df_length.setValue(new_params['IntegrationSettings'].df_length)
+        self.dt_step.setValue(new_params['IntegrationSettings'].dt_step)
 
 
     def load_params(self):

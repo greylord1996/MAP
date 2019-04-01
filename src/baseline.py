@@ -9,8 +9,22 @@ import data
 
 
 def perturb_gen_params(true_gen_params):
+    """Perturb true generator parameters.
+
+    It gets true values of generator parameters and perturbs them
+    by adding a random value to each of them from uniform distribution.
+    This uniform distribution is at [-0.5; 0.5] segment.
+
+    Args:
+        true_gen_params (class settings.GeneratorParameters): true generator
+            parameters specified by user (in GUI)
+    """
     # 4 - number of generator parameters - it is hardcoded
-    perturbations = np.random.uniform(low=-0.5, high=0.5, size=4)
+    # perturbations = np.random.uniform(low=-0.5, high=0.5, size=4)
+
+    # Just for testing
+    perturbations = [0.0, 0.0, 0.0, 0.0]
+
     return objective_function.UncertainGeneratorParameters(
         D_Ya=true_gen_params.d_2 + perturbations[0],  # check accordance D_Ya <-> d_2
         Ef_a=true_gen_params.e_2 + perturbations[1],  # check accordance Ef_a <-> e_2
@@ -165,12 +179,12 @@ opt_res = sp.optimize.minimize(
     method='BFGS',
     # tol=15.5,
     options={
-        'maxiter': 1,
+        'maxiter': 5,
         'disp': True
     }
 )
 
-print('opt success?', opt_res.success)
+print('opt_success?', opt_res.success)
 print('opt_message:', opt_res.message)
 print('theta_MAP1 =', opt_res.x)
 
