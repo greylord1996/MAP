@@ -32,7 +32,7 @@ class AdmittanceMatrix:
                 real=True
             )
 
-            # X_params -- Vector of Uncertain Generator Paramerers
+            # X_params -- Vector of Uncertain Generator Parameters
             # X_params = Array([D_Ya, Ef_a, M_Ya, X_Ya])
 
             del_a, w_a, Pm_a, Vm_a, Va_a = sympy.symbols(
@@ -53,8 +53,8 @@ class AdmittanceMatrix:
                     Vm_a**2 + Ef_a**2 - 2*Ef_a*Vm_a*sympy.cos(Va_a - del_a)
                 ),
                 sympy.atan(
-                    (Vm_a*sympy.sin(Va_a) - Ef_a*sympy.sin(del_a))
-                    / (Vm_a*sympy.cos(Va_a) - Ef_a*sympy.cos(del_a))
+                    (Vm_a*sympy.sin(Va_a) - Ef_a*sympy.sin(del_a)) /
+                    (Vm_a*sympy.cos(Va_a) - Ef_a*sympy.cos(del_a))
                 ) - sympy.pi
             ])
 
