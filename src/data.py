@@ -38,7 +38,7 @@ class Data(abc.ABC):
 
 
 
-@utils.singleton
+# @utils.singleton -- uncomment in release
 class TimeData(Data):
     """Represents data in time domain.
 
@@ -113,7 +113,7 @@ class TimeData(Data):
 
 
 
-@utils.singleton
+# @utils.singleton -- uncomment in release
 class FreqData(Data):
     """Represents data in frequency domain.
 

@@ -109,13 +109,13 @@ import tests
 # WN = settings.WhiteNoise(
 #     rnd_amp=0.000
 # )
-GP = settings.GeneratorParameters(  # true generator parameters
-    d_2=0.25,
-    e_2=1.0,
-    m_2=1.0,
-    x_d2=0.01,
-    ic_d2=1.0
-)
+# GP = settings.GeneratorParameters(  # true generator parameters
+#     d_2=0.25,
+#     e_2=1.0,
+#     m_2=1.0,
+#     x_d2=0.01,
+#     ic_d2=1.0
+# )
 # IS = settings.IntegrationSettings(
 #     dt_step=0.05,
 #     df_length=100.0
@@ -144,15 +144,12 @@ GP = settings.GeneratorParameters(  # true generator parameters
 # )
 
 
-time_data = tests.get_initial_time_data()
 
-print('Vm_time_data =', time_data.Vm)
-print('Im_time_data =', time_data.Im)
-print('Va_time_data =', time_data.Va)
-print('Ia_time_data =', time_data.Ia)
+# print('Vm_time_data =', time_data.Vm)
+# print('Im_time_data =', time_data.Im)
+# print('Va_time_data =', time_data.Va)
+# print('Ia_time_data =', time_data.Ia)
 
-
-# sys.exit()
 
 
 # time_data.apply_white_noise(snr=45.0, d_coi=0.0)
