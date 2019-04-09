@@ -104,10 +104,17 @@ import time
 import sys
 
 
+FD = settings.FreqData(
+    lower_fb=1.99,
+    upper_fb=2.01,
+    max_freq=6.00,
+    dt=0.05
+)
 
 WN = settings.WhiteNoise(
     rnd_amp=0.000
 )
+
 GP = settings.GeneratorParameters(  # true generator parameters
     d_2=0.25,
     e_2=1.0,
@@ -115,15 +122,16 @@ GP = settings.GeneratorParameters(  # true generator parameters
     x_d2=0.01,
     ic_d2=1.0
 )
+
 IS = settings.IntegrationSettings(
     dt_step=0.05,
     df_length=100.0
 )
+
 OP = settings.OscillationParameters(
     osc_amp=2.00,
     osc_freq=0.005
 )
-
 
 solver = dynamic_equations_to_simulate.OdeSolver(
     white_noise=WN,
@@ -131,7 +139,7 @@ solver = dynamic_equations_to_simulate.OdeSolver(
     osc_param=OP,
     integr_param=IS
 )
-solver.solve()
+# solver.solve()
 
 solver.simulate_time_data()
 time_data = data.TimeData(
@@ -141,8 +149,6 @@ time_data = data.TimeData(
     Ia_time_data=solver.Ig_angle,
     dt=solver.dt
 )
-
-
 
 print('Vm_time_data =', time_data.Vm)
 print('Im_time_data =', time_data.Im)
@@ -155,7 +161,9 @@ time_data.apply_white_noise(snr=45.0, d_coi=0.0)
 
 
 freq_data = data.FreqData(time_data)
-
+# freq_data.remove_zero_frequency()
+# freq_data.trim(min_freq=0.0, max_freq=FD.max_freq)
+# freq_data.remove_data_from_FO_band()
 
 print('Vm_freq_data =', freq_data.Vm)
 print('Im_freq_data =', freq_data.Im)

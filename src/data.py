@@ -143,8 +143,8 @@ class FreqData(Data):
         assert time_points_len % 2 == 1  # Ensure that N is odd (N = 2K + 1)
 
         # f_vec is the same as self.freqs (what about pi?)
-        self.freqs = (2.0 * fs / time_points_len
-                      * np.arange(0, (time_points_len + 1) / 2, 1))
+        self.freqs = (fs / time_points_len *
+                      np.arange(0, (time_points_len + 1) / 2, 1))
 
         super().__init__(
             Vm_data=self._apply_dft(time_data.Vm),
@@ -160,6 +160,7 @@ class FreqData(Data):
 
 
     def _apply_dft(self, time_points):
+        # Apply FFT to each array of data (Vm, Va, Im, Ia)
         time_points_len = len(time_points)
         assert time_points_len % 2 == 1
 
@@ -169,20 +170,62 @@ class FreqData(Data):
             scipy.signal.detrend(data=time_points, type='constant')
         )
 
-        freq_points_len = (time_points_len + 1) // 2
         freq_points = np.fft.fft(windowed_time_points / time_points_len)
+        freq_points_len = (time_points_len + 1) // 2
         freq_points = freq_points[0:freq_points_len]
 
         # Amplitude of DC = (1/N) * |F(0)|, other amplitudes = (2/N) * |F(k)|
         freq_points[1:] *= 2.0  # Double all but DC
 
-        # We removed DC by using detrend function
-        freq_points[0] = 0.0  # Exclude DC
+        # We have removed DC by using detrend function
+        freq_points[0] = 0.0  # Zero DC
 
         return freq_points
 
 
-    def trim(self):
-        pass
+    def remove_zero_frequency(self):
+        """Removes the first point from each array of data (Vm, Va, Im, Ia).
 
+        After applying DFT the first numbers of each array (Vm, Va, Im, Ia)
+        are equal to 0 (due to applying detrend function).
+        It can be convenient to remove these zeros, that is to exclude
+        the first number from each array. Zero frequency also should be
+        excluded from the array of frequencies (self.freqs).
+        """
+        self.freqs = self.freqs[1:]
+        self.Vm = self.Vm[1:]
+        self.Va = self.Va[1:]
+        self.Im = self.Im[1:]
+        self.Ia = self.Ia[1:]
+
+
+    def trim(self, min_freq, max_freq):
+        """Removes all data which are not located in [min_freq; max_freq].
+
+        Leaves only those data which are located in [min_freq; max_freq].
+        This method implies that frequencies in self.freqs are sorted
+        in ascending order.
+
+        Args:
+            min_freq (float): minimum remaining frequency in the data
+            max_freq (float): maximum remaining frequency in the data
+        """
+        low_index = np.searchsorted(self.freqs, min_freq, side='left')
+        high_index = np.searchsorted(self.freqs, max_freq, side='right')
+
+        self.freqs = self.freqs[low_index:high_index]
+        self.Vm = self.Vm[low_index:high_index]
+        self.Va = self.Va[low_index:high_index]
+        self.Im = self.Im[low_index:high_index]
+        self.Ia = self.Ia[low_index:high_index]
+
+
+    def remove_data_from_FO_band(self):
+        """Removes data which are located in a forced oscillation band.
+
+        Identifies the range of frequencies where the forced oscillation
+        has significant effect and removes corresponding data
+        from frequency data (Vm, Va, Im, Ia).
+        """
+        pass
 
