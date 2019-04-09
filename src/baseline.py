@@ -102,71 +102,70 @@ def run_all_computations(all_params):
 
 import time
 import sys
-import tests
 
 
 
-# WN = settings.WhiteNoise(
-#     rnd_amp=0.000
-# )
-# GP = settings.GeneratorParameters(  # true generator parameters
-#     d_2=0.25,
-#     e_2=1.0,
-#     m_2=1.0,
-#     x_d2=0.01,
-#     ic_d2=1.0
-# )
-# IS = settings.IntegrationSettings(
-#     dt_step=0.05,
-#     df_length=100.0
-# )
-# OP = settings.OscillationParameters(
-#     osc_amp=2.00,
-#     osc_freq=0.005
-# )
-#
-#
-# solver = dynamic_equations_to_simulate.OdeSolver(
-#     white_noise=WN,
-#     gen_param=GP,
-#     osc_param=OP,
-#     integr_param=IS
-# )
-# solver.solve()
-#
-# solver.simulate_time_data()
-# time_data = data.TimeData(
-#     Vm_time_data=solver.Vc1_abs,
-#     Va_time_data=solver.Vc1_angle,
-#     Im_time_data=solver.Ig_abs,
-#     Ia_time_data=solver.Ig_angle,
-#     dt=solver.dt
-# )
+WN = settings.WhiteNoise(
+    rnd_amp=0.000
+)
+GP = settings.GeneratorParameters(  # true generator parameters
+    d_2=0.25,
+    e_2=1.0,
+    m_2=1.0,
+    x_d2=0.01,
+    ic_d2=1.0
+)
+IS = settings.IntegrationSettings(
+    dt_step=0.05,
+    df_length=100.0
+)
+OP = settings.OscillationParameters(
+    osc_amp=2.00,
+    osc_freq=0.005
+)
+
+
+solver = dynamic_equations_to_simulate.OdeSolver(
+    white_noise=WN,
+    gen_param=GP,
+    osc_param=OP,
+    integr_param=IS
+)
+solver.solve()
+
+solver.simulate_time_data()
+time_data = data.TimeData(
+    Vm_time_data=solver.Vc1_abs,
+    Va_time_data=solver.Vc1_angle,
+    Im_time_data=solver.Ig_abs,
+    Ia_time_data=solver.Ig_angle,
+    dt=solver.dt
+)
 
 
 
-# print('Vm_time_data =', time_data.Vm)
-# print('Im_time_data =', time_data.Im)
-# print('Va_time_data =', time_data.Va)
-# print('Ia_time_data =', time_data.Ia)
+print('Vm_time_data =', time_data.Vm)
+print('Im_time_data =', time_data.Im)
+print('Va_time_data =', time_data.Va)
+print('Ia_time_data =', time_data.Ia)
 
 
 
-# time_data.apply_white_noise(snr=45.0, d_coi=0.0)
+time_data.apply_white_noise(snr=45.0, d_coi=0.0)
 
 
-# freq_data = data.FreqData(time_data)
+freq_data = data.FreqData(time_data)
 
 
-# print('Vm_freq_data =', freq_data.Vm)
-# print('Im_freq_data =', freq_data.Im)
-# print('Va_freq_data =', freq_data.Va)
-# print('Ia_freq_data =', freq_data.Ia)
+print('Vm_freq_data =', freq_data.Vm)
+print('Im_freq_data =', freq_data.Im)
+print('Va_freq_data =', freq_data.Va)
+print('Ia_freq_data =', freq_data.Ia)
 
 
-# print('===========================================')
+print('===========================================')
 
-#
+
 # prior_gen_params = perturb_gen_params(GP)  # now params are perturbed and uncertain
 #
 # start_time = time.time()
@@ -175,12 +174,12 @@ import tests
 #     prior_gen_params=prior_gen_params
 # )
 # print("constructing objective function : %s seconds" % (time.time() - start_time))
-
+#
 # start_time = time.time()
 # f0 = f.compute(prior_gen_params)
 # print('f0 =', f0, type(f0))
 # print("calculating objective function : %s seconds" % (time.time() - start_time))
-
+#
 #
 # opt_res = sp.optimize.minimize(
 #     fun=f.compute_by_array,
@@ -196,4 +195,4 @@ import tests
 # print('opt_success?', opt_res.success)
 # print('opt_message:', opt_res.message)
 # print('theta_MAP1 =', opt_res.x)
-
+#

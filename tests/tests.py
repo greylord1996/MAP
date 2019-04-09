@@ -255,7 +255,13 @@ class FreqDataTests(unittest.TestCase):
         self.assertAlmostEqual(freq_data.std_w_Im * 10**4, 1.4343, places=4)
         self.assertAlmostEqual(freq_data.std_w_Ia * 10**7, 9.9982, places=3)
 
-        for i in range(freq_data_points_n):
+        # DC has been excluded
+        self.assertEqual(freq_data.Vm[0], 0.0)
+        self.assertEqual(freq_data.Va[0], 0.0)
+        self.assertEqual(freq_data.Im[0], 0.0)
+        self.assertEqual(freq_data.Ia[0], 0.0)
+
+        for i in range(1, freq_data_points_n):
             self.assertAlmostEqual(
                 freq_data.Vm[i], correct_freq_data['Vm'][i],
                 places=13
@@ -305,49 +311,4 @@ if __name__ == '__main__':
 #     dt=0.05
 # )
 
-
-
-# print('======================================')
-# initial_time_data = get_initial_time_data()
-# print('Vm_initial_time_data =', initial_time_data['Vm'])
-# print('Va_initial_time_data =', initial_time_data['Va'])
-# print('Im_initial_time_data =', initial_time_data['Im'])
-# print('Ia_initial_time_data =', initial_time_data['Ia'])
-# print('======================================')
-#
-#
-# print('======================================')
-# time_data_after_snr = get_time_data_after_snr()
-# print('Vm_time_data_after_snr =', time_data_after_snr['Vm'])
-# print('Va_time_data_after_snr =', time_data_after_snr['Im'])
-# print('Im_time_data_after_snr =', time_data_after_snr['Va'])
-# print('Ia_time_data_after_snr =', time_data_after_snr['Ia'])
-# print('======================================')
-#
-#
-# print('======================================')
-# freq_data_after_fft = get_freq_data_after_fft()
-# print('Vm_freq_data_after_fft =', freq_data_after_fft['Vm'])
-# print('Va_freq_data_after_fft =', freq_data_after_fft['Im'])
-# print('Im_freq_data_after_fft =', freq_data_after_fft['Va'])
-# print('Ia_freq_data_after_fft =', freq_data_after_fft['Ia'])
-# print('======================================')
-#
-#
-# print('======================================')
-# freq_data_after_trim = get_freq_data_after_trim()
-# print('Vm_freq_data_after_trim =', freq_data_after_trim['Vm'])
-# print('Va_freq_data_after_trim =', freq_data_after_trim['Im'])
-# print('Im_freq_data_after_trim =', freq_data_after_trim['Va'])
-# print('Ia_freq_data_after_trim =', freq_data_after_trim['Ia'])
-# print('======================================')
-#
-#
-# print('======================================')
-# freq_data_before_stage1 = get_freq_data_before_stage1()
-# print('Vm_freq_data_before_stage1 =', freq_data_before_stage1['Vm'])
-# print('Va_freq_data_before_stage1 =', freq_data_before_stage1['Im'])
-# print('Im_freq_data_before_stage1 =', freq_data_before_stage1['Va'])
-# print('Ia_freq_data_before_stage1 =', freq_data_before_stage1['Ia'])
-# print('======================================')
 

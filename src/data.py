@@ -173,8 +173,16 @@ class FreqData(Data):
         freq_points = np.fft.fft(windowed_time_points / time_points_len)
         freq_points = freq_points[0:freq_points_len]
 
-        # Double all but DC
-        freq_points[1:] *= 2.0
+        # Amplitude of DC = (1/N) * |F(0)|, other amplitudes = (2/N) * |F(k)|
+        freq_points[1:] *= 2.0  # Double all but DC
+
+        # We removed DC by using detrend function
+        freq_points[0] = 0.0  # Exclude DC
 
         return freq_points
+
+
+    def trim(self):
+        pass
+
 
