@@ -20,15 +20,15 @@ def perturb_gen_params(true_gen_params):
             parameters specified by user (in GUI)
     """
     # 4 - number of generator parameters - it is hardcoded
-    perturbations = np.random.uniform(low=-0.5, high=0.5, size=4)
+    # perturbations = np.random.uniform(low=-0.5, high=0.5, size=4)
 
     # Just for testing
-    # perturbations = [0.0, 0.0, 0.0, 0.0]
+    perturbations = [0.2066, 0.8372, 0.6654, 0.0077]
 
     return objective_function.UncertainGeneratorParameters(
-        D_Ya=true_gen_params.d_2 + perturbations[0],  # check accordance D_Ya <-> d_2
-        Ef_a=true_gen_params.e_2 + perturbations[1],  # check accordance Ef_a <-> e_2
-        M_Ya=true_gen_params.m_2 + perturbations[2],  # check accordance M_Ya <-> m_2
+        D_Ya=true_gen_params.d_2 + perturbations[0],   # check accordance D_Ya <-> d_2
+        Ef_a=true_gen_params.e_2 + perturbations[1],   # check accordance Ef_a <-> e_2
+        M_Ya=true_gen_params.m_2 + perturbations[2],   # check accordance M_Ya <-> m_2
         X_Ya=true_gen_params.x_d2 + perturbations[3],  # check accordance X_Ya <-> x_d2
         std_dev_D_Ya=1000.0,
         std_dev_Ef_a=1000.0,
@@ -105,7 +105,7 @@ import sys
 
 
 FD = settings.FreqData(
-    lower_fb=1.99,
+    lower_fb=1.988,  # WTF? Should be 1.99!!!
     upper_fb=2.01,
     max_freq=6.00,
     dt=0.05
@@ -150,57 +150,46 @@ time_data = data.TimeData(
     dt=solver.dt
 )
 
-print('Vm_time_data =', time_data.Vm)
-print('Im_time_data =', time_data.Im)
-print('Va_time_data =', time_data.Va)
-print('Ia_time_data =', time_data.Ia)
-
-
 
 time_data.apply_white_noise(snr=45.0, d_coi=0.0)
 
 
 freq_data = data.FreqData(time_data)
-# freq_data.remove_zero_frequency()
-# freq_data.trim(min_freq=0.0, max_freq=FD.max_freq)
-# freq_data.remove_data_from_FO_band()
-
-print('Vm_freq_data =', freq_data.Vm)
-print('Im_freq_data =', freq_data.Im)
-print('Va_freq_data =', freq_data.Va)
-print('Ia_freq_data =', freq_data.Ia)
+freq_data.remove_zero_frequency()
+freq_data.trim(min_freq=0.0, max_freq=FD.max_freq)
+freq_data.remove_data_from_FO_band(min_fo_freq=FD.lower_fb, max_fo_freq=FD.upper_fb)
 
 
 print('===========================================')
 
 
-# prior_gen_params = perturb_gen_params(GP)  # now params are perturbed and uncertain
-#
-# start_time = time.time()
-# f = objective_function.ObjectiveFunction(
-#     freq_data=freq_data,
-#     prior_gen_params=prior_gen_params
-# )
-# print("constructing objective function : %s seconds" % (time.time() - start_time))
-#
-# start_time = time.time()
-# f0 = f.compute(prior_gen_params)
-# print('f0 =', f0, type(f0))
-# print("calculating objective function : %s seconds" % (time.time() - start_time))
-#
-#
-# opt_res = sp.optimize.minimize(
-#     fun=f.compute_by_array,
-#     x0=prior_gen_params.as_array,
-#     method='BFGS',
-#     # tol=15.5,
-#     options={
-#         'maxiter': 5,
-#         'disp': True
-#     }
-# )
-#
-# print('opt_success?', opt_res.success)
-# print('opt_message:', opt_res.message)
-# print('theta_MAP1 =', opt_res.x)
-#
+prior_gen_params = perturb_gen_params(GP)  # now params are perturbed and uncertain
+
+start_time = time.time()
+f = objective_function.ObjectiveFunction(
+    freq_data=freq_data,
+    prior_gen_params=prior_gen_params
+)
+print("constructing objective function : %s seconds" % (time.time() - start_time))
+
+start_time = time.time()
+f0 = f.compute(prior_gen_params)
+print('f0 =', f0, type(f0))
+print("calculating objective function : %s seconds" % (time.time() - start_time))
+
+
+opt_res = sp.optimize.minimize(
+    fun=f.compute_by_array,
+    x0=prior_gen_params.as_array,
+    method='CG',
+    # tol=15.5,
+    # options={
+    #     'maxiter': 5,
+    #     'disp': True
+    # }
+)
+
+print('opt_success?', opt_res.success)
+print('opt_message:', opt_res.message)
+print('theta_MAP1 =', opt_res.x)
+

@@ -8,155 +8,43 @@ sys.path.append(os.path.join(
     os.path.abspath(os.path.dirname(__file__)), '..', 'src')
 )
 import dynamic_equations_to_simulate
+import create_admittance_matrix
+import objective_function
 import settings
 import data
+import correct_data
 
 
 
-def _get_data_from_file(data_file, is_complex):
-    # Extracts data from given file and returns it as np.array
-    data = None
-    with open(data_file) as input_file:
-        lines = input_file.readlines()
-        data = np.zeros(
-            len(lines),
-            dtype=(np.complex_ if is_complex else np.float)
-        )
-
-        for i in range(len(lines)):
-            number = lines[i].rstrip().replace(',', '.')
-            if is_complex:
-                number = number.replace('i', 'j')
-                number = number.replace(' ', '')
-                data[i] = np.complex(number)
-            else:
-                data[i] = np.float(number)
-
-    return data
-
-
-
-def _get_data_from_files(Vm_file, Va_file, Im_file, Ia_file, is_complex):
-    path_to_this_file = os.path.abspath(os.path.dirname(__file__))
-
-    Vm_data = _get_data_from_file(
-        data_file=os.path.join(path_to_this_file, Vm_file),
-        is_complex=is_complex
-    )
-    Va_data = _get_data_from_file(
-        data_file=os.path.join(path_to_this_file, Va_file),
-        is_complex=is_complex
-    )
-    Im_data = _get_data_from_file(
-        data_file=os.path.join(path_to_this_file, Im_file),
-        is_complex=is_complex
-    )
-    Ia_data = _get_data_from_file(
-        data_file=os.path.join(path_to_this_file, Ia_file),
-        is_complex=is_complex
-    )
-
-    return {
-        'Vm': Vm_data,
-        'Va': Va_data,
-        'Im': Im_data,
-        'Ia': Ia_data
-    }
-
-
-
-def get_correct_initial_time_data_as_dict():
-    initial_time_data = _get_data_from_files(
-        Vm_file=os.path.join('initial_time_data', 'Vm_time_data.txt'),
-        Va_file=os.path.join('initial_time_data', 'Va_time_data.txt'),
-        Im_file=os.path.join('initial_time_data', 'Im_time_data.txt'),
-        Ia_file=os.path.join('initial_time_data', 'Ia_time_data.txt'),
-        is_complex=False
-    )
-
-    assert len(initial_time_data['Vm']) == 2001
-    assert len(initial_time_data['Va']) == 2001
-    assert len(initial_time_data['Im']) == 2001
-    assert len(initial_time_data['Ia']) == 2001
-
-    return initial_time_data
-
-
-
-def get_correct_time_data_after_snr_as_dict():
-    time_data_after_snr = _get_data_from_files(
-        Vm_file=os.path.join('time_data_after_snr', 'Vm_snr_time_data.txt'),
-        Va_file=os.path.join('time_data_after_snr', 'Va_snr_time_data.txt'),
-        Im_file=os.path.join('time_data_after_snr', 'Im_snr_time_data.txt'),
-        Ia_file=os.path.join('time_data_after_snr', 'Ia_snr_time_data.txt'),
-        is_complex=False
-    )
-
-    assert len(time_data_after_snr['Vm']) == 2001
-    assert len(time_data_after_snr['Va']) == 2001
-    assert len(time_data_after_snr['Im']) == 2001
-    assert len(time_data_after_snr['Ia']) == 2001
-
-    return time_data_after_snr
-
-
-
-def get_correct_freq_data_after_fft_as_dict():
-    freq_data_after_fft = _get_data_from_files(
-        Vm_file=os.path.join('freq_data_after_fft', 'Vm_freq_data.txt'),
-        Va_file=os.path.join('freq_data_after_fft', 'Va_freq_data.txt'),
-        Im_file=os.path.join('freq_data_after_fft', 'Im_freq_data.txt'),
-        Ia_file=os.path.join('freq_data_after_fft', 'Ia_freq_data.txt'),
-        is_complex=True
-    )
-
-    assert len(freq_data_after_fft['Vm']) == 1001
-    assert len(freq_data_after_fft['Va']) == 1001
-    assert len(freq_data_after_fft['Im']) == 1001
-    assert len(freq_data_after_fft['Ia']) == 1001
-
-    return freq_data_after_fft
-
-
-
-def get_correct_freq_data_after_trim_as_dict():
-    freq_data_after_trim = _get_data_from_files(
-        Vm_file=os.path.join('freq_data_after_trim', 'y_Vm.txt'),
-        Va_file=os.path.join('freq_data_after_trim', 'y_Va.txt'),
-        Im_file=os.path.join('freq_data_after_trim', 'y_Im.txt'),
-        Ia_file=os.path.join('freq_data_after_trim', 'y_Ia.txt'),
-        is_complex=True
-    )
-
-    assert len(freq_data_after_trim['Vm']) == 600
-    assert len(freq_data_after_trim['Va']) == 600
-    assert len(freq_data_after_trim['Im']) == 600
-    assert len(freq_data_after_trim['Ia']) == 600
-
-    return freq_data_after_trim
-
-
-
-def get_correct_freq_data_before_stage1_as_dict():
-    freq_data_before_stage1 = _get_data_from_files(
-        Vm_file=os.path.join('S1_data_vectors', 'y_VmS1.txt'),
-        Va_file=os.path.join('S1_data_vectors', 'y_VaS1.txt'),
-        Im_file=os.path.join('S1_data_vectors', 'y_ImS1.txt'),
-        Ia_file=os.path.join('S1_data_vectors', 'y_IaS1.txt'),
-        is_complex=True
-    )
-
-    assert len(freq_data_before_stage1['Vm']) == 597
-    assert len(freq_data_before_stage1['Va']) == 597
-    assert len(freq_data_before_stage1['Im']) == 597
-    assert len(freq_data_before_stage1['Ia']) == 597
-
-    return freq_data_before_stage1
+FREQ_DATA = settings.FreqData(
+    lower_fb=1.988,  # WTF? Should be 1.99!!!
+    upper_fb=2.01,
+    max_freq=6.00,
+    dt=0.05
+)
+WHITE_NOISE = settings.WhiteNoise(
+    rnd_amp=0.000
+)
+TRUE_GEN_PARAMS = settings.GeneratorParameters(
+    d_2=0.25,
+    e_2=1.0,
+    m_2=1.0,
+    x_d2=0.01,
+    ic_d2=1.0
+)
+INTEGRATION_SETTINGS = settings.IntegrationSettings(
+    dt_step=0.05,
+    df_length=100.0
+)
+OSCILLATION_PARAMS = settings.OscillationParameters(
+    osc_amp=2.00,
+    osc_freq=0.005
+)
 
 
 
 def get_initial_freq_data():
-    time_data_after_snr_as_dict = get_correct_time_data_after_snr_as_dict()
+    time_data_after_snr_as_dict = correct_data.get_time_data_after_snr()
     time_data_after_snr = data.TimeData(
         Vm_time_data=time_data_after_snr_as_dict['Vm'],
         Va_time_data=time_data_after_snr_as_dict['Va'],
@@ -168,25 +56,20 @@ def get_initial_freq_data():
     snr = 45.0
     d_coi = 0.0
     time_data_after_snr.std_dev_Vm = (
-            np.std(time_data_after_snr.Vm, ddof=1) / (10.0 ** (snr / 20.0))
+        np.std(time_data_after_snr.Vm, ddof=1) / (10.0**(snr/20.0))
     )
     time_data_after_snr.std_dev_Im = (
-            np.std(time_data_after_snr.Im, ddof=1) / (10.0 ** (snr / 20.0))
+        np.std(time_data_after_snr.Im, ddof=1) / (10.0**(snr/20.0))
     )
     time_data_after_snr.std_dev_Va = (
-            np.std(time_data_after_snr.Va - d_coi, ddof=1) / (10.0 ** (snr / 20.0))
+        np.std(time_data_after_snr.Va - d_coi, ddof=1) / (10.0**(snr/20.0))
     )
     time_data_after_snr.std_dev_Ia = (
-            np.std(time_data_after_snr.Ia - d_coi, ddof=1) / (10.0 ** (snr / 20.0))
+        np.std(time_data_after_snr.Ia - d_coi, ddof=1) / (10.0**(snr/20.0))
     )
 
     return data.FreqData(time_data_after_snr)
 
-
-
-# =================================================================
-# ============= Preparations for testing finished =================
-# =================================================================
 
 
 
@@ -198,8 +81,10 @@ class AdmittanceMatrixTests(unittest.TestCase):
     and compares values of the matrix with true values in these points.
     """
 
-    def test_admittance_matrix_values(self):
-        pass
+    # def test_admittance_matrix_values(self):
+    #     admittance_matrix = create_admittance_matrix.AdmittanceMatrix(
+    #         is_actual=False
+    #     )
 
 
 
@@ -212,30 +97,11 @@ class TimeDataTests(unittest.TestCase):
     """
 
     def simulate_time_data(self):
-        white_noise = settings.WhiteNoise(
-            rnd_amp=0.000
-        )
-        # true generator parameters
-        generator_params = settings.GeneratorParameters(
-            d_2=0.25,
-            e_2=1.0,
-            m_2=1.0,
-            x_d2=0.01,
-            ic_d2=1.0
-        )
-        integration_settings = settings.IntegrationSettings(
-            dt_step=0.05,
-            df_length=100.0
-        )
-        oscillation_params = settings.OscillationParameters(
-            osc_amp=2.00,
-            osc_freq=0.005
-        )
         solver = dynamic_equations_to_simulate.OdeSolver(
-            white_noise=white_noise,
-            gen_param=generator_params,
-            osc_param=oscillation_params,
-            integr_param=integration_settings
+            white_noise=WHITE_NOISE,
+            gen_param=TRUE_GEN_PARAMS,
+            osc_param=OSCILLATION_PARAMS,
+            integr_param=INTEGRATION_SETTINGS
         )
         solver.simulate_time_data()
         time_data = data.TimeData(
@@ -261,6 +127,7 @@ class TimeDataTests(unittest.TestCase):
 
     def check_data(self, time_data, correct_time_data,
                    Vm_places, Va_places, Im_places, Ia_places):
+        self.check_lengths(time_data, correct_time_data)
         time_data_points_len = len(time_data.Vm)
         for i in range(time_data_points_len):
             self.assertAlmostEqual(
@@ -283,33 +150,29 @@ class TimeDataTests(unittest.TestCase):
 
     def test_data_simulation(self):
         time_data = self.simulate_time_data()
-        correct_time_data = get_correct_initial_time_data_as_dict()
-
-        self.check_lengths(time_data, correct_time_data)
+        correct_time_data = correct_data.get_initial_time_data()
         self.check_data(
             time_data=time_data,
             correct_time_data=correct_time_data,
-            Vm_places=-2,  # WARNING! Precision must be reduced!
-            Va_places=-2,  # WARNING! Precision must be reduced!
-            Im_places=-2,  # WARNING! Precision must be reduced!
-            Ia_places=-2   # WARNING! Precision must be reduced!
+            Vm_places=0,  # WARNING! Precision must be reduced!
+            Va_places=0,  # WARNING! Precision must be reduced!
+            Im_places=0,  # WARNING! Precision must be reduced!
+            Ia_places=0   # WARNING! Precision must be reduced!
         )
 
 
     def test_snr(self):
-        initial_time_data_as_dict = get_correct_initial_time_data_as_dict()
+        initial_time_data_as_dict = correct_data.get_initial_time_data()
         time_data = data.TimeData(
             Vm_time_data=initial_time_data_as_dict['Vm'],
             Va_time_data=initial_time_data_as_dict['Va'],
             Im_time_data=initial_time_data_as_dict['Im'],
             Ia_time_data=initial_time_data_as_dict['Ia'],
-            dt=0.05
+            dt=INTEGRATION_SETTINGS.dt_step
         )
 
         time_data.apply_white_noise(snr=45.0, d_coi=0.0)
-        correct_time_data = get_correct_time_data_after_snr_as_dict()
-
-        self.check_lengths(time_data, correct_time_data)
+        correct_time_data = correct_data.get_time_data_after_snr()
 
         # Applying SNR includes generation random numbers
         # That is why we compare a few digits using self.assertAlmostEqual
@@ -348,6 +211,7 @@ class FreqDataTests(unittest.TestCase):
 
 
     def check_data(self, freq_data, correct_freq_data, begin, end):
+        self.check_lengths(freq_data, correct_freq_data)
         for i in range(begin, end):
             self.assertAlmostEqual(
                 freq_data.Vm[i], correct_freq_data['Vm'][i],
@@ -376,20 +240,19 @@ class FreqDataTests(unittest.TestCase):
 
     def test_fft(self):
         freq_data = get_initial_freq_data()
-        correct_freq_data = get_correct_freq_data_after_fft_as_dict()
+        correct_freq_data = correct_data.get_freq_data_after_fft()
 
         freq_data_points_len = len(freq_data.freqs)
         self.assertEqual(freq_data_points_len, 1001)
         # TODO: check freq_data.freqs
-
-        self.check_lengths(freq_data, correct_freq_data)
-        self.check_std_deviations(freq_data)
 
         # DC has been excluded
         self.assertEqual(freq_data.Vm[0], 0.0)
         self.assertEqual(freq_data.Va[0], 0.0)
         self.assertEqual(freq_data.Im[0], 0.0)
         self.assertEqual(freq_data.Ia[0], 0.0)
+
+        self.check_std_deviations(freq_data)
         self.check_data(
             freq_data=freq_data,
             correct_freq_data=correct_freq_data,
@@ -401,14 +264,16 @@ class FreqDataTests(unittest.TestCase):
     def test_remove_zero_frequency_and_trim(self):
         freq_data = get_initial_freq_data()
         freq_data.remove_zero_frequency()
-        freq_data.trim(min_freq=0.0, max_freq=6.0)
-        correct_freq_data = get_correct_freq_data_after_trim_as_dict()
+        freq_data.trim(
+            min_freq=0.0,
+            max_freq=FREQ_DATA.max_freq
+        )
+        correct_freq_data = correct_data.get_freq_data_after_trim()
 
         freq_data_points_len = len(freq_data.freqs)
         self.assertEqual(freq_data_points_len, 600)
         # TODO: check freq_data.freqs
 
-        self.check_lengths(freq_data, correct_freq_data)
         self.check_std_deviations(freq_data)
         self.check_data(
             freq_data=freq_data,
@@ -421,43 +286,74 @@ class FreqDataTests(unittest.TestCase):
     def test_define_stage1_data_vector(self):
         freq_data = get_initial_freq_data()
         freq_data.remove_zero_frequency()
-        freq_data.trim(min_freq=0.0, max_freq=6.0)
-        # freq_data.remove_data_from_FO_band()
-        correct_freq_data = get_correct_freq_data_before_stage1_as_dict()
+        freq_data.trim(
+            min_freq=0.0,
+            max_freq=FREQ_DATA.max_freq
+        )
+        freq_data.remove_data_from_FO_band(
+            min_fo_freq=FREQ_DATA.lower_fb,
+            max_fo_freq=FREQ_DATA.upper_fb
+        )
+        correct_freq_data = correct_data.get_freq_data_before_stage1()
 
-        # freq_data_points_len = len(freq_data.freqs)
-        # self.assertEqual(freq_data_points_len, 597)
+        freq_data_points_len = len(freq_data.freqs)
+        self.assertEqual(freq_data_points_len, 597)
         # TODO: check freq_data.freqs
 
-        # self.check_lengths(freq_data, correct_freq_data)
         self.check_std_deviations(freq_data)
-        # self.check_data(
-        #     freq_data=freq_data,
-        #     correct_freq_data=correct_freq_data,
-        #     begin=0,
-        #     end=freq_data_points_len
-        # )
+        self.check_data(
+            freq_data=freq_data,
+            correct_freq_data=correct_freq_data,
+            begin=0,
+            end=freq_data_points_len
+        )
+
+
+class CovarianceMatrixTests(unittest.TestCase):
+
+    def test_covariance_matrix(self):
+        freq_data = get_initial_freq_data()
+        freq_data.remove_zero_frequency()
+        freq_data.trim(
+            min_freq=0.0,
+            max_freq=FREQ_DATA.max_freq
+        )
+        freq_data.remove_data_from_FO_band(
+            min_fo_freq=FREQ_DATA.lower_fb,
+            max_fo_freq=FREQ_DATA.upper_fb
+        )
+
+        uncertain_gen_params = objective_function.UncertainGeneratorParameters(
+            D_Ya=0.2066,  # check accordance D_Ya <-> d_2
+            Ef_a=0.8372,  # check accordance Ef_a <-> e_2
+            M_Ya=0.6654,  # check accordance M_Ya <-> m_2
+            X_Ya=0.0077,  # check accordance X_Ya <-> x_d2
+            std_dev_D_Ya=1000.0,
+            std_dev_Ef_a=1000.0,
+            std_dev_M_Ya=1000.0,
+            std_dev_X_Ya=1000.0
+        )
+
+        f = objective_function.ObjectiveFunction(
+            freq_data=freq_data,
+            prior_gen_params=uncertain_gen_params
+        )
+
+        gamma_L = f._gamma_L.compute(uncertain_gen_params)
+
+        self.assertAlmostEqual(gamma_L[0, 2387], 0.0)
+        self.assertAlmostEqual(gamma_L[1879, 1880], 0.0)
+        self.assertAlmostEqual(gamma_L[1879, 1878], 0.0)
+        self.assertAlmostEqual(gamma_L[0, 1], 0.0)
+        self.assertAlmostEqual(gamma_L[1, 0], 0.0)
+
+        self.assertAlmostEqual(gamma_L[0, 0] * 10**8, 2.0590, places=3)
+        self.assertAlmostEqual(gamma_L[1, 1] * 10**8, 2.0590, places=3)
+        # TODO: check values (the following line fails)
+        self.assertAlmostEqual(gamma_L[2387, 2387] * 10**12, 2.0539, places=3)
 
 
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
-
-
-
-# GP = settings.GeneratorParameters(  # true generator parameters
-#     d_2=0.25,
-#     e_2=1.0,
-#     m_2=1.0,
-#     x_d2=0.01,
-#     ic_d2=1.0
-# )
-#
-# FD = settings.FreqData(
-#     lower_fb=1.99,
-#     upper_fb=2.01,
-#     max_freq=6.00,
-#     dt=0.05
-# )
-
 

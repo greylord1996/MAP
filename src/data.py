@@ -210,22 +210,36 @@ class FreqData(Data):
             min_freq (float): minimum remaining frequency in the data
             max_freq (float): maximum remaining frequency in the data
         """
-        low_index = np.searchsorted(self.freqs, min_freq, side='left')
-        high_index = np.searchsorted(self.freqs, max_freq, side='right')
+        begin = np.searchsorted(self.freqs, min_freq, side='left')
+        end = np.searchsorted(self.freqs, max_freq, side='right')
 
-        self.freqs = self.freqs[low_index:high_index]
-        self.Vm = self.Vm[low_index:high_index]
-        self.Va = self.Va[low_index:high_index]
-        self.Im = self.Im[low_index:high_index]
-        self.Ia = self.Ia[low_index:high_index]
+        self.freqs = self.freqs[begin:end]
+        self.Vm = self.Vm[begin:end]
+        self.Va = self.Va[begin:end]
+        self.Im = self.Im[begin:end]
+        self.Ia = self.Ia[begin:end]
 
 
-    def remove_data_from_FO_band(self):
+    def remove_data_from_FO_band(self, min_fo_freq, max_fo_freq):
         """Removes data which are located in a forced oscillation band.
 
-        Identifies the range of frequencies where the forced oscillation
-        has significant effect and removes corresponding data
-        from frequency data (Vm, Va, Im, Ia).
+        Removes the range [min_fo_freq; max_fo_freq] of frequencies
+        where the forced oscillation has significant effect. Moreover,
+        it removes corresponding data from frequency data (Vm, Va, Im, Ia).
+
+        Args:
+            min_fo_freq (float): begin forced oscillation band
+            max_fo_freq (float): end forced oscillation band
         """
-        pass
+        # for i in range(len(self.freqs)):
+        #     print('###', i, self.freqs[i])
+        begin = np.searchsorted(self.freqs, min_fo_freq, side='left')
+        end = np.searchsorted(self.freqs, max_fo_freq, side='right')
+        removing_indexes = np.arange(begin, end)
+
+        self.freqs = np.delete(self.freqs, removing_indexes)
+        self.Vm = np.delete(self.Vm, removing_indexes)
+        self.Va = np.delete(self.Va, removing_indexes)
+        self.Im = np.delete(self.Im, removing_indexes)
+        self.Ia = np.delete(self.Ia, removing_indexes)
 
