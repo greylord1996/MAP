@@ -220,7 +220,7 @@ class FreqData(Data):
         self.Ia = self.Ia[begin:end]
 
 
-    def remove_data_from_FO_band(self, min_fo_freq, max_fo_freq):
+    def remove_data_from_fo_band(self, min_fo_freq, max_fo_freq):
         """Removes data which are located in a forced oscillation band.
 
         Removes the range [min_fo_freq; max_fo_freq] of frequencies
