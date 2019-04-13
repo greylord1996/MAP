@@ -2,7 +2,6 @@ import numpy as np
 from scipy.interpolate import interp1d
 from scipy.integrate import *
 import matplotlib.pyplot as plt
-from settings import GeneratorParameters, OscillationParameters, WhiteNoise
 import time
 
 i = 0
@@ -128,7 +127,7 @@ class OdeSolver:
 
 
 
-# Test mode, just for checking appropriate working
+# Test mode, just for checking correct working
 
 import settings
 
@@ -155,12 +154,6 @@ OP = settings.OscillationParameters(
     osc_freq=0.005
 )
 
-
-
-# WN = {'rnd_amp': 0.00}
-# GP = {'d_2': 0.25, 'e_2': 1, 'm_2': 1, 'x_d2': 0.01, 'ic_d2': 1}
-# IP = {'dt_step': 0.05, 'df_length': 100}
-# OP = {'osc_amp': 2.00, 'osc_freq': 0.005}
 
 
 # solver = OdeSolver(WN, GP, OP, IS)

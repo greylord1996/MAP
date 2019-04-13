@@ -18,7 +18,7 @@ class AdmittanceMatrix:
         Ys: admittance matrix
     """
 
-    def __init__(self, is_actual=True):  # may be False just for debugging
+    def __init__(self, is_actual=True):  # set True in release
         path_to_this_file = os.path.abspath(os.path.dirname(__file__))
         path_to_matrix_file = os.path.join(
             path_to_this_file,
@@ -69,10 +69,12 @@ class AdmittanceMatrix:
             Ys = Ys.subs(Vm_a, 1)
 
             self.Ys = Ys
-            pickle.dump(self.Ys, open(path_to_matrix_file, 'wb'))
+            with open(path_to_matrix_file, 'wb') as matrix_file:
+                pickle.dump(self.Ys, matrix_file)
 
         else:
-            self.Ys = pickle.load(open(path_to_matrix_file, 'rb'))
+            with open(path_to_matrix_file, 'rb') as matrix_file:
+                self.Ys = pickle.load(matrix_file)
 
 
 

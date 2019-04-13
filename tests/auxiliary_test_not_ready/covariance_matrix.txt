@@ -1,0 +1,8 @@
+Lk_Cov: 2388*2388 sparse double (evaluated in prior_mean point)
+
+Lk_Cov(1, 1)       = 2.0590e-08
+Lk_Cov(2, 2)       = 2.0590e-08
+Lk_Cov(2388, 2388) = 2.0539e-12
+Lk_Cov(1, 2388)    = 0.0
+
+

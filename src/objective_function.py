@@ -2,7 +2,7 @@ import numpy as np
 import scipy as sp
 import sympy
 
-from create_admittance_matrix import AdmittanceMatrix
+import admittance_matrix
 import utils
 
 
@@ -75,11 +75,11 @@ class ResidualVector:
         """
         self._freq_data = freq_data
 
-        admittance_matrix = AdmittanceMatrix().Ys
-        Y11 = admittance_matrix[0, 0]
-        Y12 = admittance_matrix[0, 1]
-        Y21 = admittance_matrix[1, 0]
-        Y22 = admittance_matrix[1, 1]
+        matrix_Y = admittance_matrix.AdmittanceMatrix().Ys
+        Y11 = matrix_Y[0, 0]
+        Y12 = matrix_Y[0, 1]
+        Y21 = matrix_Y[1, 0]
+        Y22 = matrix_Y[1, 1]
 
         Y11r, Y11i = sympy.re(Y11), sympy.im(Y11)
         Y12r, Y12i = sympy.re(Y12), sympy.im(Y12)
@@ -213,11 +213,11 @@ class CovarianceMatrix:
         std_eps_Im = freq_data.std_w_Im
         std_eps_Ia = freq_data.std_w_Ia
 
-        admittance_matrix = AdmittanceMatrix().Ys
-        Y11 = admittance_matrix[0, 0]
-        Y12 = admittance_matrix[0, 1]
-        Y21 = admittance_matrix[1, 0]
-        Y22 = admittance_matrix[1, 1]
+        matrix_Y = admittance_matrix.AdmittanceMatrix().Ys
+        Y11 = matrix_Y[0, 0]
+        Y12 = matrix_Y[0, 1]
+        Y21 = matrix_Y[1, 0]
+        Y22 = matrix_Y[1, 1]
 
         Y11r, Y11i = sympy.re(Y11), sympy.im(Y11)
         Y12r, Y12i = sympy.re(Y12), sympy.im(Y12)

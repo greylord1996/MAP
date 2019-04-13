@@ -205,6 +205,7 @@ class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
             QtWidgets.QApplication.quit()
 
 
+
 def main():
     app = QtWidgets.QApplication(sys.argv)
     main_window = MainWindow()
