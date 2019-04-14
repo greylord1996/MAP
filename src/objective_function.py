@@ -123,7 +123,7 @@ class ResidualVector:
 
 
     def compute(self, uncertain_gen_params):
-        """Computes the residual vector in the given point.
+        """Computes the residual vector at the given point.
 
         Args:
             uncertain_gen_params (class UncertainGeneratorParameters):
@@ -312,7 +312,7 @@ class CovarianceMatrix:
 
 
     def compute(self, uncertain_gen_params):
-        """Computes the covariance matrix in the given point.
+        """Computes the covariance matrix at the given point.
 
         Builds and computes the numerical value of the covariance matrix
         in the point specified by 'generator_params'. The result matrix
@@ -379,7 +379,7 @@ class CovarianceMatrix:
 
 
     def compute_and_inverse(self, uncertain_gen_params):
-        """Computes the inversed covariance matrix in the given point.
+        """Computes the inversed covariance matrix at the given point.
 
         Does exactly the same as 'compute' method but after computing
         the covariance matrix this method make the calculated matrix inversed
@@ -418,7 +418,7 @@ class ObjectiveFunction:
     """
 
     def __init__(self, freq_data, prior_gen_params):
-        """Prepares for computing the objective function in a given point.
+        """Prepares for computing the objective function at a given point.
 
         Args:
             freq_data (class FreqData): data in frequency domain
@@ -446,7 +446,7 @@ class ObjectiveFunction:
 
 
     def compute(self, uncertain_gen_params):
-        """Computes value of the objective function in the given point.
+        """Computes value of the objective function at the given point.
 
         Args:
             uncertain_gen_params (class UncertainGeneratorParameters):
@@ -477,7 +477,7 @@ class ObjectiveFunction:
 
 
     def compute_by_array(self, uncertain_gen_params):
-        """Computes value of the objective function in the given point.
+        """Computes value of the objective function at the given point.
 
         This method just calls self.compute method
         transforming the sole argument from numpy.array to an instance

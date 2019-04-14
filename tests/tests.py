@@ -5,10 +5,10 @@ import unittest
 
 import numpy as np
 
+
 # directory with source code
-sys.path.append(os.path.join(
-    os.path.abspath(os.path.dirname(__file__)), '..', 'src')
-)
+PATH_TO_THIS_FILE = os.path.abspath(os.path.dirname(__file__))
+sys.path.append(os.path.join(PATH_TO_THIS_FILE, '..', 'src'))
 
 import dynamic_equations_to_simulate
 import admittance_matrix
@@ -19,10 +19,10 @@ import our_data
 import correct_data
 
 
-
+# Test sets
 TEST_DIRS = (
-    'Rnd_Amp_0000',
-    # 'Rnd_Amp_0002'
+    os.path.join(PATH_TO_THIS_FILE, 'Rnd_Amp_0000'),
+    # os.path.join(PATH_TO_THIS_FILE, 'Rnd_Amp_0002')
 )
 
 
@@ -82,7 +82,7 @@ class TimeDataTests(unittest.TestCase):
     def _check_data(self, time_data, correct_time_data):
         self._check_lengths(time_data, correct_time_data)
         time_data_points_len = len(time_data.Vm)
-        relative_precision = 1  # WARNING! Low precision!
+        relative_precision = 2  # WARNING! Low precision!
 
         for i in range(time_data_points_len):
             self.assertAlmostEqual(
@@ -107,11 +107,6 @@ class TimeDataTests(unittest.TestCase):
         for test_dir in TEST_DIRS:
             time_data = self._simulate_time_data(test_dir)
             correct_time_data = correct_data.get_initial_time_data(test_dir)
-
-            # for i in range(len(time_data.Vm)):
-            #     if round(time_data.Im[i] - correct_time_data['Im'][i], 0):
-            #         print('????????', #time_data.Im[i], correct_time_data['Im'][i],
-            #               abs(time_data.Im[i] - correct_time_data['Im'][i]))
 
             self._check_data(
                 time_data=time_data,
@@ -294,16 +289,47 @@ class FreqDataTests(unittest.TestCase):
 
 
 
-class CovarianceMatrixTests(unittest.TestCase):
-    """Checks correctness of the covariance matrix (denoted as gamma_L).
+class ObjectiveFunctionTests(unittest.TestCase):
+    """Checks correctness of the objective function (which will be minimized).
 
-    Computes covariance matrix in point specified by initial
-    uncertain generator parameters and compares come picked values
-    of the computed matrix with true values
-    (see test_dir/correct_values.json, section 'CovarianceMatrix').
+    Computes the objective function at some picked points and compares
+    obtained values with true values (see test_dir/correct_values.json).
     """
 
-    def test_covariance_matrix(self):
+    def _ckeck_covariance_matrix(self, gamma_L, test_dir):
+        correct_values = correct_data.get_correct_values(test_dir)
+        correct_gamma_L = correct_values['CovarianceMatrix']
+
+        self.assertEqual(gamma_L.shape[0], correct_gamma_L['size_y'])
+        self.assertEqual(gamma_L.shape[1], correct_gamma_L['size_x'])
+
+        for coords, matrix_element in correct_gamma_L['values'].items():
+            y_coord = int(coords.split(',')[0]) - 1
+            x_coord = int(coords.split(',')[1]) - 1
+            self.assertAlmostEqual(
+                gamma_L[y_coord][x_coord] / matrix_element, 1.0,
+                places=3
+            )
+
+
+    def _check_objective_function(self, func, test_dir):
+        correct_values = correct_data.get_correct_values(test_dir)
+        correct_func = correct_values['ObjectiveFunction']
+        # print('f =', f.compute_by_array(np.array([100.0, 100.0, 100.0, 100.0])))
+
+        for args, correct_func_value in correct_func['values'].items():
+            args_array = np.array([np.float(arg) for arg in args.split(',')])
+            print(
+                'TEST_OBJECTVE_FUNCTION, OUR/CORRECT RATIO: ',
+                func.compute_by_array(args_array) / correct_func_value
+            )
+            # self.assertAlmostEqual(
+            #     func.compute_by_array(args_array) / correct_func_value, 1.0,
+            #     places=3
+            # )
+
+
+    def test_objective_function(self):
         for test_dir in TEST_DIRS:
             # initial_params = our_data.get_initial_params(test_dir)
             freq_data = our_data.get_prepared_freq_data(test_dir)
@@ -325,23 +351,14 @@ class CovarianceMatrixTests(unittest.TestCase):
                 prior_gen_params=gen_params
             )
 
-            # evaluating gamma_L in the gen_params point
-            gamma_L = f._gamma_L.compute(gen_params)
-
-            # correct_gamma_L -- correct gamma_L matrix
-            correct_values = correct_data.get_correct_values(test_dir)
-            correct_gamma_L = correct_values['CovarianceMatrix']
-
-            self.assertEqual(gamma_L.shape[0], correct_gamma_L['size_y'])
-            self.assertEqual(gamma_L.shape[1], correct_gamma_L['size_x'])
-
-            for coords, matrix_element in correct_gamma_L['values'].items():
-                y_coord = int(coords.split(',')[0]) - 1
-                x_coord = int(coords.split(',')[1]) - 1
-                self.assertAlmostEqual(
-                    gamma_L[y_coord][x_coord] / matrix_element, 1.0,
-                    places=3
-                )
+            self._ckeck_covariance_matrix(
+                gamma_L=f._gamma_L.compute(gen_params),
+                test_dir=test_dir
+            )
+            self._check_objective_function(
+                func=f,
+                test_dir=test_dir
+            )
 
 
 

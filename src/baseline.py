@@ -139,7 +139,7 @@ solver = dynamic_equations_to_simulate.OdeSolver(
     osc_param=OP,
     integr_param=IS
 )
-solver.solve()
+# solver.solve()
 
 solver.simulate_time_data()
 time_data = data.TimeData(
