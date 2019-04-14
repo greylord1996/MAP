@@ -6,7 +6,7 @@
     },
     "FreqData":
     {
-        "lower_fb": 1.99,
+        "lower_fb": 1.988,
         "upper_fb": 2.01,
         "max_freq": 6.0,
         "dt": 0.005

@@ -332,28 +332,36 @@ class CovarianceMatrix:
         X_Ya = uncertain_gen_params.X_Ya
 
         gamma_NrNr = np.diag([
-            self._NrNr(D_Ya, Ef_a, M_Ya, X_Ya, freq) for freq in self._freqs
+            self._NrNr(D_Ya, Ef_a, M_Ya, X_Ya, 2.0 * np.pi * freq)
+            for freq in self._freqs
         ])
         gamma_NrQr = np.diag([
-            self._NrQr(D_Ya, Ef_a, M_Ya, X_Ya, freq) for freq in self._freqs
+            self._NrQr(D_Ya, Ef_a, M_Ya, X_Ya, 2.0 * np.pi * freq)
+            for freq in self._freqs
         ])
         gamma_NrQi = np.diag([
-            self._NrQi(D_Ya, Ef_a, M_Ya, X_Ya, freq) for freq in self._freqs
+            self._NrQi(D_Ya, Ef_a, M_Ya, X_Ya, 2.0 * np.pi * freq)
+            for freq in self._freqs
         ])
         gamma_NiNi = np.diag([
-            self._NiNi(D_Ya, Ef_a, M_Ya, X_Ya, freq) for freq in self._freqs
+            self._NiNi(D_Ya, Ef_a, M_Ya, X_Ya, 2.0 * np.pi * freq)
+            for freq in self._freqs
         ])
         gamma_NiQr = np.diag([
-            self._NiQr(D_Ya, Ef_a, M_Ya, X_Ya, freq) for freq in self._freqs
+            self._NiQr(D_Ya, Ef_a, M_Ya, X_Ya, 2.0 * np.pi * freq)
+            for freq in self._freqs
         ])
         gamma_NiQi = np.diag([
-            self._NiQi(D_Ya, Ef_a, M_Ya, X_Ya, freq) for freq in self._freqs
+            self._NiQi(D_Ya, Ef_a, M_Ya, X_Ya, 2.0 * np.pi * freq)
+            for freq in self._freqs
         ])
         gamma_QrQr = np.diag([
-            self._QrQr(D_Ya, Ef_a, M_Ya, X_Ya, freq) for freq in self._freqs
+            self._QrQr(D_Ya, Ef_a, M_Ya, X_Ya, 2.0 * np.pi * freq)
+            for freq in self._freqs
         ])
         gamma_QiQi = np.diag([
-            self._QiQi(D_Ya, Ef_a, M_Ya, X_Ya, freq) for freq in self._freqs
+            self._QiQi(D_Ya, Ef_a, M_Ya, X_Ya, 2.0 * np.pi * freq)
+            for freq in self._freqs
         ])
         gamma_QrNr = gamma_NrQr
         gamma_QrNi = gamma_NiQr
@@ -384,7 +392,7 @@ class CovarianceMatrix:
 
         Returns:
             gamma_L^(-1) (numpy.ndarray): inversed covariance matrix
-                in the given point
+                evaluated in the given point
         """
         return sp.sparse.linalg.inv(sp.sparse.csc_matrix(
             self.compute(uncertain_gen_params)

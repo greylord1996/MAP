@@ -13,7 +13,7 @@ def _get_data_from_file(data_file, is_complex):
         lines = input_file.readlines()
         data = np.zeros(
             len(lines),
-            dtype=(np.complex128 if is_complex else np.float128)
+            dtype=(np.complex if is_complex else np.float)
         )
 
         for i in range(len(lines)):
@@ -23,7 +23,7 @@ def _get_data_from_file(data_file, is_complex):
                 number = number.replace(' ', '')
                 data[i] = np.complex(number)
             else:
-                data[i] = np.float128(number)
+                data[i] = np.float(number)
 
     return data
 

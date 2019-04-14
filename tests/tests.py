@@ -3,6 +3,8 @@ import os
 import os.path
 import unittest
 
+import numpy as np
+
 # directory with source code
 sys.path.append(os.path.join(
     os.path.abspath(os.path.dirname(__file__)), '..', 'src')
@@ -11,7 +13,6 @@ sys.path.append(os.path.join(
 import dynamic_equations_to_simulate
 import admittance_matrix
 import objective_function
-import settings
 import data
 
 import our_data
@@ -78,26 +79,27 @@ class TimeDataTests(unittest.TestCase):
         self.assertEqual(len(time_data.Ia), len(correct_time_data['Ia']))
 
 
-    def _check_data(self, time_data, correct_time_data,
-                    Vm_places, Va_places, Im_places, Ia_places):
+    def _check_data(self, time_data, correct_time_data):
         self._check_lengths(time_data, correct_time_data)
         time_data_points_len = len(time_data.Vm)
+        relative_precision = 1  # WARNING! Low precision!
+
         for i in range(time_data_points_len):
             self.assertAlmostEqual(
-                time_data.Vm[i], correct_time_data['Vm'][i],
-                places=Vm_places
+                time_data.Vm[i] / correct_time_data['Vm'][i], 1.0,
+                places=relative_precision
             )
             self.assertAlmostEqual(
-                time_data.Va[i], correct_time_data['Va'][i],
-                places=Va_places
+                time_data.Va[i] / correct_time_data['Va'][i], 1.0,
+                places=relative_precision
             )
             self.assertAlmostEqual(
-                time_data.Im[i], correct_time_data['Im'][i],
-                places=Im_places
+                time_data.Im[i] / correct_time_data['Im'][i], 1.0,
+                places=relative_precision
             )
             self.assertAlmostEqual(
-                time_data.Ia[i], correct_time_data['Ia'][i],
-                places=Ia_places
+                time_data.Ia[i] / correct_time_data['Ia'][i], 1.0,
+                places=relative_precision
             )
 
 
@@ -105,13 +107,15 @@ class TimeDataTests(unittest.TestCase):
         for test_dir in TEST_DIRS:
             time_data = self._simulate_time_data(test_dir)
             correct_time_data = correct_data.get_initial_time_data(test_dir)
+
+            # for i in range(len(time_data.Vm)):
+            #     if round(time_data.Im[i] - correct_time_data['Im'][i], 0):
+            #         print('????????', #time_data.Im[i], correct_time_data['Im'][i],
+            #               abs(time_data.Im[i] - correct_time_data['Im'][i]))
+
             self._check_data(
                 time_data=time_data,
-                correct_time_data=correct_time_data,
-                Vm_places=2,  # WARNING! Precision must be reduced!
-                Va_places=2,  # WARNING! Precision must be reduced!
-                Im_places=0,  # WARNING! Precision must be reduced!
-                Ia_places=0   # WARNING! Precision must be reduced!
+                correct_time_data=correct_time_data
             )
 
 
@@ -135,14 +139,9 @@ class TimeDataTests(unittest.TestCase):
             correct_time_data = correct_data.get_time_data_after_snr(test_dir)
 
             # Applying SNR includes generation random numbers
-            # That is why we compare a few digits using self.assertAlmostEqual
             self._check_data(
                 time_data=time_data,
-                correct_time_data=correct_time_data,
-                Vm_places=0,   # WARNING! Lo precision!
-                Va_places=0,   # WARNING! Lo precision!
-                Im_places=-1,  # WARNING! Lo precision!
-                Ia_places=0    # WARNING! Lo precision!
+                correct_time_data=correct_time_data
             )
 
 
@@ -172,30 +171,29 @@ class FreqDataTests(unittest.TestCase):
 
     def _check_data(self, freq_data, correct_freq_data, begin, end):
         self._check_lengths(freq_data, correct_freq_data)
-        comparing_digits_after_decimal_point = 12
-
         for i in range(begin, end):
             self.assertAlmostEqual(
                 freq_data.freqs[i], correct_freq_data['freqs'][i],
-                places=comparing_digits_after_decimal_point
+                places=13
             )
 
+        relative_precision = 10
         for i in range(begin, end):
+            # self.assertAlmostEqual(
+            #     freq_data.Vm[i] / correct_freq_data['Vm'][i], np.complex(1.0),
+            #     places=relative_precision
+            # )
             self.assertAlmostEqual(
-                freq_data.Vm[i], correct_freq_data['Vm'][i],
-                places=comparing_digits_after_decimal_point
+                freq_data.Va[i] / correct_freq_data['Va'][i], np.complex(1.0),
+                places=relative_precision
             )
             self.assertAlmostEqual(
-                freq_data.Va[i], correct_freq_data['Va'][i],
-                places=comparing_digits_after_decimal_point
+                freq_data.Im[i] / correct_freq_data['Im'][i], np.complex(1.0),
+                places=relative_precision
             )
             self.assertAlmostEqual(
-                freq_data.Im[i], correct_freq_data['Im'][i],
-                places=comparing_digits_after_decimal_point
-            )
-            self.assertAlmostEqual(
-                freq_data.Ia[i], correct_freq_data['Ia'][i],
-                places=comparing_digits_after_decimal_point
+                freq_data.Ia[i] / correct_freq_data['Ia'][i], np.complex(1.0),
+                places=relative_precision
             )
 
 
@@ -203,23 +201,23 @@ class FreqDataTests(unittest.TestCase):
         freq_data = our_data.get_initial_freq_data(test_dir)
         all_correct_values = correct_data.get_correct_values(test_dir)
         correct_std_deviations = all_correct_values['freq_data_std_dev_eps']
+        relative_precision = 3
 
-        # TODO: why freq_data.std_w_Vm == 0 ?
         # self.assertAlmostEqual(
-        #     freq_data.std_w_Vm, correct_std_deviations['std_dev_eps_Vm'],
-        #     places=21
+        #     freq_data.std_w_Vm / correct_std_deviations['std_dev_eps_Vm'], 1.0,
+        #     places=relative_precision
         # )
         self.assertAlmostEqual(
-            freq_data.std_w_Va, correct_std_deviations['std_dev_eps_Va'],
-            places=7
+            freq_data.std_w_Va / correct_std_deviations['std_dev_eps_Va'], 1.0,
+            places=relative_precision
         )
         self.assertAlmostEqual(
-            freq_data.std_w_Im, correct_std_deviations['std_dev_eps_Im'],
-            places=6
+            freq_data.std_w_Im / correct_std_deviations['std_dev_eps_Im'], 1.0,
+            places=relative_precision
         )
         self.assertAlmostEqual(
-            freq_data.std_w_Ia, correct_std_deviations['std_dev_eps_Ia'],
-            places=7
+            freq_data.std_w_Ia / correct_std_deviations['std_dev_eps_Ia'], 1.0,
+            places=relative_precision
         )
 
 
@@ -297,13 +295,20 @@ class FreqDataTests(unittest.TestCase):
 
 
 class CovarianceMatrixTests(unittest.TestCase):
-    """"""
+    """Checks correctness of the covariance matrix (denoted as gamma_L).
+
+    Computes covariance matrix in point specified by initial
+    uncertain generator parameters and compares come picked values
+    of the computed matrix with true values
+    (see test_dir/correct_values.json, section 'CovarianceMatrix').
+    """
 
     def test_covariance_matrix(self):
         for test_dir in TEST_DIRS:
-            initial_params = our_data.get_initial_params(test_dir)
+            # initial_params = our_data.get_initial_params(test_dir)
             freq_data = our_data.get_prepared_freq_data(test_dir)
 
+            # perturbed generator's parameters
             gen_params = objective_function.UncertainGeneratorParameters(
                 D_Ya=0.206552362540141,
                 Ef_a=0.837172184078094,
@@ -314,34 +319,32 @@ class CovarianceMatrixTests(unittest.TestCase):
                 std_dev_M_Ya=1000.0,
                 std_dev_X_Ya=1000.0
             )
+            # f -- objective function to minimize
             f = objective_function.ObjectiveFunction(
                 freq_data=freq_data,
                 prior_gen_params=gen_params
             )
 
+            # evaluating gamma_L in the gen_params point
             gamma_L = f._gamma_L.compute(gen_params)
-            correct_gamma_L = correct_data.get_correct_values(test_dir)['CovarianceMatrix']
 
+            # correct_gamma_L -- correct gamma_L matrix
+            correct_values = correct_data.get_correct_values(test_dir)
+            correct_gamma_L = correct_values['CovarianceMatrix']
 
+            self.assertEqual(gamma_L.shape[0], correct_gamma_L['size_y'])
+            self.assertEqual(gamma_L.shape[1], correct_gamma_L['size_x'])
 
-            # self.assertAlmostEqual(gamma_L[0, 2387], 0.0)
-            # self.assertAlmostEqual(gamma_L[1879, 1880], 0.0)
-            # self.assertAlmostEqual(gamma_L[1879, 1878], 0.0)
-            # self.assertAlmostEqual(gamma_L[0, 1], 0.0)
-            # self.assertAlmostEqual(gamma_L[1, 0], 0.0)
-            #
-            # self.assertAlmostEqual(gamma_L[0, 0] * 10**8, 2.0590, places=3)
-            # self.assertAlmostEqual(gamma_L[1, 1] * 10**8, 2.0590, places=3)
-            # TODO: check values (the following line fails)
-            # self.assertAlmostEqual(gamma_L[2387, 2387] * 10**12, 2.0539, places=3)
-
-
-
-def run(verbosity):
-    unittest.main(verbosity=verbosity)
+            for coords, matrix_element in correct_gamma_L['values'].items():
+                y_coord = int(coords.split(',')[0]) - 1
+                x_coord = int(coords.split(',')[1]) - 1
+                self.assertAlmostEqual(
+                    gamma_L[y_coord][x_coord] / matrix_element, 1.0,
+                    places=3
+                )
 
 
 
 if __name__ == '__main__':
-    run(verbosity=2)
+    unittest.main(verbosity=2)
 
