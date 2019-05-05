@@ -38,24 +38,6 @@ class OptimizingGeneratorParameters:
         self.X_Ya = X_Ya
 
 
-    def __add__(self, other):
-        return OptimizingGeneratorParameters(
-            D_Ya=self.D_Ya + other.D_Ya,
-            Ef_a=self.Ef_a + other.Ef_a,
-            M_Ya=self.M_Ya + other.M_Ya,
-            X_Ya=self.X_Ya + other.X_Ya
-        )
-
-
-    def __sub__(self, other):
-        return OptimizingGeneratorParameters(
-            D_Ya=self.D_Ya - other.D_Ya,
-            Ef_a=self.Ef_a - other.Ef_a,
-            M_Ya=self.M_Ya - other.M_Ya,
-            X_Ya=self.X_Ya - other.X_Ya
-        )
-
-
     @property
     def as_array(self):
         """Returns generator parameters as a numpy.array."""
@@ -387,6 +369,7 @@ class CovarianceMatrix:
                     expr=sympy.diff(element_expr, gen_param),
                     # there are some problems with sign function in numexpr
                     modules=('numexpr' if gen_param_name != 'Ef_a' else 'numpy')
+                    # modules='numexpr'
                 )
 
 
@@ -581,7 +564,13 @@ class ObjectiveFunction:
         """
         self._R = ResidualVector(freq_data)
         self._gamma_L = CovarianceMatrix(freq_data)
-        self._gen_params_prior_means = gen_params_prior_means
+
+        self._gen_params_prior_means = np.array([
+            gen_params_prior_means.D_Ya,
+            gen_params_prior_means.Ef_a,
+            gen_params_prior_means.M_Ya,
+            gen_params_prior_means.X_Ya
+        ])
         self._reversed_gamma_g = np.diag([
             gen_params_prior_std_devs.D_Ya,
             gen_params_prior_std_devs.Ef_a,
@@ -601,9 +590,13 @@ class ObjectiveFunction:
         Returns:
             value (numpy.float64) of the objective function at the given point
         """
-        curr_delta_params = (
-            (optimizing_gen_params - self._gen_params_prior_means).as_array
-        )
+        curr_delta_params = np.array([
+            optimizing_gen_params.D_Ya,
+            optimizing_gen_params.Ef_a,
+            optimizing_gen_params.M_Ya,
+            optimizing_gen_params.X_Ya,
+        ]) - self._gen_params_prior_means
+
         computed_R = self._R.compute(optimizing_gen_params)
         computed_inverted_gamma_L = (
             self._gamma_L.compute_and_invert(optimizing_gen_params)
@@ -627,7 +620,6 @@ class ObjectiveFunction:
             optimizing_gen_params (class OptimizingGeneratorParameters):
                 current parameters of a generator
                 (at the current step of an optimization routine)
-
 
         Returns:
             gradients (numpy.float64) of objective function at the given point
