@@ -7,45 +7,53 @@ import utils
 
 
 
-class UncertainGeneratorParameters:
-    """Wrapper around 4 uncertain parameters of a generator.
+class OptimizingGeneratorParameters:
+    """Wrapper around 4 parameters of a generator which we want to clarify.
 
-    Unfortunately, it is not allowed to simply add or remove uncertain
-    generator parameters from this class. If you want add or remove some
-    such parameters, it will require changing some code in this file
+    Unfortunately, it is not allowed to simply add or remove optimizing
+    parameters (of a generator) from this class. If you want add or remove
+    some such parameters, it will require changing some code in this file
     (you should pay attention to substitution of the fields to
     symbolic expressions). To sum up, this class is only for readability
-    of the code and is not convenient for extensibility.
+    of the code and not for extensibility.
 
     Attributes:
         D_Ya (float): generator damping
         Ef_a (float): generator field voltage magnitude
         M_Ya (float): what is M in papers???
         X_Ya (float): generator reactance (inductance)
-
-        std_dev_D_Ya (float): standard variance of D_Ya
-        std_dev_Ef_a (float): standard variance of Ef_a
-        std_dev_M_Ya (float): standard variance of M_Ya
-        std_dev_X_Ya (float): standard variance of X_Ya
     """
 
-    def __init__(self, D_Ya, Ef_a, M_Ya, X_Ya,
-                 std_dev_D_Ya, std_dev_Ef_a, std_dev_M_Ya, std_dev_X_Ya):
-        """Inits all fields which are uncertain parameters of a generator.
+    def __init__(self, D_Ya, Ef_a, M_Ya, X_Ya):
+        """Inits all fields which represents a starting point for an optimizer.
 
-        This method requires prior values of uncertain parameters of a
-        generator and their standard variances. These values will be updated
-        after finishing an optimization routine.
+        This method requires prior values of optimizing parameters of
+        a generator. Obtained 4-dimensional point will be treated as
+        the starting point for an optimization routine. Values of prior
+        parameters should be enough closed to the true parameters.
         """
         self.D_Ya = D_Ya
         self.Ef_a = Ef_a
         self.M_Ya = M_Ya
         self.X_Ya = X_Ya
 
-        self.std_dev_D_Ya = std_dev_D_Ya
-        self.std_dev_Ef_a = std_dev_Ef_a
-        self.std_dev_M_Ya = std_dev_M_Ya
-        self.std_dev_X_Ya = std_dev_X_Ya
+
+    def __add__(self, other):
+        return OptimizingGeneratorParameters(
+            D_Ya=self.D_Ya + other.D_Ya,
+            Ef_a=self.Ef_a + other.Ef_a,
+            M_Ya=self.M_Ya + other.M_Ya,
+            X_Ya=self.X_Ya + other.X_Ya
+        )
+
+
+    def __sub__(self, other):
+        return OptimizingGeneratorParameters(
+            D_Ya=self.D_Ya - other.D_Ya,
+            Ef_a=self.Ef_a - other.Ef_a,
+            M_Ya=self.M_Ya - other.M_Ya,
+            X_Ya=self.X_Ya - other.X_Ya
+        )
 
 
     @property
@@ -59,16 +67,30 @@ class UncertainGeneratorParameters:
 class ResidualVector:
     """Wrapper for calculations of R (residual vector).
 
+     Based on the paper, vector R is equal to (Mr, Mi, Pr, Pi)^T.
+     But the vector R is not stored. Instead of it this class stores
+     only 4 functions for further computing and constructing the vector R
+     at any given point on demand (see self.compute method).
+
     Attributes:
         _freq_data (class FreqData): data in frequency domain
         _Mr (function): for computing elements of vector Mr
         _Mi (function): for computing elements of vector Mi
         _Pr (function): for computing elements of vector Pr
         _Pi (function): for computing elements of vector Pi
+
+    Note:
+        All attributes are private. Don't change them outside this class.
+        Communicate with an instance of this class only via its public methods.
     """
 
     def __init__(self, freq_data):
-        """Prepares for computing the covariance matrix in a given point.
+        """Prepares for computing the covariance matrix at the given point.
+
+        Stores data in frequency domain and 4 compiled functions
+        (see sympy.lambdify) for further computing and constructing
+        the vector R at any 4-dimensional point (the number of parameters
+        which we optimize is equal to 4).
 
         Args:
             freq_data (class FreqData): data in frequency domain
@@ -96,44 +118,94 @@ class ResidualVector:
             'D_Ya Ef_a M_Ya X_Ya Omega_a',
             real=True
         )
+        args_list = [Vm, Va, Im, Ia, D_Ya, Ef_a, M_Ya, X_Ya, Omega_a]
+
+        Mr_expr = Imr - Y11r*Vmr + Y11i*Vmi - Y12r*Var + Y12i*Vai
+        Mi_expr = Imi - Y11i*Vmr - Y11r*Vmi - Y12i*Var - Y12r*Vai
+        Pr_expr = Iar - Y21r*Vmr + Y21i*Vmi - Y22r*Var + Y22i*Vai
+        Pi_expr = Iai - Y21i*Vmr - Y21r*Vmi - Y22i*Var - Y22r*Vai
 
         self._Mr = sympy.lambdify(
-            args=[Vm, Va, Im, Ia, D_Ya, Ef_a, M_Ya, X_Ya, Omega_a],
-            expr=(Imr - Y11r*Vmr + Y11i*Vmi - Y12r*Var + Y12i*Vai),
+            args=args_list,
+            expr=Mr_expr,
             modules='numexpr'
         )
-
         self._Mi = sympy.lambdify(
-            args=[Vm, Va, Im, Ia, D_Ya, Ef_a, M_Ya, X_Ya, Omega_a],
-            expr=(Imi - Y11i*Vmr - Y11r*Vmi - Y12i*Var - Y12r*Vai),
+            args=args_list,
+            expr=Mi_expr,
             modules='numexpr'
         )
-
         self._Pr = sympy.lambdify(
-            args=[Vm, Va, Im, Ia, D_Ya, Ef_a, M_Ya, X_Ya, Omega_a],
-            expr=(Iar - Y21r*Vmr + Y21i*Vmi - Y22r*Var + Y22i*Vai),
+            args=args_list,
+            expr=Pr_expr,
             modules='numexpr'
         )
-
         self._Pi = sympy.lambdify(
-            args=[Vm, Va, Im, Ia, D_Ya, Ef_a, M_Ya, X_Ya, Omega_a],
-            expr=(Iai - Y21i*Vmr - Y21r*Vmi - Y22i*Var - Y22r*Vai),
+            args=args_list,
+            expr=Pi_expr,
             modules='numexpr'
         )
 
+        # gradient_Mr_expr = sympy.tensor.array.derive_by_array(
+        #     expr=Mr_expr,
+        #     dx=(D_Ya, Ef_a, M_Ya, X_Ya)
+        # )
+        # gradient_Mi_expr = sympy.tensor.array.derive_by_array(
+        #     expr=Mi_expr,
+        #     dx=(D_Ya, Ef_a, M_Ya, X_Ya)
+        # )
+        # gradient_Pr_expr = sympy.tensor.array.derive_by_array(
+        #     expr=Pr_expr,
+        #     dx=(D_Ya, Ef_a, M_Ya, X_Ya)
+        # )
+        # gradient_Pi_expr = sympy.tensor.array.derive_by_array(
+        #     expr=Pi_expr,
+        #     dx=(D_Ya, Ef_a, M_Ya, X_Ya)
+        # )
+        #
+        # self._gradient_Mr = sympy.lambdify(
+        #     args=args_list,
+        #     expr=gradient_Mr_expr,
+        #     modules='numexpr'
+        # )
+        # self._gradient_Mi = sympy.lambdify(
+        #     args=args_list,
+        #     expr=gradient_Mi_expr,
+        #     modules='numexpr'
+        # )
+        # self._gradient_Pr = sympy.lambdify(
+        #     args=args_list,
+        #     expr=gradient_Pr_expr,
+        #     modules='numexpr'
+        # )
+        # self._gradient_Pi = sympy.lambdify(
+        #     args=args_list,
+        #     expr=gradient_Pi_expr,
+        #     modules='numexpr'
+        # )
 
-    def compute(self, uncertain_gen_params):
+
+    def compute(self, optimizing_gen_params):
         """Computes the residual vector at the given point.
 
+        It evaluates the residual vector at the point
+        specified by 'optimizing_gen_params'
+        and returns numpy.array containing (K+1) numbers.
+
         Args:
-            uncertain_gen_params (class UncertainGeneratorParameters):
-                current uncertain parameters of a generator
+            optimizing_gen_params (class OptimizingGeneratorParameters):
+                current parameters of a generator
                 (at the current step of an optimization routine)
+
+        Returns:
+            R (numpy.array): residual vector (containing K+1 numbers)
+                evaluated at the given 4-dimensional point (specified by
+                the 'optimizing_gen_params' argument of this method)
         """
-        D_Ya = uncertain_gen_params.D_Ya
-        Ef_a = uncertain_gen_params.Ef_a
-        M_Ya = uncertain_gen_params.M_Ya
-        X_Ya = uncertain_gen_params.X_Ya
+        D_Ya = optimizing_gen_params.D_Ya
+        Ef_a = optimizing_gen_params.Ef_a
+        M_Ya = optimizing_gen_params.M_Ya
+        X_Ya = optimizing_gen_params.X_Ya
 
         freq_data_len = len(self._freq_data.freqs)
         Mr = np.zeros(freq_data_len)
@@ -148,21 +220,18 @@ class ResidualVector:
                 D_Ya, Ef_a, M_Ya, X_Ya,
                 self._freq_data.freqs[i]
             )
-
             Mi[i] = self._Mi(
                 self._freq_data.Vm[i], self._freq_data.Va[i],
                 self._freq_data.Im[i], self._freq_data.Ia[i],
                 D_Ya, Ef_a, M_Ya, X_Ya,
                 self._freq_data.freqs[i]
             )
-
             Pr[i] = self._Pr(
                 self._freq_data.Vm[i], self._freq_data.Va[i],
                 self._freq_data.Im[i], self._freq_data.Ia[i],
                 D_Ya, Ef_a, M_Ya, X_Ya,
                 self._freq_data.freqs[i]
             )
-
             Pi[i] = self._Pi(
                 self._freq_data.Vm[i], self._freq_data.Va[i],
                 self._freq_data.Im[i], self._freq_data.Ia[i],
@@ -177,31 +246,38 @@ class ResidualVector:
 
 @utils.singleton
 class CovarianceMatrix:
-    """Wrapper for calculations of covariance matrix.
+    """Wrapper for calculations of covariance matrix at any point.
 
     Attributes:
         _freqs (np.array): frequencies in frequency domain
-        _NrNr (function): for computing diagonal elements of gamma_NrNr
-        _NrQr (function): for computing diagonal elements of gamma_NrQr
-        _NrQi (function): for computing diagonal elements of gamma_NrQi
-        _NiNi (function): for computing diagonal elements of gamma_NiNi
-        _NiQr (function): for computing diagonal elements of gamma_NiQr
-        _NiQi (function): for computing diagonal elements of gamma_NiQi
-        _QrQr (function): for computing diagonal elements of gamma_QrQr
-        _QiQi (function): for computing diagonal elements of gamma_QiQi
+        _elements (dict): contains 12 keys:
+            'NrNr', 'NrQr', 'NrQi', 'NiNi', 'NiQr', 'NiQi',
+            'QrQr', 'QiQi', 'QrNr', 'QrNi', 'QiNr', 'QiNi'.
+            every key matches to function for computing
+            corresponding element of the gamma_L matrix
+        _gradients (dict of dicts): contains 12 keys:
+            'NrNr', 'NrQr', 'NrQi', 'NiNi', 'NiQr', 'NiQi',
+            'QrQr', 'QiQi', 'QrNr', 'QrNi', 'QiNr', 'QiNi'.
+            every key matches to dictionary holding 4 functions:
+            'D_Ya': (function) for computing partial_derivative of D_Ya
+            'Ef_a': (function) for computing partial_derivative of Ef_a
+            'M_Ya': (function) for computing partial_derivative of M_Ya
+            'X_Ya': (function) for computing partial_derivative of X_Ya
 
     Note:
-        attributes _QrNr, _QrNi, _QiNr, _QiNi are absent.
-        It is not necessary to store them due to the following equations:
-            gamma_QrNr = gamma_NrQr
-            gamma_QrNi = gamma_NiQr
-            gamma_QiNr = gamma_NrQi
-            gamma_QiNi = gamma_NiQi
-        This fact will be used in the 'compute' method.
+        All attributes are private. Don't change them outside this class.
+        Communicate with an instance of this class only via its public methods.
     """
 
     def __init__(self, freq_data):
-        """Prepares for computing the covariance matrix.
+        """Prepares the covariance matrix for computing at any point.
+
+        Stores data in frequency domain, 12 compiled functions
+        (see sympy.lambdify) for further computing and constructing
+        the gamma_L matrix at any 4-dimensional point (the number of parameters
+        which we optimize is equal to 4) and 48 compiled functions
+        for computing and constructing 4 matrices (each of the 4 matrices
+        contains partial derivatives of D_Ya, Ef_a, M_Ya, X_Ya respectively).
 
         Args:
             freq_data (class FreqData): data in frequency domain
@@ -224,189 +300,253 @@ class CovarianceMatrix:
         Y21r, Y21i = sympy.re(Y21), sympy.im(Y21)
         Y22r, Y22i = sympy.re(Y22), sympy.im(Y22)
 
-        D_Ya, Ef_a, M_Ya, X_Ya, Omega_a = sympy.symbols(
-            'D_Ya Ef_a M_Ya X_Ya Omega_a',
-            real=True
-        )
-
-        self._NrNr = sympy.lambdify(
-            args=[D_Ya, Ef_a, M_Ya, X_Ya, Omega_a],
-            expr=(
+        sym_exprs = {
+            'NrNr': (
                 std_eps_Im**2
                 + std_eps_Vm**2 * (Y11r**2 + Y11i**2)
                 + std_eps_Va**2 * (Y12r**2 + Y12i**2)
             ),
-            modules='numexpr'
-        )
-
-        self._NrQr = sympy.lambdify(
-            args=[D_Ya, Ef_a, M_Ya, X_Ya, Omega_a],
-            expr=(
+            'NrQr': (
                 std_eps_Vm**2 * (Y11r*Y21r + Y11i*Y21i) +
                 std_eps_Va**2 * (Y12r*Y22r + Y12i*Y22i)
             ),
-            modules='numexpr'
-        )
-
-        self._NrQi = sympy.lambdify(
-            args=[D_Ya, Ef_a, M_Ya, X_Ya, Omega_a],
-            expr=(
+            'NrQi': (
                 std_eps_Vm**2 * (Y11r*Y21i - Y11i*Y21r) +
                 std_eps_Va**2 * (Y12r*Y22i - Y12i*Y22r)
             ),
-            modules='numexpr'
-        )
-
-        self._NiNi = sympy.lambdify(
-            args=[D_Ya, Ef_a, M_Ya, X_Ya, Omega_a],
-            expr=(
+            'NiNi': (
                 std_eps_Im**2
                 + std_eps_Vm**2 * (Y11r**2 + Y11i**2)
                 + std_eps_Va**2 * (Y12r**2 + Y12i**2)
             ),
-            modules='numexpr'
-        )
-
-        self._NiQr = sympy.lambdify(
-            args=[D_Ya, Ef_a, M_Ya, X_Ya, Omega_a],
-            expr=(
+            'NiQr': (
                 std_eps_Vm**2 * (Y11i*Y21r - Y11r*Y21i) +
                 std_eps_Va**2 * (Y12i*Y22r - Y12r*Y22i)
             ),
-            modules='numexpr'
-        )
-
-        self._NiQi = sympy.lambdify(
-            args=[D_Ya, Ef_a, M_Ya, X_Ya, Omega_a],
-            expr=(
+            'NiQi': (
                 std_eps_Vm**2 * (Y11i*Y21i + Y11r*Y21r) +
                 std_eps_Va**2 * (Y12i*Y22i + Y12r*Y22r)
             ),
-            modules='numexpr'
-        )
-
-        self._QrQr = sympy.lambdify(
-            args=[D_Ya, Ef_a, M_Ya, X_Ya, Omega_a],
-            expr=(
+            'QrQr': (
                 std_eps_Ia**2
                 + std_eps_Vm**2 * (Y21r**2 + Y21i**2)
                 + std_eps_Va**2 * (Y22r**2 + Y22i**2)
             ),
-            modules='numexpr'
-        )
-
-        self._QiQi = sympy.lambdify(
-            args=[D_Ya, Ef_a, M_Ya, X_Ya, Omega_a],
-            expr=(
+            'QiQi': (
                 std_eps_Ia**2
                 + std_eps_Vm**2 * (Y21i**2 + Y21r**2)
                 + std_eps_Va**2 * (Y22r**2 + Y22i**2)
-            ),
-            modules='numexpr'
+            )
+        }
+        sym_exprs['QrNr'] = sym_exprs['NrQr']
+        sym_exprs['QrNi'] = sym_exprs['NiQr']
+        sym_exprs['QiNr'] = sym_exprs['NrQi']
+        sym_exprs['QiNi'] = sym_exprs['NiQi']
+
+        self._elements = dict()
+        self._init_elements(sym_exprs)
+
+        self._gradients = dict()
+        self._init_gradients(sym_exprs)
+
+
+    def _init_elements(self, sym_exprs):
+        D_Ya, Ef_a, M_Ya, X_Ya, Omega_a = sympy.symbols(
+            'D_Ya Ef_a M_Ya X_Ya Omega_a',
+            real=True
         )
+        for element_name, element_expr in sym_exprs.items():
+            self._elements[element_name] = sympy.lambdify(
+                args=[D_Ya, Ef_a, M_Ya, X_Ya, Omega_a],
+                expr=element_expr,
+                modules='numexpr'
+            )
 
-        # self.QrNr = self.NrQr
-        # self.QrNi = self.NiQr
-        # self.QiNr = self.NrQi
-        # self.QiNi = self.NiQi
+
+    def _init_gradients(self, sym_exprs):
+        D_Ya, Ef_a, M_Ya, X_Ya, Omega_a = sympy.symbols(
+            'D_Ya Ef_a M_Ya X_Ya Omega_a',
+            real=True
+        )
+        gen_params_dict = {
+            'D_Ya': D_Ya, 'Ef_a': Ef_a, 'M_Ya': M_Ya, 'X_Ya': X_Ya
+        }
+
+        # print('=========================================================')
+        # print('\nNrNr_D_Ya', sympy.diff(sym_exprs['NrNr'], D_Ya), '\n')
+        # print('\nNrNr_Ef_a', sympy.diff(sym_exprs['NrNr'], Ef_a), '\n')
+        # print('\nNrNr_M_Ya', sympy.diff(sym_exprs['NrNr'], M_Ya), '\n')
+        # print('\nNrNr_X_Ya', sympy.diff(sym_exprs['NrNr'], X_Ya), '\n')
+        # print('=========================================================')
+
+        for element_name, element_expr in sym_exprs.items():
+            self._gradients[element_name] = dict()
+            for gen_param_name, gen_param in gen_params_dict.items():
+                self._gradients[element_name][gen_param_name] = sympy.lambdify(
+                    args=[D_Ya, Ef_a, M_Ya, X_Ya, Omega_a],
+                    expr=sympy.diff(element_expr, gen_param),
+                    # there are some problems with sign function in numexpr
+                    modules=('numexpr' if gen_param_name != 'Ef_a' else 'numpy')
+                )
 
 
-    def compute(self, uncertain_gen_params):
+    def _construct_matrix_from_blocks(self, blocks):
+        # Constructing one big matrix from 16 blocks
+        zero_block = np.zeros((len(self._freqs), len(self._freqs)))
+        return np.block([
+            [blocks['NrNr'], zero_block, blocks['NrQr'], blocks['NrQi']],
+            [zero_block, blocks['NiNi'], blocks['NiQr'], blocks['NiQi']],
+            [blocks['QrNr'], blocks['QrNi'], blocks['QrQr'], zero_block],
+            [blocks['QiNr'], blocks['QiNi'], zero_block, blocks['QiQi']]
+        ])
+
+
+    def compute(self, optimizing_gen_params):
         """Computes the covariance matrix at the given point.
 
-        Builds and computes the numerical value of the covariance matrix
-        in the point specified by 'generator_params'. The result matrix
-        will have sizes (4K+4) * (4K+4) and contain only numbers (not symbols).
+        Computes and builds the numerical value of the covariance matrix
+        at the point specified by 'optimizing_gen_params'. The obtained matrix
+        will have sizes (4K+4)*(4K+4) and contain only numbers (not symbols).
 
         Args:
-            uncertain_gen_params (class UncertainGeneratorParameters):
-                current uncertain parameters of a generator
+            optimizing_gen_params (class OptimizingGeneratorParameters):
+                current parameters of a generator
                 (at the current step of an optimization routine)
 
         Returns:
-            gamma (numpy.ndarray): value of the covariance matrix
+            gamma_L (numpy.ndarray): the covariance matrix
+            evaluated at the given 4-dimensional point (specified by
+                the 'optimizing_gen_params' argument of this method)
         """
-        D_Ya = uncertain_gen_params.D_Ya
-        Ef_a = uncertain_gen_params.Ef_a
-        M_Ya = uncertain_gen_params.M_Ya
-        X_Ya = uncertain_gen_params.X_Ya
+        D_Ya = optimizing_gen_params.D_Ya
+        Ef_a = optimizing_gen_params.Ef_a
+        M_Ya = optimizing_gen_params.M_Ya
+        X_Ya = optimizing_gen_params.X_Ya
 
-        gamma_NrNr = np.diag([
-            self._NrNr(D_Ya, Ef_a, M_Ya, X_Ya, 2.0 * np.pi * freq)
-            for freq in self._freqs
-        ])
-        gamma_NrQr = np.diag([
-            self._NrQr(D_Ya, Ef_a, M_Ya, X_Ya, 2.0 * np.pi * freq)
-            for freq in self._freqs
-        ])
-        gamma_NrQi = np.diag([
-            self._NrQi(D_Ya, Ef_a, M_Ya, X_Ya, 2.0 * np.pi * freq)
-            for freq in self._freqs
-        ])
-        gamma_NiNi = np.diag([
-            self._NiNi(D_Ya, Ef_a, M_Ya, X_Ya, 2.0 * np.pi * freq)
-            for freq in self._freqs
-        ])
-        gamma_NiQr = np.diag([
-            self._NiQr(D_Ya, Ef_a, M_Ya, X_Ya, 2.0 * np.pi * freq)
-            for freq in self._freqs
-        ])
-        gamma_NiQi = np.diag([
-            self._NiQi(D_Ya, Ef_a, M_Ya, X_Ya, 2.0 * np.pi * freq)
-            for freq in self._freqs
-        ])
-        gamma_QrQr = np.diag([
-            self._QrQr(D_Ya, Ef_a, M_Ya, X_Ya, 2.0 * np.pi * freq)
-            for freq in self._freqs
-        ])
-        gamma_QiQi = np.diag([
-            self._QiQi(D_Ya, Ef_a, M_Ya, X_Ya, 2.0 * np.pi * freq)
-            for freq in self._freqs
-        ])
-        gamma_QrNr = gamma_NrQr
-        gamma_QrNi = gamma_NiQr
-        gamma_QiNr = gamma_NrQi
-        gamma_QiNi = gamma_NiQi
+        gamma_L_blocks = dict()
+        for block_name, element_function in self._elements.items():
+            gamma_L_blocks[block_name] = np.diag([
+                element_function(D_Ya, Ef_a, M_Ya, X_Ya, 2.0 * np.pi * freq)
+                for freq in self._freqs
+            ])
 
-        zero_matrix = np.zeros((len(self._freqs), len(self._freqs)))
-        gamma_L = np.block([
-            [gamma_NrNr, zero_matrix, gamma_NrQr, gamma_NrQi],
-            [zero_matrix, gamma_NiNi, gamma_NiQr, gamma_NiQi],
-            [gamma_QrNr, gamma_QrNi, gamma_QrQr, zero_matrix],
-            [gamma_QiNr, gamma_QiNi, zero_matrix, gamma_QiQi]
-        ])
+        gamma_L = self._construct_matrix_from_blocks(gamma_L_blocks)
         return gamma_L
 
 
-    def compute_and_inverse(self, uncertain_gen_params):
-        """Computes the inversed covariance matrix at the given point.
+    def compute_and_invert(self, optimizing_gen_params):
+        """Computes the inverse of the covariance matrix at the given point.
 
         Does exactly the same as 'compute' method but after computing
-        the covariance matrix this method make the calculated matrix inversed
-        and returns it.
+        the covariance matrix this method inverts the obtained matrix
+        and returns it. See docstrings of the 'compute' method.
 
         Args:
-            uncertain_gen_params (class UncertainGeneratorParameters):
-                current parameters of a generator (at the current iteration of
-                an optimization routine)
+            optimizing_gen_params (class OptimizingGeneratorParameters):
+                current parameters of a generator
+                (at the current step of an optimization routine)
 
         Returns:
-            gamma_L^(-1) (numpy.ndarray): inversed covariance matrix
-                evaluated in the given point
+            gamma_L^(-1) (numpy.ndarray): inverted covariance matrix
+                evaluated at the given point (specified by
+                the 'optimizing_gen_params' argument of this method)
         """
         return sp.sparse.linalg.inv(sp.sparse.csc_matrix(
-            self.compute(uncertain_gen_params)
+            self.compute(optimizing_gen_params)
         )).toarray()
+
+
+    def compute_gradients(self, optimizing_gen_params):
+        """Computes gradients of the covariance matrix at the given point.
+
+        Each element of the covariance matrix depends on 4 quantities
+        (4 generator parameters). This method constructs 4 matrices.
+        The 1st matrix consists of partial derivatives of the D_Ya.
+        The 2nd matrix consists of partial derivatives of the Ef_a.
+        The 3rd matrix consists of partial derivatives of the M_Ya.
+        The 4th matrix consists of partial derivatives of the X_Ya.
+        Then returns the 4 matrices in a dictionary.
+
+        Args:
+            optimizing_gen_params (class OptimizingGeneratorParameters):
+                current parameters of a generator
+                (at the current step of an optimization routine)
+
+        Returns:
+            gamma_L_gradients (dict): a dictionary with 4 keys:
+                'D_Ya' (numpy.ndarray): matrix of partial derivatives of D_Ya
+                'Ef_a' (numpy.ndarray): matrix of partial derivatives of Ef_a
+                'M_Ya' (numpy.ndarray): matrix of partial derivatives of M_Ya
+                'X_Ya' (numpy.ndarray): matrix of partial derivatives of X_Ya
+        """
+        params_dict = {
+            'D_Ya': optimizing_gen_params.D_Ya,
+            'Ef_a': optimizing_gen_params.Ef_a,
+            'M_Ya': optimizing_gen_params.M_Ya,
+            'X_Ya': optimizing_gen_params.X_Ya
+        }
+
+        gamma_L_gradients = dict()
+        for param_name in params_dict.keys():
+            gradient_blocks = dict()
+            for block_name, gradient_functions in self._gradients.items():
+                gradient_blocks[block_name] = np.diag([
+                    gradient_functions[param_name](
+                        params_dict['D_Ya'],
+                        params_dict['Ef_a'],
+                        params_dict['M_Ya'],
+                        params_dict['X_Ya'],
+                        2.0 * np.pi * freq
+                    ) for freq in self._freqs
+                ])
+
+            gamma_L_gradients[param_name] = (
+                self._construct_matrix_from_blocks(gradient_blocks)
+            )
+
+        return gamma_L_gradients
+
+
+    def compute_gradients_of_inverted_matrix(self, optimizing_gen_params):
+        """Computes gradients of the inverted covariance matrix.
+
+        Each element of the inverted covariance matrix depends on 4 quantities
+        (4 generator parameters). But it is impossible to invert
+        a big symbolic matrix (by computational reasons). That is why
+        this method uses one math trick to compute gradients
+        of the inverted covariance matrix at the given point
+        without direct inverting symbolic covariance matrix.
+
+        Args:
+            optimizing_gen_params (class OptimizingGeneratorParameters):
+                current parameters of a generator
+                (at the current step of an optimization routine)
+
+        Returns:
+            inverted_gamma_L_gradients (dict): a dictionary with 4 keys:
+                'D_Ya' (numpy.ndarray): matrix of partial derivatives of D_Ya
+                'Ef_a' (numpy.ndarray): matrix of partial derivatives of Ef_a
+                'M_Ya' (numpy.ndarray): matrix of partial derivatives of M_Ya
+                'X_Ya' (numpy.ndarray): matrix of partial derivatives of X_Ya
+        """
+        inv_gamma_L = self.compute_and_invert(optimizing_gen_params)
+        gamma_L_gradients = self.compute_matrix_gradient(optimizing_gen_params)
+        return {
+            'D_Ya': -inv_gamma_L @ gamma_L_gradients['D_Ya'] @ inv_gamma_L,
+            'Ef_a': -inv_gamma_L @ gamma_L_gradients['Ef_a'] @ inv_gamma_L,
+            'M_Ya': -inv_gamma_L @ gamma_L_gradients['M_Ya'] @ inv_gamma_L,
+            'X_Ya': -inv_gamma_L @ gamma_L_gradients['X_Ya'] @ inv_gamma_L
+        }
 
 
 
 @utils.singleton
 class ObjectiveFunction:
-    """Wrapper for calculations of objective function.
+    """Wrapper for calculations of the objective function at any point.
 
     Attributes:
-        _prior_gen_params (class UncertainGeneratorParameters):
-            start point for an optimization routine
+        _gen_params_prior_means (np.array):
+            a starting point for an optimization routine
         _R (class ResidualVector): auxiliary member to simplify
             calculations of vector R (residual vector)
             at the current step of an optimization routine
@@ -415,93 +555,136 @@ class ObjectiveFunction:
             at the current step of an optimization routine
         _reversed_gamma_g (numpy.ndarray): diagonal matrix containing
             standard deviations of prior uncertain generator parameters
+
+    Note:
+        All attributes are private. Don't change them outside this class.
+        Communicate with an instance of this class only via its public methods.
     """
 
-    def __init__(self, freq_data, prior_gen_params):
-        """Prepares for computing the objective function at a given point.
+    def __init__(self, freq_data,
+                 gen_params_prior_means, gen_params_prior_std_devs):
+        """Prepares for computing the objective function at any point.
+
+        Stores data in frequency domain, prior means of generator parameters,
+        diagonal covariance matrix of its parameters. Prepares the vector R
+        (residual vector) and gamma_L (covariance matrix)
+        for computing at any point.
 
         Args:
             freq_data (class FreqData): data in frequency domain
-            prior_gen_params (class UncertainGeneratorParameters):
-                prior generator parameters of a generator (we are uncertain
-                in their values) and the standard variances (how much we are
-                uncertain in their values)
+            gen_params_prior_means (class OptimizingGeneratorParameters):
+                prior means of generator's parameters
+                (we are uncertain in their values)
+            gen_params_prior_std_devs (class OptimizingGeneratorParameters):
+                standard deviations of generator's parameters
+                (how much we are uncertain in their values)
         """
         self._R = ResidualVector(freq_data)
         self._gamma_L = CovarianceMatrix(freq_data)
-
-        self._prior_gen_params = np.array([
-            prior_gen_params.D_Ya,
-            prior_gen_params.Ef_a,
-            prior_gen_params.M_Ya,
-            prior_gen_params.X_Ya
-        ])
-
+        self._gen_params_prior_means = gen_params_prior_means
         self._reversed_gamma_g = np.diag([
-            prior_gen_params.std_dev_D_Ya,
-            prior_gen_params.std_dev_Ef_a,
-            prior_gen_params.std_dev_M_Ya,
-            prior_gen_params.std_dev_X_Ya
+            gen_params_prior_std_devs.D_Ya,
+            gen_params_prior_std_devs.Ef_a,
+            gen_params_prior_std_devs.M_Ya,
+            gen_params_prior_std_devs.X_Ya
         ])
 
 
-    def compute(self, uncertain_gen_params):
+    def compute(self, optimizing_gen_params):
         """Computes value of the objective function at the given point.
 
         Args:
-            uncertain_gen_params (class UncertainGeneratorParameters):
-                current values of uncertain generator parameters
-                (at the current iteration of an optimization routine)
+            optimizing_gen_params (class OptimizingGeneratorParameters):
+                current parameters of a generator
+                (at the current step of an optimization routine)
 
         Returns:
-            value (numpy.float64) of objective function in the given point
+            value (numpy.float64) of the objective function at the given point
         """
-        curr_gen_params = np.array([
-            uncertain_gen_params.D_Ya,
-            uncertain_gen_params.Ef_a,
-            uncertain_gen_params.M_Ya,
-            uncertain_gen_params.X_Ya
-        ])
+        curr_delta_params = (
+            (optimizing_gen_params - self._gen_params_prior_means).as_array
+        )
+        computed_R = self._R.compute(optimizing_gen_params)
+        computed_inverted_gamma_L = (
+            self._gamma_L.compute_and_invert(optimizing_gen_params)
+        )
 
-        delta_params = curr_gen_params - self._prior_gen_params
-        computed_R = self._R.compute(uncertain_gen_params)
+        # print('*********** COMPUTING GAMMA_L')
+        # computed_gamma_L = self._gamma_L.compute(uncertain_gen_params)
+        # print('*** COND NUMBER OF GAMMA_L =', np.linalg.cond(computed_gamma_L))
+        # print('*********** *****************')
 
         return (
-            delta_params @ self._reversed_gamma_g @ delta_params +
-            (
-                computed_R @
-                self._gamma_L.compute_and_inverse(uncertain_gen_params) @
-                computed_R
-            )
+            curr_delta_params @ self._reversed_gamma_g @ curr_delta_params
+            + computed_R @ computed_inverted_gamma_L @ computed_R
         )
 
 
-    def compute_by_array(self, uncertain_gen_params):
+    def compute_gradients(self, optimizing_gen_params):
+        """Computes gradients of the objective function at the given point.
+
+        Args:
+            optimizing_gen_params (class OptimizingGeneratorParameters):
+                current parameters of a generator
+                (at the current step of an optimization routine)
+
+
+        Returns:
+            gradients (numpy.float64) of objective function at the given point
+        """
+        pass
+
+
+    def compute_by_array(self, optimizing_gen_params):
         """Computes value of the objective function at the given point.
 
         This method just calls self.compute method
         transforming the sole argument from numpy.array to an instance
-        of class UncertainGeneratorParameters. It is necessary
-        to have such method because optimizers want to get an instance
-        of numpy.array.
+        of class OptimizingGeneratorParameters. It is necessary
+        to have such method because optimizers want to give an instance
+        of numpy.array as an argument.
 
         Args:
-            uncertain_gen_params (numpy.array):
+            optimizing_gen_params (numpy.array):
+                current values of optimizing generator parameters
+                (at the current iteration of an optimization routine)
+
+        Returns:
+            value (numpy.float64) of objective function at the given point
+
+        Note:
+            Be cautious using this method! The order of parameters
+            is extremely important!
+        """
+        # print('### DEBUG: optimizing... curr_point =', optimizing_gen_params)
+        return self.compute(OptimizingGeneratorParameters(
+            D_Ya=optimizing_gen_params[0],
+            Ef_a=optimizing_gen_params[1],
+            M_Ya=optimizing_gen_params[2],
+            X_Ya=optimizing_gen_params[3]
+        ))
+
+
+    def compute_gradients_by_array(self, optimizing_gen_params):
+        """Computes gradients of the objective function at the given point.
+
+        This method just calls self.compute_gradients method
+        transforming the sole argument from numpy.array to an instance
+        of class OptimizingGeneratorParameters. It is necessary
+        to have such method because optimizers want to give an instance
+        of numpy.array as an argument.
+
+        Args:
+            optimizing_gen_params (numpy.array):
                 current values of uncertain generator parameters
                 (at the current iteration of an optimization routine)
 
         Returns:
-            value (numpy.float64) of objective function in the given point
+            gradients (numpy.float64) of objective function at the given point
+
+        Note:
+            Be cautious using this method! The order of parameters
+            is extremely important!
         """
-        print('### optimizing... curr_point =', uncertain_gen_params)
-        return self.compute(UncertainGeneratorParameters(
-            D_Ya=uncertain_gen_params[0],
-            Ef_a=uncertain_gen_params[1],
-            M_Ya=uncertain_gen_params[2],
-            X_Ya=uncertain_gen_params[3],
-            std_dev_D_Ya=self._reversed_gamma_g[0][0],
-            std_dev_Ef_a=self._reversed_gamma_g[1][1],
-            std_dev_M_Ya=self._reversed_gamma_g[2][2],
-            std_dev_X_Ya=self._reversed_gamma_g[3][3]
-        ))
+        pass
 
