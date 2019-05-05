@@ -1,11 +1,12 @@
-from sympy import *
+# from sympy import *
+import sympy
 import numexpr
 
 
-D_Ya, Ef_a, M_Ya, X_Ya, Omega_a = symbols(
-    'D_Ya Ef_a M_Ya X_Ya Omega_a',
-    real=True
-)
+# D_Ya, Ef_a, M_Ya, X_Ya, Omega_a = symbols(
+#     'D_Ya Ef_a M_Ya X_Ya Omega_a',
+#     real=True
+# )
 
 
 # NrNr_Ef_a = (
@@ -45,25 +46,25 @@ D_Ya, Ef_a, M_Ya, X_Ya, Omega_a = symbols(
 # )
 
 
-
-test_expr = sqrt(Ef_a**2 - 1.75516512378075*Ef_a + 1)
-print(test_expr, end='\n\n')
-
-test_expr = re(test_expr)
-print(test_expr, end='\n\n')
-
-test_expr = diff(test_expr, Ef_a)
-print(test_expr, end='\n\n')
+Ef_a = sympy.symbols('Ef_a', real=True)
 
 
-compiled_test_expr = lambdify(
+test_expr = sympy.Abs(Ef_a**2 - 1.75*Ef_a + 1)
+print(test_expr, '\n\n')
+
+test_expr = sympy.diff(test_expr, Ef_a)
+print(test_expr, '\n\n')
+
+test_expr = test_expr.replace(sympy.sign, lambda arg: sympy.Abs(arg) / arg)
+print(test_expr, '\n\n')
+
+
+compiled_test_expr = sympy.lambdify(
     args=Ef_a,
     expr=test_expr,
     modules='numexpr'
 )
 
 
-compiled_test_expr(1.0)
-
-
+print('result =', compiled_test_expr(2.0))
 

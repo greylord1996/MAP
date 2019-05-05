@@ -88,10 +88,10 @@ class OdeSolver:
 
     def solve(self):
         y0 = [0, 1.0]
-        start_time = time.time()
-        print("--- %s seconds ---" % (time.time() - start_time))
+        # start_time = time.time()
+        # print("--- %s seconds ---" % (time.time() - start_time))
         self.sol = solve_ivp(fun=self.get_system, t_span=[0, self.tf], y0=y0, t_eval=self.t_vec)
-        print("--- %s seconds ---" % (time.time() - start_time))
+        # print("--- %s seconds ---" % (time.time() - start_time))
         self.w2 = self.sol.y[0, :]
         self.d2 = self.sol.y[1, :]
         return {'w2': self.w2, 'd2': self.d2}

@@ -354,22 +354,26 @@ class CovarianceMatrix:
             'D_Ya': D_Ya, 'Ef_a': Ef_a, 'M_Ya': M_Ya, 'X_Ya': X_Ya
         }
 
-        # print('=========================================================')
-        # print('\nNrNr_D_Ya', sympy.diff(sym_exprs['NrNr'], D_Ya), '\n')
-        # print('\nNrNr_Ef_a', sympy.diff(sym_exprs['NrNr'], Ef_a), '\n')
-        # print('\nNrNr_M_Ya', sympy.diff(sym_exprs['NrNr'], M_Ya), '\n')
-        # print('\nNrNr_X_Ya', sympy.diff(sym_exprs['NrNr'], X_Ya), '\n')
-        # print('=========================================================')
-
         for element_name, element_expr in sym_exprs.items():
             self._gradients[element_name] = dict()
             for gen_param_name, gen_param in gen_params_dict.items():
+                element_diff_expr = sympy.diff(element_expr, gen_param)
+
+                # It seems that numexpr module doesn't support sign function
+                # (see https://github.com/pydata/numexpr/issues/87).
+                # That is why we replace sign(x) with |x| / x
+                # (we have checked that x is always a nonzero real number
+                # in our code). Moreover, x is always greater than 0 because
+                # it always looks like x = Ef_a**2 - 1.75516512378075*Ef_a + 1,
+                # where Ef_a is a real number.
+                element_diff_expr = element_diff_expr.replace(
+                    sympy.sign, lambda arg: sympy.Abs(arg) / arg
+                )
+
                 self._gradients[element_name][gen_param_name] = sympy.lambdify(
                     args=[D_Ya, Ef_a, M_Ya, X_Ya, Omega_a],
-                    expr=sympy.diff(element_expr, gen_param),
-                    # there are some problems with sign function in numexpr
-                    modules=('numexpr' if gen_param_name != 'Ef_a' else 'numpy')
-                    # modules='numexpr'
+                    expr=element_diff_expr,
+                    modules='numexpr'
                 )
 
 
@@ -513,7 +517,7 @@ class CovarianceMatrix:
                 'X_Ya' (numpy.ndarray): matrix of partial derivatives of X_Ya
         """
         inv_gamma_L = self.compute_and_invert(optimizing_gen_params)
-        gamma_L_gradients = self.compute_matrix_gradient(optimizing_gen_params)
+        gamma_L_gradients = self.compute_gradients(optimizing_gen_params)
         return {
             'D_Ya': -inv_gamma_L @ gamma_L_gradients['D_Ya'] @ inv_gamma_L,
             'Ef_a': -inv_gamma_L @ gamma_L_gradients['Ef_a'] @ inv_gamma_L,

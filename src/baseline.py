@@ -237,3 +237,4 @@ print("calculating objective function : %s seconds" % (time.time() - start_time)
 # print('opt_message:', opt_res.message)
 # print('theta_MAP1 =', opt_res.x)
 
+
