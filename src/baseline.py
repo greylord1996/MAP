@@ -210,10 +210,15 @@ print("constructing objective function : %s seconds" % (time.time() - start_time
 
 
 start_time = time.time()
-initial_point_gradients = f._gamma_L.compute_gradients(gen_params_prior_means)
+initial_point_gamma_L_gradient = f._gamma_L.compute_gradient(gen_params_prior_means)
 # for param_name, gamma_L_gradient in initial_point_gradients.items():
 #     print(param_name, gamma_L_gradient)
-print("calculating gradients : %s seconds" % (time.time() - start_time))
+print("calculating gamma_L gradient : %s seconds" % (time.time() - start_time))
+
+
+start_time = time.time()
+initial_point_gradients = f._gamma_L.compute_inverted_matrix_gradient(gen_params_prior_means)
+print("calculating inverted gamma_L gradient : %s seconds" % (time.time() - start_time))
 
 
 start_time = time.time()

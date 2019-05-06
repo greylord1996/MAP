@@ -316,7 +316,6 @@ class ObjectiveFunctionTests(unittest.TestCase):
     def _check_objective_function(self, func, test_dir):
         correct_values = correct_data.get_correct_values(test_dir)
         correct_func = correct_values['ObjectiveFunction']
-        # print('f =', f.compute_by_array(np.array([100.0, 100.0, 100.0, 100.0])))
 
         for args, correct_func_value in correct_func['values'].items():
             args_array = np.array([np.float(arg) for arg in args.split(',')])
@@ -380,8 +379,13 @@ class ObjectiveFunctionTests(unittest.TestCase):
             #     test_dir=test_dir
             # )
 
-            initial_point_gradients = (
-                f._gamma_L.compute_gradients(gen_params_prior_means)
+            initial_point_gamma_L_gradient = (
+                f._gamma_L.compute_gradient(gen_params_prior_means)
+            )
+            initial_point_inverted_gamma_L_gradient = (
+                f._gamma_L.compute_inverted_matrix_gradient(
+                    gen_params_prior_means
+                )
             )
 
 
