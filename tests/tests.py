@@ -379,10 +379,16 @@ class ObjectiveFunctionTests(unittest.TestCase):
             #     test_dir=test_dir
             # )
 
-            initial_point_gamma_L_gradient = (
+            starting_point_R = f._R.compute(gen_params_prior_means)
+            starting_point_gamma_L = f._gamma_L.compute(gen_params_prior_means)
+
+            starting_point_R_gradient = (
+                f._R.compute_gradient(gen_params_prior_means)
+            )
+            starting_point_gamma_L_gradient = (
                 f._gamma_L.compute_gradient(gen_params_prior_means)
             )
-            initial_point_inverted_gamma_L_gradient = (
+            starting_point_inverted_gamma_L_gradient = (
                 f._gamma_L.compute_inverted_matrix_gradient(
                     gen_params_prior_means
                 )

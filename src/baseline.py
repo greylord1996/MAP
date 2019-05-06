@@ -210,6 +210,11 @@ print("constructing objective function : %s seconds" % (time.time() - start_time
 
 
 start_time = time.time()
+initial_point_vector_R_gradient = f._R.compute_gradient(gen_params_prior_means)
+print("calculating vector_R gradient : %s seconds" % (time.time() - start_time))
+
+
+start_time = time.time()
 initial_point_gamma_L_gradient = f._gamma_L.compute_gradient(gen_params_prior_means)
 # for param_name, gamma_L_gradient in initial_point_gradients.items():
 #     print(param_name, gamma_L_gradient)

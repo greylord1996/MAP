@@ -56,10 +56,16 @@ class ResidualVector:
 
     Attributes:
         _freq_data (class FreqData): data in frequency domain
-        _Mr (function): for computing elements of vector Mr
-        _Mi (function): for computing elements of vector Mi
-        _Pr (function): for computing elements of vector Pr
-        _Pi (function): for computing elements of vector Pi
+        _elements (dict): contains 4 keys: 'Mr', 'Mi', 'Pr', 'Pi'.
+            Every key matches to function for computing
+            corresponding element of the vector R.
+        _partial_derivatives (dict of dicts): contains 4 keys:
+            'Mr', 'Mi', 'Pr', 'Pi'.
+            Every key matches to dictionary holding 4 functions:
+            'D_Ya': (function) for computing partial derivative at D_Ya
+            'Ef_a': (function) for computing partial derivative at Ef_a
+            'M_Ya': (function) for computing partial derivative at M_Ya
+            'X_Ya': (function) for computing partial derivative at X_Ya
 
     Note:
         All attributes are private. Don't change them outside this class.
@@ -67,7 +73,7 @@ class ResidualVector:
     """
 
     def __init__(self, freq_data):
-        """Prepares for computing the covariance matrix at the given point.
+        """Prepares for computing the residual vector at the given point.
 
         Stores data in frequency domain and 4 compiled functions
         (see sympy.lambdify) for further computing and constructing
@@ -96,37 +102,79 @@ class ResidualVector:
         Imr, Imi = sympy.re(Im), sympy.im(Im)
         Iar, Iai = sympy.re(Ia), sympy.im(Ia)
 
+        sym_exprs = {
+            'Mr': Imr - Y11r*Vmr + Y11i*Vmi - Y12r*Var + Y12i*Vai,
+            'Mi': Imi - Y11i*Vmr - Y11r*Vmi - Y12i*Var - Y12r*Vai,
+            'Pr': Iar - Y21r*Vmr + Y21i*Vmi - Y22r*Var + Y22i*Vai,
+            'Pi': Iai - Y21i*Vmr - Y21r*Vmi - Y22i*Var - Y22r*Vai
+        }
+
+        self._elements = dict()
+        self._init_elements(sym_exprs)
+
+        self._partial_derivatives = dict()
+        self._init_partial_derivatives(sym_exprs)
+
+
+    def _init_elements(self, sym_exprs):
+        assert len(sym_exprs) == 4
+        Vm, Va, Im, Ia = sympy.symbols('Vm Va Im Ia')
         D_Ya, Ef_a, M_Ya, X_Ya, Omega_a = sympy.symbols(
             'D_Ya Ef_a M_Ya X_Ya Omega_a',
             real=True
         )
-        args_list = [Vm, Va, Im, Ia, D_Ya, Ef_a, M_Ya, X_Ya, Omega_a]
+        for element_name, element_expr in sym_exprs.items():
+            self._elements[element_name] = sympy.lambdify(
+                args=[Vm, Va, Im, Ia, D_Ya, Ef_a, M_Ya, X_Ya, Omega_a],
+                expr=element_expr,
+                modules='numexpr'
+            )
 
-        Mr_expr = Imr - Y11r*Vmr + Y11i*Vmi - Y12r*Var + Y12i*Vai
-        Mi_expr = Imi - Y11i*Vmr - Y11r*Vmi - Y12i*Var - Y12r*Vai
-        Pr_expr = Iar - Y21r*Vmr + Y21i*Vmi - Y22r*Var + Y22i*Vai
-        Pi_expr = Iai - Y21i*Vmr - Y21r*Vmi - Y22i*Var - Y22r*Vai
 
-        self._Mr = sympy.lambdify(
-            args=args_list,
-            expr=Mr_expr,
-            modules='numexpr'
+    def _init_partial_derivatives(self, sym_exprs):
+        assert len(sym_exprs) == 4
+        Vm, Va, Im, Ia = sympy.symbols('Vm Va Im Ia')
+        D_Ya, Ef_a, M_Ya, X_Ya, Omega_a = sympy.symbols(
+            'D_Ya Ef_a M_Ya X_Ya Omega_a',
+            real=True
         )
-        self._Mi = sympy.lambdify(
-            args=args_list,
-            expr=Mi_expr,
-            modules='numexpr'
-        )
-        self._Pr = sympy.lambdify(
-            args=args_list,
-            expr=Pr_expr,
-            modules='numexpr'
-        )
-        self._Pi = sympy.lambdify(
-            args=args_list,
-            expr=Pi_expr,
-            modules='numexpr'
-        )
+        gen_params_dict = {
+            'D_Ya': D_Ya, 'Ef_a': Ef_a, 'M_Ya': M_Ya, 'X_Ya': X_Ya
+        }
+
+        for element_name, element_expr in sym_exprs.items():
+            self._partial_derivatives[element_name] = dict()
+            for gen_param_name, gen_param in gen_params_dict.items():
+                partial_derivative_expr = sympy.diff(element_expr, gen_param)
+
+                # It seems that numexpr module doesn't support sign function
+                # (see https://github.com/pydata/numexpr/issues/87).
+                # That is why we replace sign(x) with |x| / x
+                # (we have checked that x is always a nonzero real number
+                # in our code). Moreover, x is always greater than 0 because
+                # it always looks like x = Ef_a**2 - 1.75516512378075*Ef_a + 1,
+                # where Ef_a is a real number.
+                partial_derivative_expr = partial_derivative_expr.replace(
+                    sympy.sign, lambda x: sympy.Abs(x) / x
+                )
+
+                self._partial_derivatives[element_name][gen_param_name] = (
+                    sympy.lambdify(
+                        args=[Vm, Va, Im, Ia, D_Ya, Ef_a, M_Ya, X_Ya, Omega_a],
+                        expr=partial_derivative_expr,
+                        modules='numexpr'
+                    )
+                )
+
+
+    def _construct_vector_from_subvectors(self, subvectors):
+        # Constructing vector R from 4 subvectors: Mr, Mi, Pr, Pi
+        return np.concatenate([
+            subvectors['Mr'],
+            subvectors['Mi'],
+            subvectors['Pr'],
+            subvectors['Pi']
+        ])
 
 
     def compute(self, optimizing_gen_params):
@@ -142,7 +190,7 @@ class ResidualVector:
                 (at the current step of an optimization routine)
 
         Returns:
-            R (numpy.array): residual vector (containing 4K+4 numbers)
+            vector_R (numpy.array): residual vector (containing 4K+4 numbers)
                 evaluated at the given 4-dimensional point (specified by
                 the 'optimizing_gen_params' argument of this method)
         """
@@ -151,40 +199,73 @@ class ResidualVector:
         M_Ya = optimizing_gen_params.M_Ya
         X_Ya = optimizing_gen_params.X_Ya
 
-        freq_data_len = len(self._freq_data.freqs)
-        Mr = np.zeros(freq_data_len)
-        Mi = np.zeros(freq_data_len)
-        Pr = np.zeros(freq_data_len)
-        Pi = np.zeros(freq_data_len)
+        vector_R_subvectors = dict()
+        for subvector_name, element_function in self._elements.items():
+            vector_R_subvectors[subvector_name] = np.array([
+                element_function(
+                    self._freq_data.Vm[i], self._freq_data.Va[i],
+                    self._freq_data.Im[i], self._freq_data.Ia[i],
+                    D_Ya, Ef_a, M_Ya, X_Ya,
+                    2.0 * np.pi * self._freq_data.freqs[i]
+                ) for i in range(len(self._freq_data.freqs))
+            ])
 
-        for i in range(freq_data_len):
-            Mr[i] = self._Mr(
-                self._freq_data.Vm[i], self._freq_data.Va[i],
-                self._freq_data.Im[i], self._freq_data.Ia[i],
-                D_Ya, Ef_a, M_Ya, X_Ya,
-                self._freq_data.freqs[i]
-            )
-            Mi[i] = self._Mi(
-                self._freq_data.Vm[i], self._freq_data.Va[i],
-                self._freq_data.Im[i], self._freq_data.Ia[i],
-                D_Ya, Ef_a, M_Ya, X_Ya,
-                self._freq_data.freqs[i]
-            )
-            Pr[i] = self._Pr(
-                self._freq_data.Vm[i], self._freq_data.Va[i],
-                self._freq_data.Im[i], self._freq_data.Ia[i],
-                D_Ya, Ef_a, M_Ya, X_Ya,
-                self._freq_data.freqs[i]
-            )
-            Pi[i] = self._Pi(
-                self._freq_data.Vm[i], self._freq_data.Va[i],
-                self._freq_data.Im[i], self._freq_data.Ia[i],
-                D_Ya, Ef_a, M_Ya, X_Ya,
-                self._freq_data.freqs[i]
+        vector_R = self._construct_vector_from_subvectors(vector_R_subvectors)
+        return vector_R
+
+
+    def compute_gradient(self, optimizing_gen_params):
+        """Computes gradient of the residual vector at the given point.
+
+        Each element of the residual vector depends on 4 quantities
+        (4 generator parameters). This method constructs 4 vectors.
+        The 1st vector consists of partial derivatives of vector R at the D_Ya.
+        The 2nd vector consists of partial derivatives of vector R at the Ef_a.
+        The 3rd vector consists of partial derivatives of vector R at the M_Ya.
+        The 4th vector consists of partial derivatives of vector R at the X_Ya.
+        Then it returns these 4 vectors in a dictionary.
+
+        Args:
+            optimizing_gen_params (class OptimizingGeneratorParameters):
+                current parameters of a generator
+                (at the current step of an optimization routine)
+
+        Returns:
+            vector_R_gradient (dict): a dictionary with 4 keys:
+                'D_Ya' (numpy.array): vector of partial derivatives at D_Ya
+                'Ef_a' (numpy.array): vector of partial derivatives at Ef_a
+                'M_Ya' (numpy.array): vector of partial derivatives at M_Ya
+                'X_Ya' (numpy.array): vector of partial derivatives at X_Ya
+        """
+        optimizing_gen_params_dict = {
+            'D_Ya': optimizing_gen_params.D_Ya,
+            'Ef_a': optimizing_gen_params.Ef_a,
+            'M_Ya': optimizing_gen_params.M_Ya,
+            'X_Ya': optimizing_gen_params.X_Ya
+        }
+
+        vector_R_gradient = dict()
+        for optimizing_gen_param_name in optimizing_gen_params_dict.keys():
+            gradient_subvectors = dict()
+            for subvector_name, partial_derivatives_functions in (
+                    self._partial_derivatives.items()):
+                gradient_subvectors[subvector_name] = np.array([
+                    partial_derivatives_functions[optimizing_gen_param_name](
+                        self._freq_data.Vm[i], self._freq_data.Va[i],
+                        self._freq_data.Im[i], self._freq_data.Ia[i],
+                        optimizing_gen_params_dict['D_Ya'],
+                        optimizing_gen_params_dict['Ef_a'],
+                        optimizing_gen_params_dict['M_Ya'],
+                        optimizing_gen_params_dict['X_Ya'],
+                        2.0 * np.pi * self._freq_data.freqs[i]
+                    ) for i in range(len(self._freq_data.freqs))
+                ])
+
+            vector_R_gradient[optimizing_gen_param_name] = (
+                self._construct_vector_from_subvectors(gradient_subvectors)
             )
 
-        # Build and return R (residual vector)
-        return np.concatenate([Mr, Mi, Pr, Pi])
+        return vector_R_gradient
 
 
 
@@ -197,12 +278,12 @@ class CovarianceMatrix:
         _elements (dict): contains 12 keys:
             'NrNr', 'NrQr', 'NrQi', 'NiNi', 'NiQr', 'NiQi',
             'QrQr', 'QiQi', 'QrNr', 'QrNi', 'QiNr', 'QiNi'.
-            every key matches to function for computing
-            corresponding element of the gamma_L matrix
+            Every key matches to function for computing
+            corresponding element of the gamma_L matrix.
         _partial_derivatives (dict of dicts): contains 12 keys:
             'NrNr', 'NrQr', 'NrQi', 'NiNi', 'NiQr', 'NiQi',
             'QrQr', 'QiQi', 'QrNr', 'QrNi', 'QiNr', 'QiNi'.
-            every key matches to dictionary holding 4 functions:
+            Every key matches to dictionary holding 4 functions:
             'D_Ya': (function) for computing partial derivative at D_Ya
             'Ef_a': (function) for computing partial derivative at Ef_a
             'M_Ya': (function) for computing partial derivative at M_Ya
@@ -295,6 +376,7 @@ class CovarianceMatrix:
 
 
     def _init_elements(self, sym_exprs):
+        assert len(sym_exprs) == 12
         D_Ya, Ef_a, M_Ya, X_Ya, Omega_a = sympy.symbols(
             'D_Ya Ef_a M_Ya X_Ya Omega_a',
             real=True
@@ -308,6 +390,7 @@ class CovarianceMatrix:
 
 
     def _init_partial_derivatives(self, sym_exprs):
+        assert len(sym_exprs) == 12
         D_Ya, Ef_a, M_Ya, X_Ya, Omega_a = sympy.symbols(
             'D_Ya Ef_a M_Ya X_Ya Omega_a',
             real=True
@@ -365,9 +448,9 @@ class CovarianceMatrix:
                 (at the current step of an optimization routine)
 
         Returns:
-            gamma_L (numpy.ndarray): the covariance matrix evaluated at the
-            given 4-dimensional point (specified by the 'optimizing_gen_params'
-            argument of this method)
+            gamma_L (numpy.array): the covariance matrix evaluated at the
+                4-dimensional point (specified by the 'optimizing_gen_params'
+                argument of this method)
         """
         D_Ya = optimizing_gen_params.D_Ya
         Ef_a = optimizing_gen_params.Ef_a
@@ -398,7 +481,7 @@ class CovarianceMatrix:
                 (at the current step of an optimization routine)
 
         Returns:
-            gamma_L^(-1) (numpy.ndarray): inverted covariance matrix
+            gamma_L^(-1) (numpy.array): inverted covariance matrix
                 evaluated at the given point (specified by
                 the 'optimizing_gen_params' argument of this method)
         """
@@ -416,7 +499,7 @@ class CovarianceMatrix:
         The 2nd matrix consists of partial derivatives at the Ef_a.
         The 3rd matrix consists of partial derivatives at the M_Ya.
         The 4th matrix consists of partial derivatives at the X_Ya.
-        Then it returns the 4 matrices in a dictionary.
+        Then it returns these 4 matrices in a dictionary.
 
         Args:
             optimizing_gen_params (class OptimizingGeneratorParameters):
@@ -425,10 +508,10 @@ class CovarianceMatrix:
 
         Returns:
             gamma_L_gradient (dict): a dictionary with 4 keys:
-                'D_Ya' (numpy.ndarray): matrix of partial derivatives at D_Ya
-                'Ef_a' (numpy.ndarray): matrix of partial derivatives at Ef_a
-                'M_Ya' (numpy.ndarray): matrix of partial derivatives at M_Ya
-                'X_Ya' (numpy.ndarray): matrix of partial derivatives at X_Ya
+                'D_Ya' (numpy.array): matrix of partial derivatives at D_Ya
+                'Ef_a' (numpy.array): matrix of partial derivatives at Ef_a
+                'M_Ya' (numpy.array): matrix of partial derivatives at M_Ya
+                'X_Ya' (numpy.array): matrix of partial derivatives at X_Ya
         """
         optimizing_gen_params_dict = {
             'D_Ya': optimizing_gen_params.D_Ya,
@@ -476,10 +559,10 @@ class CovarianceMatrix:
 
         Returns:
             inverted_gamma_L_gradient (dict): a dictionary with 4 keys:
-                'D_Ya' (numpy.ndarray): matrix of partial derivatives at D_Ya
-                'Ef_a' (numpy.ndarray): matrix of partial derivatives at Ef_a
-                'M_Ya' (numpy.ndarray): matrix of partial derivatives at M_Ya
-                'X_Ya' (numpy.ndarray): matrix of partial derivatives at X_Ya
+                'D_Ya' (numpy.array): matrix of partial derivatives at D_Ya
+                'Ef_a' (numpy.array): matrix of partial derivatives at Ef_a
+                'M_Ya' (numpy.array): matrix of partial derivatives at M_Ya
+                'X_Ya' (numpy.array): matrix of partial derivatives at X_Ya
         """
         inv_gamma_L = self.compute_and_invert(optimizing_gen_params)
         gamma_L_gradient = self.compute_gradient(optimizing_gen_params)
@@ -505,7 +588,7 @@ class ObjectiveFunction:
             at the current step of an optimization routine
         _gen_params_prior_means (numpy.array):
             a starting point for an optimization routine
-        _reversed_gamma_g (numpy.ndarray): diagonal matrix containing
+        _reversed_gamma_g (numpy.array): diagonal matrix containing
             standard deviations of prior uncertain generator parameters
 
     Note:
@@ -593,8 +676,8 @@ class ObjectiveFunction:
 
         Args:
             optimizing_gen_params (numpy.array):
-                current values of optimizing generator parameters
-                (at the current iteration of an optimization routine)
+                current values of optimizing generator parameters (array of 4
+                numbers) at the current iteration of an optimization routine
 
         Returns:
             value (numpy.float64) of the objective function at the given point
@@ -623,8 +706,8 @@ class ObjectiveFunction:
 
         Args:
             optimizing_gen_params (numpy.array):
-                current values of optimizing generator parameters
-                (at the current iteration of an optimization routine)
+                current values of optimizing generator parameters (array of 4
+                numbers) at the current iteration of an optimization routine
 
         Returns:
             gradient (numpy.array) of the objective function at the given point
@@ -633,5 +716,10 @@ class ObjectiveFunction:
             Be cautious using this method! The order of parameters
             is extremely important!
         """
-        pass
+        return self.compute_gradient(OptimizingGeneratorParameters(
+            D_Ya=optimizing_gen_params[0],
+            Ef_a=optimizing_gen_params[1],
+            M_Ya=optimizing_gen_params[2],
+            X_Ya=optimizing_gen_params[3]
+        ))
 
