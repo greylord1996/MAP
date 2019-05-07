@@ -1,6 +1,11 @@
 # from sympy import *
 import sympy
-import numexpr
+import time
+
+import numexpr as ne
+print('numexpr uses VML?', ne.use_vml)
+print(ne.set_num_threads(4))
+print('numexpr uses VML?', ne.use_vml)
 
 
 # D_Ya, Ef_a, M_Ya, X_Ya, Omega_a = symbols(
@@ -66,5 +71,8 @@ compiled_test_expr = sympy.lambdify(
 )
 
 
-print('result =', compiled_test_expr(2.0))
-
+start_time = time.time()
+for i in range(300000):
+    aux = compiled_test_expr(2.0)
+    # print('result =', compiled_test_expr(2.0))
+print("calculating test expr : %s seconds" % (time.time() - start_time))

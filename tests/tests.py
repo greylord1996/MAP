@@ -374,10 +374,10 @@ class ObjectiveFunctionTests(unittest.TestCase):
                 our_gamma_L=f._gamma_L.compute(gen_params_prior_means),
                 test_dir=test_dir
             )
-            # self._check_objective_function(
-            #     func=f,
-            #     test_dir=test_dir
-            # )
+            self._check_objective_function(
+                func=f,
+                test_dir=test_dir
+            )
 
             starting_point_R = f._R.compute(gen_params_prior_means)
             starting_point_gamma_L = f._gamma_L.compute(gen_params_prior_means)
@@ -393,6 +393,11 @@ class ObjectiveFunctionTests(unittest.TestCase):
                     gen_params_prior_means
                 )
             )
+            starting_point_f_gradient = f.compute_gradient(gen_params_prior_means)
+            starting_point_f_gradient = (
+                f.compute_gradient_by_array(gen_params_prior_means.as_array)
+            )
+            print('\n### DEBUG: Gradient at the point ', gen_params_prior_means.as_array)
 
 
 

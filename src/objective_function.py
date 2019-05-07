@@ -68,12 +68,13 @@ class ResidualVector:
             'X_Ya': (function) for computing partial derivative at X_Ya
 
     Note:
-        All attributes are private. Don't change them outside this class.
-        Communicate with an instance of this class only via its public methods.
+        All attributes are private. Don't change them
+        outside this class. Communicate with an instance of this class
+        only via its public methods.
     """
 
     def __init__(self, freq_data):
-        """Prepares for computing the residual vector at the given point.
+        """Prepares for computing the residual vector and its gradient.
 
         Stores data in frequency domain and 4 compiled functions
         (see sympy.lambdify) for further computing and constructing
@@ -217,12 +218,13 @@ class ResidualVector:
     def compute_gradient(self, optimizing_gen_params):
         """Computes gradient of the residual vector at the given point.
 
-        Each element of the residual vector depends on 4 quantities
-        (4 generator parameters). This method constructs 4 vectors.
-        The 1st vector consists of partial derivatives of vector R at the D_Ya.
-        The 2nd vector consists of partial derivatives of vector R at the Ef_a.
-        The 3rd vector consists of partial derivatives of vector R at the M_Ya.
-        The 4th vector consists of partial derivatives of vector R at the X_Ya.
+        Each element of the residual vector depends on 9 quantities
+        Vm, Va, Im, Ia, D_Ya, Ef_a, M_Ya, X_Ya, Omega_a.
+        This method constructs 4 vectors.
+        The 1st vector consists of partial derivatives of R at D_Ya.
+        The 2nd vector consists of partial derivatives of R at Ef_a.
+        The 3rd vector consists of partial derivatives of R at M_Ya.
+        The 4th vector consists of partial derivatives of R at X_Ya.
         Then it returns these 4 vectors in a dictionary.
 
         Args:
@@ -290,19 +292,21 @@ class CovarianceMatrix:
             'X_Ya': (function) for computing partial derivative at X_Ya
 
     Note:
-        All attributes are private. Don't change them outside this class.
-        Communicate with an instance of this class only via its public methods.
+        All attributes are private. Don't change them
+        outside this class. Communicate with an instance of this class
+        only via its public methods.
     """
 
     def __init__(self, freq_data):
-        """Prepares the covariance matrix for computing at any point.
+        """Prepares for computing the covariance matrix and its gradient.
 
         Stores data in frequency domain, 12 compiled functions
         (see sympy.lambdify) for further computing and constructing
-        the gamma_L matrix at any 4-dimensional point (the number of parameters
-        which we optimize is equal to 4) and 48 compiled functions
-        for computing and constructing 4 matrices (each of the 4 matrices
-        contains partial derivatives at D_Ya, Ef_a, M_Ya, X_Ya respectively).
+        the gamma_L matrix at any 4-dimensional point
+        (the number of parameters which we optimize is equal to 4)
+        and 48 compiled functions for computing and constructing 4 matrices
+        (each of the 4 matrices contains partial derivatives
+        at D_Ya, Ef_a, M_Ya, X_Ya respectively).
 
         Args:
             freq_data (class FreqData): data in frequency domain
@@ -493,12 +497,13 @@ class CovarianceMatrix:
     def compute_gradient(self, optimizing_gen_params):
         """Computes gradient of the covariance matrix at the given point.
 
-        Each element of the covariance matrix depends on 4 quantities
-        (4 generator parameters). This method constructs 4 matrices.
-        The 1st matrix consists of partial derivatives at the D_Ya.
-        The 2nd matrix consists of partial derivatives at the Ef_a.
-        The 3rd matrix consists of partial derivatives at the M_Ya.
-        The 4th matrix consists of partial derivatives at the X_Ya.
+        Each element of the covariance matrix depends on 5 quantities
+        D_Ya, Ef_a, M_Ya, X_Ya (4 generator parameters) and Omega_a.
+        This method constructs 4 matrices.
+        The 1st matrix consists of partial derivatives at D_Ya.
+        The 2nd matrix consists of partial derivatives at Ef_a.
+        The 3rd matrix consists of partial derivatives at M_Ya.
+        The 4th matrix consists of partial derivatives at X_Ya.
         Then it returns these 4 matrices in a dictionary.
 
         Args:
@@ -592,8 +597,9 @@ class ObjectiveFunction:
             standard deviations of prior uncertain generator parameters
 
     Note:
-        All attributes are private. Don't change them outside this class.
-        Communicate with an instance of this class only via its public methods.
+        All attributes are private. Don't change them
+        outside this class. Communicate with an instance of this class
+        only via its public methods.
     """
 
     def __init__(self, freq_data,
@@ -660,9 +666,43 @@ class ObjectiveFunction:
                 (at the current step of an optimization routine)
 
         Returns:
-            gradient (numpy.array) of the objective function at the given point
+            gradient (numpy.array of 4 numbers) of the objective function
+                at optimizing generator parameters (D_Ya, Ef_a, M_Ya, X_Ya)
+                evaluated at the given point
         """
-        pass
+        curr_delta_params = (
+            optimizing_gen_params.as_array - self._gen_params_prior_means
+        )
+
+        computed_R = self._R.compute(optimizing_gen_params)
+        computed_R_gradient = self._R.compute_gradient(optimizing_gen_params)
+
+        computed_inverted_gamma_L = (
+            self._gamma_L.compute_and_invert(optimizing_gen_params)
+        )
+        # computed_inverted_gamma_L_gradient = (
+        #     self._gamma_L.compute_inverted_matrix_gradient(
+        #         optimizing_gen_params
+        #     )
+        # )
+
+        # grad_f = grad_f1 + grad_f2 (see equation 40 in the paper)
+        grad_f1 = (
+            self._reversed_gamma_g + np.transpose(self._reversed_gamma_g)
+        ) @ curr_delta_params
+
+        auxiliary_vector = (
+            computed_inverted_gamma_L + np.transpose(computed_inverted_gamma_L)
+        ) @ computed_R
+        grad_f2 = np.array([
+            auxiliary_vector @ computed_R_gradient['D_Ya'],
+            auxiliary_vector @ computed_R_gradient['Ef_a'],
+            auxiliary_vector @ computed_R_gradient['M_Ya'],
+            auxiliary_vector @ computed_R_gradient['X_Ya'],
+        ])
+
+        grad_f = grad_f1 + grad_f2
+        return grad_f
 
 
     def compute_by_array(self, optimizing_gen_params):
@@ -675,9 +715,9 @@ class ObjectiveFunction:
         of numpy.array as an argument.
 
         Args:
-            optimizing_gen_params (numpy.array):
-                current values of optimizing generator parameters (array of 4
-                numbers) at the current iteration of an optimization routine
+            optimizing_gen_params (numpy.array of 4 numbers):
+                current values of optimizing generator parameters
+                at the current iteration of an optimization routine
 
         Returns:
             value (numpy.float64) of the objective function at the given point
@@ -686,7 +726,7 @@ class ObjectiveFunction:
             Be cautious using this method! The order of parameters
             is extremely important!
         """
-        # print('### DEBUG: optimizing... curr_point =', optimizing_gen_params)
+        print('### DEBUG: optimizing... curr_point =', optimizing_gen_params)
         return self.compute(OptimizingGeneratorParameters(
             D_Ya=optimizing_gen_params[0],
             Ef_a=optimizing_gen_params[1],
@@ -705,21 +745,25 @@ class ObjectiveFunction:
         of numpy.array as an argument.
 
         Args:
-            optimizing_gen_params (numpy.array):
+            optimizing_gen_params (numpy.array of 4 numbers):
                 current values of optimizing generator parameters (array of 4
                 numbers) at the current iteration of an optimization routine
 
         Returns:
-            gradient (numpy.array) of the objective function at the given point
+            gradient (numpy.array of 4 numbers) of the objective function
+                at optimizing generator parameters (D_Ya, Ef_a, M_Ya, X_Ya)
+                evaluated at the given point
 
         Note:
             Be cautious using this method! The order of parameters
             is extremely important!
         """
-        return self.compute_gradient(OptimizingGeneratorParameters(
+        gradient = self.compute_gradient(OptimizingGeneratorParameters(
             D_Ya=optimizing_gen_params[0],
             Ef_a=optimizing_gen_params[1],
             M_Ya=optimizing_gen_params[2],
             X_Ya=optimizing_gen_params[3]
         ))
+        print('### DEBUG: gradient =', gradient)
+        return gradient
 

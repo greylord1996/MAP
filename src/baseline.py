@@ -30,7 +30,12 @@ def perturb_gen_params(true_gen_params):
     # perturbations = np.random.uniform(low=-0.5, high=0.5, size=4)
 
     # Just for testing -- remove in release
-    perturbations = [0.2066 - 0.25, 0.8372 - 1.0, 0.6654 - 1.0, 0.0077 - 0.01]
+    perturbations = [
+        0.2066 - true_gen_params.d_2,
+        0.8372 - true_gen_params.e_2,
+        0.6654 - true_gen_params.m_2,
+        0.0077 - true_gen_params.x_d2
+    ]
 
     gen_params_prior_means = (
         objective_function.OptimizingGeneratorParameters(
@@ -175,6 +180,7 @@ freq_data.remove_data_from_fo_band(min_fo_freq=FD.lower_fb, max_fo_freq=FD.upper
 
 print('===========================================')
 
+
 gen_params_prior_means, gen_params_prior_std_devs = perturb_gen_params(GP)
 # now params are perturbed and uncertain
 
@@ -209,6 +215,7 @@ print("constructing objective function : %s seconds" % (time.time() - start_time
 # print('theta4:', np.linalg.cond(reversed_gamma0 @ gamma4))
 
 
+
 start_time = time.time()
 initial_point_vector_R_gradient = f._R.compute_gradient(gen_params_prior_means)
 print("calculating vector_R gradient : %s seconds" % (time.time() - start_time))
@@ -232,19 +239,25 @@ print('f0 =', f0, type(f0))
 print("calculating objective function : %s seconds" % (time.time() - start_time))
 
 
-# opt_res = sp.optimize.minimize(
-#     fun=f.compute_by_array,
-#     x0=prior_gen_params.as_array,
-#     method='CG',
-#     # tol=15.5,
-#     # options={
-#     #     'maxiter': 5,
-#     #     'disp': True
-#     # }
-# )
-#
-# print('opt_success?', opt_res.success)
-# print('opt_message:', opt_res.message)
-# print('theta_MAP1 =', opt_res.x)
+print('######################################################')
+print('### DEBUG: OPTIMIZATION ROUTINE IS STARTING NOW!!! ###')
+print('######################################################')
+
+
+opt_res = sp.optimize.minimize(
+    fun=f.compute_by_array,
+    x0=gen_params_prior_means.as_array,
+    method='CG',
+    jac=f.compute_gradient_by_array
+    # tol=15.5,
+    # options={
+    #     'maxiter': 5,
+    #     'disp': True
+    # }
+)
+
+print('opt_success?', opt_res.success)
+print('opt_message:', opt_res.message)
+print('theta_MAP1 =', opt_res.x)
 
 
