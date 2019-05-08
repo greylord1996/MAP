@@ -322,7 +322,7 @@ class ObjectiveFunctionTests(unittest.TestCase):
             print('+++++++++++++++++++++++++++++++++++')
             print(
                 '$$$ TESTING:', 'TEST_OBJECTIVE_FUNCTION, OUR/CORRECT RATIO: ',
-                func.compute_by_array(args_array) / correct_func_value
+                func.compute_from_array(args_array) / correct_func_value
             )
             computed_gamma_L = func._gamma_L.compute(
                 objective_function.OptimizingGeneratorParameters(
@@ -395,9 +395,8 @@ class ObjectiveFunctionTests(unittest.TestCase):
             )
             starting_point_f_gradient = f.compute_gradient(gen_params_prior_means)
             starting_point_f_gradient = (
-                f.compute_gradient_by_array(gen_params_prior_means.as_array)
+                f.compute_gradient_from_array(gen_params_prior_means.as_array)
             )
-            print('\n### DEBUG: Gradient at the point ', gen_params_prior_means.as_array)
 
 
 

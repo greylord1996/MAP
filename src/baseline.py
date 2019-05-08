@@ -94,7 +94,7 @@ def run_all_computations(all_params):
         gen_params_prior_std_devs=gen_params_prior_std_devs
     )
 
-    # Here we minimize the objective function
+    # Here we should minimize the objective function
 
     # It is not clear now what should be returned
     return ode_solver_object.get_appropr_data_to_gui()
@@ -215,6 +215,10 @@ print("constructing objective function : %s seconds" % (time.time() - start_time
 # print('theta4:', np.linalg.cond(reversed_gamma0 @ gamma4))
 
 
+start_time = time.time()
+initial_point_vector_R = f._R.compute(gen_params_prior_means)
+print("calculating vector_R : %s seconds" % (time.time() - start_time))
+
 
 start_time = time.time()
 initial_point_vector_R_gradient = f._R.compute_gradient(gen_params_prior_means)
@@ -222,33 +226,48 @@ print("calculating vector_R gradient : %s seconds" % (time.time() - start_time))
 
 
 start_time = time.time()
+initial_point_gamma_L = f._gamma_L.compute(gen_params_prior_means)
+print("calculating gamma_L : %s seconds" % (time.time() - start_time))
+
+
+start_time = time.time()
+initial_point_inverted_gamma_L = f._gamma_L.compute_and_invert(gen_params_prior_means)
+print("calculating inverted gamma_L : %s seconds" % (time.time() - start_time))
+
+
+start_time = time.time()
 initial_point_gamma_L_gradient = f._gamma_L.compute_gradient(gen_params_prior_means)
-# for param_name, gamma_L_gradient in initial_point_gradients.items():
-#     print(param_name, gamma_L_gradient)
 print("calculating gamma_L gradient : %s seconds" % (time.time() - start_time))
 
 
 start_time = time.time()
-initial_point_gradients = f._gamma_L.compute_inverted_matrix_gradient(gen_params_prior_means)
+initial_point_inverted_gamma_L_gradient = f._gamma_L.compute_inverted_matrix_gradient(gen_params_prior_means)
 print("calculating inverted gamma_L gradient : %s seconds" % (time.time() - start_time))
+
+
+# start_time = time.time()
+# aux = -initial_point_inverted_gamma_L @ initial_point_gamma_L_gradient['D_Ya'] @ initial_point_inverted_gamma_L
+# print("calculating one gradient's component of inv gamma_L : %s seconds" % (time.time() - start_time))
 
 
 start_time = time.time()
 f0 = f.compute(gen_params_prior_means)
 print('f0 =', f0, type(f0))
-print("calculating objective function : %s seconds" % (time.time() - start_time))
+print("calculating objective function at the starting point : %s seconds" % (time.time() - start_time))
 
 
+print()
 print('######################################################')
 print('### DEBUG: OPTIMIZATION ROUTINE IS STARTING NOW!!! ###')
 print('######################################################')
+print()
 
 
 opt_res = sp.optimize.minimize(
-    fun=f.compute_by_array,
+    fun=f.compute_from_array,
     x0=gen_params_prior_means.as_array,
     method='CG',
-    jac=f.compute_gradient_by_array
+    jac=f.compute_gradient_from_array
     # tol=15.5,
     # options={
     #     'maxiter': 5,
@@ -259,5 +278,4 @@ opt_res = sp.optimize.minimize(
 print('opt_success?', opt_res.success)
 print('opt_message:', opt_res.message)
 print('theta_MAP1 =', opt_res.x)
-
 
