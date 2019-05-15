@@ -1,17 +1,24 @@
 import os
 import os.path
+import sys
 import json
 
 import numpy as np
+
+# directory with source code
+PATH_TO_THIS_FILE = os.path.abspath(os.path.dirname(__file__))
+sys.path.append(os.path.join(PATH_TO_THIS_FILE, '..', 'src'))
+
+import data
 
 
 
 def _get_data_from_file(data_file, is_complex):
     # Extracts data from given file and returns it as np.array
-    data = None
+    data_array = None
     with open(data_file, 'r') as input_file:
         lines = input_file.readlines()
-        data = np.zeros(
+        data_array = np.zeros(
             len(lines),
             dtype=(np.complex if is_complex else np.float)
         )
@@ -21,32 +28,30 @@ def _get_data_from_file(data_file, is_complex):
             if is_complex:
                 number = number.replace('i', 'j')
                 number = number.replace(' ', '')
-                data[i] = np.complex(number)
+                data_array[i] = np.complex(number)
             else:
-                data[i] = np.float(number)
+                data_array[i] = np.float(number)
 
-    return data
+    return data_array
 
 
 
 def _get_data_from_files(Vm_file, Va_file, Im_file, Ia_file, is_complex):
     # Just calls 4 times _get_data_from_file to get Vm, Va, Im, Ia
-    path_to_this_file = os.path.abspath(os.path.dirname(__file__))
-
     Vm_data = _get_data_from_file(
-        data_file=os.path.join(path_to_this_file, Vm_file),
+        data_file=os.path.join(PATH_TO_THIS_FILE, Vm_file),
         is_complex=is_complex
     )
     Va_data = _get_data_from_file(
-        data_file=os.path.join(path_to_this_file, Va_file),
+        data_file=os.path.join(PATH_TO_THIS_FILE, Va_file),
         is_complex=is_complex
     )
     Im_data = _get_data_from_file(
-        data_file=os.path.join(path_to_this_file, Im_file),
+        data_file=os.path.join(PATH_TO_THIS_FILE, Im_file),
         is_complex=is_complex
     )
     Ia_data = _get_data_from_file(
-        data_file=os.path.join(path_to_this_file, Ia_file),
+        data_file=os.path.join(PATH_TO_THIS_FILE, Ia_file),
         is_complex=is_complex
     )
 
@@ -287,4 +292,48 @@ def get_correct_values(test_dir):
     with open(path_to_correct_values_file, 'r') as correct_values_file:
         json_correct_values = json.load(correct_values_file)
     return json_correct_values
+
+
+
+def get_prepared_freq_data(test_dir):
+    """Returns correct data which should be just before running stage 1.
+
+    Args:
+        test_dir (str): name of a directory specifying a test set
+
+    Returns:
+        prepared_freq_data (class FreqData): data in frequency domain
+            which can be used immediately for minimization
+            of the objective function
+    """
+    all_correct_values = get_correct_values(test_dir)
+    correct_std_deviations = all_correct_values['freq_data_std_dev_eps']
+    prepared_freq_data_dict = get_freq_data_after_remove_fo_band(test_dir)
+
+    # It doesn't matter initial values of aux_time_data and prepared_freq_data.
+    # aux_time_data is used only for creating an instance of data.FreqData.
+    # We will overwrite all attributes of prepared_freq_data below
+    # in this function.
+    aux_time_data = data.TimeData(
+        Vm_time_data=np.array([0.0, 1.0, 2.0]),
+        Va_time_data=np.array([0.0, 1.0, 2.0]),
+        Im_time_data=np.array([0.0, 1.0, 2.0]),
+        Ia_time_data=np.array([0.0, 1.0, 2.0]),
+        dt=1.23456789
+    )
+    aux_time_data.apply_white_noise(snr=0.0, d_coi=0.0)
+    prepared_freq_data = data.FreqData(aux_time_data)
+
+    prepared_freq_data.freqs = prepared_freq_data_dict['freqs']
+    prepared_freq_data.Vm = prepared_freq_data_dict['Vm']
+    prepared_freq_data.Va = prepared_freq_data_dict['Va']
+    prepared_freq_data.Im = prepared_freq_data_dict['Im']
+    prepared_freq_data.Ia = prepared_freq_data_dict['Ia']
+
+    prepared_freq_data.std_w_Vm = correct_std_deviations['std_dev_eps_Vm']
+    prepared_freq_data.std_w_Va = correct_std_deviations['std_dev_eps_Va']
+    prepared_freq_data.std_w_Im = correct_std_deviations['std_dev_eps_Im']
+    prepared_freq_data.std_w_Ia = correct_std_deviations['std_dev_eps_Ia']
+
+    return prepared_freq_data
 

@@ -231,8 +231,6 @@ class FreqData(Data):
             min_fo_freq (float): begin forced oscillation band
             max_fo_freq (float): end forced oscillation band
         """
-        # for i in range(len(self.freqs)):
-        #     print('###', i, self.freqs[i])
         begin = np.searchsorted(self.freqs, min_fo_freq, side='left')
         end = np.searchsorted(self.freqs, max_fo_freq, side='right')
         removing_indexes = np.arange(begin, end)

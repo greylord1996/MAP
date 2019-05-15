@@ -31,10 +31,10 @@ def perturb_gen_params(true_gen_params):
 
     # Just for testing -- remove in release
     perturbations = [
-        0.2066 - true_gen_params.d_2,
-        0.8372 - true_gen_params.e_2,
-        0.6654 - true_gen_params.m_2,
-        0.0077 - true_gen_params.x_d2
+        0.206552362540141 - true_gen_params.d_2,
+        0.837172184078094 - true_gen_params.e_2,
+        0.665441037484483 - true_gen_params.m_2,
+        0.00771416811078329 - true_gen_params.x_d2
     ]
 
     gen_params_prior_means = (
@@ -115,167 +115,98 @@ def run_all_computations(all_params):
 
 import time
 import sys
+import os
+import os.path
+
+# ONLY FOR TESTING!
+PATH_TO_THIS_FILE = os.path.abspath(os.path.dirname(__file__))
+sys.path.append(os.path.join(PATH_TO_THIS_FILE, '..', 'tests'))
+import our_data
+import correct_data
+
+TEST_DIR = os.path.join(PATH_TO_THIS_FILE, '..', 'tests', 'Rnd_Amp_0002')
+
+initial_params = our_data.get_initial_params(TEST_DIR)
+correct_freq_data = correct_data.get_prepared_freq_data(TEST_DIR)
+
+print('=================== DATA HAVE BEEN PREPARED ========================')
 
 
-FD = settings.FreqData(
-    lower_fb=1.988,  # WTF? Should be equal to 1.99?
-    upper_fb=2.01,
-    max_freq=6.00,
-    dt=0.05
-)
-
-WN = settings.WhiteNoise(
-    rnd_amp=0.002
-)
-
-# 0.2066, 0.8372, 0.6654, 0.0077
-# 0.2166, 0.8672, 0.7654, 0.0087
-# 0.2366, 0.9372, 0.8654, 0.0095
-# 0.2401, 0.9856, 0.9554, 0.0098
-# 0.2500, 1.0000, 1.0000, 0.0100
-GP = settings.GeneratorParameters(  # true generator parameters
-    d_2=0.25,
-    e_2=1.0,
-    m_2=1.0,
-    x_d2=0.01,
-    ic_d2=1.0
-)
-
-IS = settings.IntegrationSettings(
-    dt_step=0.05,
-    df_length=100.0
-)
-
-OP = settings.OscillationParameters(
-    osc_amp=2.00,
-    osc_freq=0.005
-)
-
-solver = dynamic_equations_to_simulate.OdeSolver(
-    white_noise=WN,
-    gen_param=GP,
-    osc_param=OP,
-    integr_param=IS
-)
-# solver.solve()
-
-solver.simulate_time_data()
-time_data = data.TimeData(
-    Vm_time_data=solver.Vc1_abs,
-    Va_time_data=solver.Vc1_angle,
-    Im_time_data=solver.Ig_abs,
-    Ia_time_data=solver.Ig_angle,
-    dt=solver.dt
-)
-
-
-time_data.apply_white_noise(snr=45.0, d_coi=0.0)
-
-
-freq_data = data.FreqData(time_data)
-freq_data.remove_zero_frequency()
-freq_data.trim(min_freq=0.0, max_freq=FD.max_freq)
-freq_data.remove_data_from_fo_band(min_fo_freq=FD.lower_fb, max_fo_freq=FD.upper_fb)
-
-
-print('===========================================')
-
-
-gen_params_prior_means, gen_params_prior_std_devs = perturb_gen_params(GP)
-# now params are perturbed and uncertain
+gen_params_prior_means, gen_params_prior_std_devs = perturb_gen_params(
+    initial_params.generator_parameters
+)  # now params are perturbed and uncertain
 
 start_time = time.time()
 f = objective_function.ObjectiveFunction(
-    freq_data=freq_data,
+    freq_data=correct_freq_data,
     gen_params_prior_means=gen_params_prior_means,
     gen_params_prior_std_devs=gen_params_prior_std_devs
 )
+
 print("constructing objective function : %s seconds" % (time.time() - start_time))
 
-
-# theta0 = objective_function.OptimizingGeneratorParameters(0.2066, 0.8372, 0.6654, 0.0077)
-# gamma0 = f._gamma_L.compute(theta0)
-# reversed_gamma0 = np.linalg.inv(gamma0)
-# print('theta0:', np.linalg.cond(reversed_gamma0 @ gamma0))
 #
-# theta1 = objective_function.OptimizingGeneratorParameters(0.2166, 0.8672, 0.7654, 0.0087)
-# gamma1 = f._gamma_L.compute(theta1)
-# print('theta1:', np.linalg.cond(reversed_gamma0 @ gamma1))
+# import matplotlib.pyplot as plt
 #
-# theta2 = objective_function.OptimizingGeneratorParameters(0.2366, 0.9372, 0.8654, 0.0095)
-# gamma2 = f._gamma_L.compute(theta2)
-# print('theta2:', np.linalg.cond(reversed_gamma0 @ gamma2))
+# true_gen_params = objective_function.OptimizingGeneratorParameters(
+#     D_Ya=initial_params.generator_parameters.d_2,
+#     Ef_a=initial_params.generator_parameters.e_2,
+#     M_Ya=initial_params.generator_parameters.m_2,
+#     X_Ya=initial_params.generator_parameters.x_d2
+# )
+# assert true_gen_params.D_Ya == 0.25
+# assert true_gen_params.Ef_a == 1.00
+# assert true_gen_params.M_Ya == 1.00
+# assert true_gen_params.X_Ya == 0.01
 #
-# theta3 = objective_function.OptimizingGeneratorParameters(0.2401, 0.9856, 0.9554, 0.0098)
-# gamma3 = f._gamma_L.compute(theta3)
-# print('theta3:', np.linalg.cond(reversed_gamma0 @ gamma3))
+# thetas4 = np.arange(start=0.001, stop=0.050, step=0.001)
+# repeated_true_gen_params_arrays = objective_function._construct_gen_params_arrays(
+#     true_gen_params,
+#     len(thetas4)
+# )
 #
-# theta4 = objective_function.OptimizingGeneratorParameters(0.2500, 1.0000, 1.0000, 0.0100)
-# gamma4 = f._gamma_L.compute(theta4)
-# print('theta4:', np.linalg.cond(reversed_gamma0 @ gamma4))
+# f_values = np.array([
+#     f.compute_from_array(np.array([
+#         repeated_true_gen_params_arrays['D_Ya'][i],
+#         repeated_true_gen_params_arrays['Ef_a'][i],
+#         repeated_true_gen_params_arrays['M_Ya'][i],
+#         thetas4[i],
+#     ]))
+#     for i in range(len(thetas4))
+# ])
+#
+# plt.plot(thetas4, f_values)
+# plt.savefig(os.path.join(PATH_TO_THIS_FILE, '..', 'samples', 'theta4.pdf'), dpi=180, format='pdf')
+
+#
+# print('f(0.2500, 1.0000, 1.0000, 0.0100) =', f.compute_from_array([0.2500, 1.0000, 1.0000, 0.0100]))
+# print('f(0.3015, 1.2460, 1.1922, 0.0484) =', f.compute_from_array([0.3015, 1.2460, 1.1922, 0.0484]))
+# print('f(0.2200, 1.1200, 1.3700, 0.0500) =', f.compute_from_array([0.2200, 1.1200, 1.3700, 0.0500]))
+# print('f(0.2066, 0.8372, 0.6654, 0.0077) =', f.compute_from_array([0.2066, 0.8372, 0.6654, 0.0077]))
+# print('f(0.2462, 1.2772, 1.1675, 0.0420) =', f.compute_from_array([0.2462, 1.2772, 1.1675, 0.0420]))
+# print('f(0.1373, 1.0525, 1.4881, 0.0479) =', f.compute_from_array([0.1373, 1.0525, 1.4881, 0.0479]))
 
 
-start_time = time.time()
-initial_point_vector_R = f._R.compute(gen_params_prior_means)
-print("calculating vector_R : %s seconds" % (time.time() - start_time))
-
-
-start_time = time.time()
-initial_point_vector_R_gradient = f._R.compute_gradient(gen_params_prior_means)
-print("calculating vector_R gradient : %s seconds" % (time.time() - start_time))
-
-
-start_time = time.time()
-initial_point_gamma_L = f._gamma_L.compute(gen_params_prior_means)
-print("calculating gamma_L : %s seconds" % (time.time() - start_time))
-
-
-start_time = time.time()
-initial_point_inverted_gamma_L = f._gamma_L.compute_and_invert(gen_params_prior_means)
-print("calculating inverted gamma_L : %s seconds" % (time.time() - start_time))
-
-
-start_time = time.time()
-initial_point_gamma_L_gradient = f._gamma_L.compute_gradient(gen_params_prior_means)
-print("calculating gamma_L gradient : %s seconds" % (time.time() - start_time))
-
-
-start_time = time.time()
-initial_point_inverted_gamma_L_gradient = f._gamma_L.compute_inverted_matrix_gradient(gen_params_prior_means)
-print("calculating inverted gamma_L gradient : %s seconds" % (time.time() - start_time))
-
-
-# start_time = time.time()
-# aux = -initial_point_inverted_gamma_L @ initial_point_gamma_L_gradient['D_Ya'] @ initial_point_inverted_gamma_L
-# print("calculating one gradient's component of inv gamma_L : %s seconds" % (time.time() - start_time))
-
-
-start_time = time.time()
-f0 = f.compute(gen_params_prior_means)
-print('f0 =', f0, type(f0))
-print("calculating objective function at the starting point : %s seconds" % (time.time() - start_time))
-
-
-print()
-print('######################################################')
-print('### DEBUG: OPTIMIZATION ROUTINE IS STARTING NOW!!! ###')
-print('######################################################')
-print()
-
-
-opt_res = sp.optimize.minimize(
-    fun=f.compute_from_array,
-    x0=gen_params_prior_means.as_array,
-    method='CG',
-    jac=f.compute_gradient_from_array
-    # tol=15.5,
-    # options={
-    #     'maxiter': 5,
-    #     'disp': True
-    # }
-)
-
-print('opt_success?', opt_res.success)
-print('opt_message:', opt_res.message)
-print('theta_MAP1 =', opt_res.x)
+# print()
+# print('######################################################')
+# print('### DEBUG: OPTIMIZATION ROUTINE IS STARTING NOW!!! ###')
+# print('######################################################')
+# print()
+#
+#
+# opt_res = sp.optimize.minimize(
+#     fun=f.compute_from_array,
+#     x0=[0.25, 1.0, 1.0, 0.01],
+#     # method='',
+#     jac=f.compute_gradient_from_array
+#     # tol=15.5,
+#     # options={
+#     #     'maxiter': 5,
+#     #     'disp': True
+#     # }
+# )
+#
+# print('opt_success?', opt_res.success)
+# print('opt_message:', opt_res.message)
+# print('theta_MAP1 =', opt_res.x)
 

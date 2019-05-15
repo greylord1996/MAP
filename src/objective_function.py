@@ -222,8 +222,8 @@ class ResidualVector:
         return vector_R
 
 
-    def compute_gradient(self, optimizing_gen_params):
-        """Computes gradient of the residual vector at the given point.
+    def compute_partial_derivatives(self, optimizing_gen_params):
+        """Computes partial derivatives of the residual vector.
 
         Each element of the residual vector depends on 9 quantities
         Vm, Va, Im, Ia, D_Ya, Ef_a, M_Ya, X_Ya, Omega_a.
@@ -240,7 +240,7 @@ class ResidualVector:
                 (at the current step of an optimization routine)
 
         Returns:
-            vector_R_gradient (dict): a dictionary with 4 keys:
+            vector_R_partial_derivatives (dict): a dictionary with 4 keys:
                 'D_Ya' (numpy.array): vector of partial derivatives at D_Ya
                 'Ef_a' (numpy.array): vector of partial derivatives at Ef_a
                 'M_Ya' (numpy.array): vector of partial derivatives at M_Ya
@@ -251,12 +251,12 @@ class ResidualVector:
             freq_data_points_n=len(self._freq_data.freqs)
         )
 
-        vector_R_gradient = dict()
+        vector_R_partial_derivatives = dict()
         for optimizing_gen_param_name in optimizing_gen_params_arrays.keys():
-            gradient_subvectors = dict()
+            partial_derivatives_subvectors = dict()
             for subvector_name, partial_derivatives_functions in (
                     self._partial_derivatives.items()):
-                gradient_subvectors[subvector_name] = (
+                partial_derivatives_subvectors[subvector_name] = (
                     partial_derivatives_functions[optimizing_gen_param_name](
                         self._freq_data.Vm,
                         self._freq_data.Va,
@@ -270,11 +270,13 @@ class ResidualVector:
                     )
                 )
 
-            vector_R_gradient[optimizing_gen_param_name] = (
-                self._construct_vector_from_subvectors(gradient_subvectors)
+            vector_R_partial_derivatives[optimizing_gen_param_name] = (
+                self._construct_vector_from_subvectors(
+                    partial_derivatives_subvectors
+                )
             )
 
-        return vector_R_gradient
+        return vector_R_partial_derivatives
 
 
 
@@ -491,8 +493,8 @@ class CovarianceMatrix:
         )).toarray()
 
 
-    def compute_gradient(self, optimizing_gen_params):
-        """Computes gradient of the covariance matrix at the given point.
+    def compute_partial_derivatives(self, optimizing_gen_params):
+        """Computes partial_derivatives of the covariance matrix.
 
         Each element of the covariance matrix depends on 5 quantities
         D_Ya, Ef_a, M_Ya, X_Ya (4 generator parameters) and Omega_a.
@@ -509,7 +511,7 @@ class CovarianceMatrix:
                 (at the current step of an optimization routine)
 
         Returns:
-            gamma_L_gradient (dict): a dictionary with 4 keys:
+            gamma_L_partial_derivatives (dict): a dictionary with 4 keys:
                 'D_Ya' (numpy.array): matrix of partial derivatives at D_Ya
                 'Ef_a' (numpy.array): matrix of partial derivatives at Ef_a
                 'M_Ya' (numpy.array): matrix of partial derivatives at M_Ya
@@ -520,12 +522,12 @@ class CovarianceMatrix:
             freq_data_points_n=len(self._freqs)
         )
 
-        gamma_L_gradient = dict()
+        gamma_L_partial_derivatives = dict()
         for optimizing_gen_param_name in optimizing_gen_params_arrays.keys():
-            gradient_blocks = dict()
+            partial_derivatives_blocks = dict()
             for block_name, partial_derivatives_functions in (
                     self._partial_derivatives.items()):
-                gradient_blocks[block_name] = np.diag(
+                partial_derivatives_blocks[block_name] = np.diag(
                     partial_derivatives_functions[optimizing_gen_param_name](
                         optimizing_gen_params_arrays['D_Ya'],
                         optimizing_gen_params_arrays['Ef_a'],
@@ -535,22 +537,22 @@ class CovarianceMatrix:
                     )
                 )
 
-            gamma_L_gradient[optimizing_gen_param_name] = (
-                self._construct_matrix_from_blocks(gradient_blocks)
+            gamma_L_partial_derivatives[optimizing_gen_param_name] = (
+                self._construct_matrix_from_blocks(partial_derivatives_blocks)
             )
 
-        return gamma_L_gradient
+        return gamma_L_partial_derivatives
 
 
-    def compute_inverted_matrix_gradient(self, optimizing_gen_params):
-        """Computes gradient of the inverted covariance matrix.
+    def compute_inverted_matrix_partial_derivatives(self, optimizing_gen_params):
+        """Computes partial_derivatives of the inverted covariance matrix.
 
         Each element of the inverted covariance matrix
         depends on 5 quantities:
         D_Ya, Ef_a, M_Ya, X_Ya (4 generator parameters) and Omega_a.
         But it is impossible to invert a big symbolic matrix
         (by computational reasons). That is why
-        this method uses one math trick to compute gradient
+        this method uses one math trick to compute partial_derivatives
         of the inverted covariance matrix at the given point
         without direct inverting symbolic covariance matrix.
 
@@ -560,19 +562,21 @@ class CovarianceMatrix:
                 (at the current step of an optimization routine)
 
         Returns:
-            inverted_gamma_L_gradient (dict): a dictionary with 4 keys:
+            inverted_gamma_L_partial_derivatives (dict): contains 4 keys:
                 'D_Ya' (numpy.array): matrix of partial derivatives at D_Ya
                 'Ef_a' (numpy.array): matrix of partial derivatives at Ef_a
                 'M_Ya' (numpy.array): matrix of partial derivatives at M_Ya
                 'X_Ya' (numpy.array): matrix of partial derivatives at X_Ya
         """
         inv_gamma_L = self.compute_and_invert(optimizing_gen_params)
-        gamma_L_gradient = self.compute_gradient(optimizing_gen_params)
+        gamma_L_partial_derivatives = (
+            self.compute_partial_derivatives(optimizing_gen_params)
+        )
         return {
-            'D_Ya': -inv_gamma_L @ gamma_L_gradient['D_Ya'] @ inv_gamma_L,
-            'Ef_a': -inv_gamma_L @ gamma_L_gradient['Ef_a'] @ inv_gamma_L,
-            'M_Ya': -inv_gamma_L @ gamma_L_gradient['M_Ya'] @ inv_gamma_L,
-            'X_Ya': -inv_gamma_L @ gamma_L_gradient['X_Ya'] @ inv_gamma_L
+            'D_Ya': -inv_gamma_L @ gamma_L_partial_derivatives['D_Ya'] @ inv_gamma_L,
+            'Ef_a': -inv_gamma_L @ gamma_L_partial_derivatives['Ef_a'] @ inv_gamma_L,
+            'M_Ya': -inv_gamma_L @ gamma_L_partial_derivatives['M_Ya'] @ inv_gamma_L,
+            'X_Ya': -inv_gamma_L @ gamma_L_partial_derivatives['X_Ya'] @ inv_gamma_L
         }
 
 
@@ -643,11 +647,6 @@ class ObjectiveFunction:
             self._gamma_L.compute_and_invert(optimizing_gen_params)
         )
 
-        # print('*********** COMPUTING GAMMA_L')
-        # computed_gamma_L = self._gamma_L.compute(optimizing_gen_params)
-        # print('*** COND NUMBER OF GAMMA_L =', np.linalg.cond(computed_gamma_L))
-        # print('*********** *****************')
-
         return (
             curr_delta_params @ self._reversed_gamma_g @ curr_delta_params
             + computed_R @ computed_inverted_gamma_L @ computed_R
@@ -672,16 +671,12 @@ class ObjectiveFunction:
         )
 
         computed_R = self._R.compute(optimizing_gen_params)
-        computed_R_gradient = self._R.compute_gradient(optimizing_gen_params)
-
-        computed_inverted_gamma_L = (
+        computed_R_partial_derivatives = (
+            self._R.compute_partial_derivatives(optimizing_gen_params)
+        )
+        computed_inv_gamma_L = (
             self._gamma_L.compute_and_invert(optimizing_gen_params)
         )
-        # computed_inverted_gamma_L_gradient = (
-        #     self._gamma_L.compute_inverted_matrix_gradient(
-        #         optimizing_gen_params
-        #     )
-        # )
 
         # grad_f = grad_f1 + grad_f2 (see equation 40 in the paper)
         grad_f1 = (
@@ -689,13 +684,13 @@ class ObjectiveFunction:
         ) @ curr_delta_params
 
         auxiliary_vector = (
-            computed_inverted_gamma_L + np.transpose(computed_inverted_gamma_L)
+            computed_inv_gamma_L + np.transpose(computed_inv_gamma_L)
         ) @ computed_R
         grad_f2 = np.array([
-            auxiliary_vector @ computed_R_gradient['D_Ya'],
-            auxiliary_vector @ computed_R_gradient['Ef_a'],
-            auxiliary_vector @ computed_R_gradient['M_Ya'],
-            auxiliary_vector @ computed_R_gradient['X_Ya'],
+            auxiliary_vector @ computed_R_partial_derivatives['D_Ya'],
+            auxiliary_vector @ computed_R_partial_derivatives['Ef_a'],
+            auxiliary_vector @ computed_R_partial_derivatives['M_Ya'],
+            auxiliary_vector @ computed_R_partial_derivatives['X_Ya'],
         ])
 
         grad_f = grad_f1 + grad_f2
@@ -723,7 +718,8 @@ class ObjectiveFunction:
             Be cautious using this method! The order of parameters
             is extremely important!
         """
-        print('\n### DEBUG: optimizing... curr_point =', optimizing_gen_params)
+        print('\n### DEBUG: computing value of objective function...', end=' ')
+        print('curr_point =', optimizing_gen_params)
         func_value = self.compute(OptimizingGeneratorParameters(
             D_Ya=optimizing_gen_params[0],
             Ef_a=optimizing_gen_params[1],
