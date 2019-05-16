@@ -145,7 +145,7 @@ f = objective_function.ObjectiveFunction(
 
 print("constructing objective function : %s seconds" % (time.time() - start_time))
 
-#
+
 # import matplotlib.pyplot as plt
 #
 # true_gen_params = objective_function.OptimizingGeneratorParameters(
@@ -159,7 +159,7 @@ print("constructing objective function : %s seconds" % (time.time() - start_time
 # assert true_gen_params.M_Ya == 1.00
 # assert true_gen_params.X_Ya == 0.01
 #
-# thetas4 = np.arange(start=0.001, stop=0.050, step=0.001)
+# thetas4 = np.arange(start=0.001, stop=0.090, step=0.001)
 # repeated_true_gen_params_arrays = objective_function._construct_gen_params_arrays(
 #     true_gen_params,
 #     len(thetas4)
@@ -175,6 +175,8 @@ print("constructing objective function : %s seconds" % (time.time() - start_time
 #     for i in range(len(thetas4))
 # ])
 #
+# plt.xlabel('theta4')
+# plt.ylabel('objective function (f)')
 # plt.plot(thetas4, f_values)
 # plt.savefig(os.path.join(PATH_TO_THIS_FILE, '..', 'samples', 'theta4.pdf'), dpi=180, format='pdf')
 
@@ -194,19 +196,19 @@ print("constructing objective function : %s seconds" % (time.time() - start_time
 # print()
 #
 #
-# opt_res = sp.optimize.minimize(
-#     fun=f.compute_from_array,
-#     x0=[0.25, 1.0, 1.0, 0.01],
-#     # method='',
-#     jac=f.compute_gradient_from_array
-#     # tol=15.5,
-#     # options={
-#     #     'maxiter': 5,
-#     #     'disp': True
-#     # }
-# )
-#
-# print('opt_success?', opt_res.success)
-# print('opt_message:', opt_res.message)
-# print('theta_MAP1 =', opt_res.x)
+opt_res = sp.optimize.minimize(
+    fun=f.compute_from_array,
+    x0=[0.25, 1.0, 1.0, 0.01],
+    # method='',
+    jac=f.compute_gradient_from_array,
+    # tol=15.5,
+    # options={
+    #     'maxiter': 5,
+    #     'disp': True
+    # }
+)
+
+print('opt_success?', opt_res.success)
+print('opt_message:', opt_res.message)
+print('theta_MAP1 =', opt_res.x)
 

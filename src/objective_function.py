@@ -471,26 +471,26 @@ class CovarianceMatrix:
         return gamma_L
 
 
-    def compute_and_invert(self, optimizing_gen_params):
-        """Computes the inverse of the covariance matrix at the given point.
-
-        Does exactly the same as 'compute' method but after computing
-        the covariance matrix this method inverts the obtained matrix
-        and returns it. See docstrings of the 'compute' method.
-
-        Args:
-            optimizing_gen_params (class OptimizingGeneratorParameters):
-                current parameters of a generator
-                (at the current step of an optimization routine)
-
-        Returns:
-            gamma_L^(-1) (numpy.array): inverted covariance matrix
-                evaluated at the given point (specified by
-                the 'optimizing_gen_params' argument of this method)
-        """
-        return sp.sparse.linalg.inv(sp.sparse.csc_matrix(
-            self.compute(optimizing_gen_params)
-        )).toarray()
+    # def compute_and_invert(self, optimizing_gen_params):
+    #     """Computes the inverse of the covariance matrix at the given point.
+    #
+    #     Does exactly the same as 'compute' method but after computing
+    #     the covariance matrix this method inverts the obtained matrix
+    #     and returns it. See docstrings of the 'compute' method.
+    #
+    #     Args:
+    #         optimizing_gen_params (class OptimizingGeneratorParameters):
+    #             current parameters of a generator
+    #             (at the current step of an optimization routine)
+    #
+    #     Returns:
+    #         gamma_L^(-1) (numpy.array): inverted covariance matrix
+    #             evaluated at the given point (specified by
+    #             the 'optimizing_gen_params' argument of this method)
+    #     """
+    #     return sp.sparse.linalg.inv(sp.sparse.csc_matrix(
+    #         self.compute(optimizing_gen_params)
+    #     )).toarray()
 
 
     def compute_partial_derivatives(self, optimizing_gen_params):
@@ -544,40 +544,40 @@ class CovarianceMatrix:
         return gamma_L_partial_derivatives
 
 
-    def compute_inverted_matrix_partial_derivatives(self, optimizing_gen_params):
-        """Computes partial_derivatives of the inverted covariance matrix.
-
-        Each element of the inverted covariance matrix
-        depends on 5 quantities:
-        D_Ya, Ef_a, M_Ya, X_Ya (4 generator parameters) and Omega_a.
-        But it is impossible to invert a big symbolic matrix
-        (by computational reasons). That is why
-        this method uses one math trick to compute partial_derivatives
-        of the inverted covariance matrix at the given point
-        without direct inverting symbolic covariance matrix.
-
-        Args:
-            optimizing_gen_params (class OptimizingGeneratorParameters):
-                current parameters of a generator
-                (at the current step of an optimization routine)
-
-        Returns:
-            inverted_gamma_L_partial_derivatives (dict): contains 4 keys:
-                'D_Ya' (numpy.array): matrix of partial derivatives at D_Ya
-                'Ef_a' (numpy.array): matrix of partial derivatives at Ef_a
-                'M_Ya' (numpy.array): matrix of partial derivatives at M_Ya
-                'X_Ya' (numpy.array): matrix of partial derivatives at X_Ya
-        """
-        inv_gamma_L = self.compute_and_invert(optimizing_gen_params)
-        gamma_L_partial_derivatives = (
-            self.compute_partial_derivatives(optimizing_gen_params)
-        )
-        return {
-            'D_Ya': -inv_gamma_L @ gamma_L_partial_derivatives['D_Ya'] @ inv_gamma_L,
-            'Ef_a': -inv_gamma_L @ gamma_L_partial_derivatives['Ef_a'] @ inv_gamma_L,
-            'M_Ya': -inv_gamma_L @ gamma_L_partial_derivatives['M_Ya'] @ inv_gamma_L,
-            'X_Ya': -inv_gamma_L @ gamma_L_partial_derivatives['X_Ya'] @ inv_gamma_L
-        }
+    # def compute_inverted_matrix_partial_derivatives(self, optimizing_gen_params):
+    #     """Computes partial_derivatives of the inverted covariance matrix.
+    #
+    #     Each element of the inverted covariance matrix
+    #     depends on 5 quantities:
+    #     D_Ya, Ef_a, M_Ya, X_Ya (4 generator parameters) and Omega_a.
+    #     But it is impossible to invert a big symbolic matrix
+    #     (by computational reasons). That is why
+    #     this method uses one math trick to compute partial_derivatives
+    #     of the inverted covariance matrix at the given point
+    #     without direct inverting symbolic covariance matrix.
+    #
+    #     Args:
+    #         optimizing_gen_params (class OptimizingGeneratorParameters):
+    #             current parameters of a generator
+    #             (at the current step of an optimization routine)
+    #
+    #     Returns:
+    #         inverted_gamma_L_partial_derivatives (dict): contains 4 keys:
+    #             'D_Ya' (numpy.array): matrix of partial derivatives at D_Ya
+    #             'Ef_a' (numpy.array): matrix of partial derivatives at Ef_a
+    #             'M_Ya' (numpy.array): matrix of partial derivatives at M_Ya
+    #             'X_Ya' (numpy.array): matrix of partial derivatives at X_Ya
+    #     """
+    #     inv_gamma_L = self.compute_and_invert(optimizing_gen_params)
+    #     gamma_L_partial_derivatives = (
+    #         self.compute_partial_derivatives(optimizing_gen_params)
+    #     )
+    #     return {
+    #         'D_Ya': -inv_gamma_L @ gamma_L_partial_derivatives['D_Ya'] @ inv_gamma_L,
+    #         'Ef_a': -inv_gamma_L @ gamma_L_partial_derivatives['Ef_a'] @ inv_gamma_L,
+    #         'M_Ya': -inv_gamma_L @ gamma_L_partial_derivatives['M_Ya'] @ inv_gamma_L,
+    #         'X_Ya': -inv_gamma_L @ gamma_L_partial_derivatives['X_Ya'] @ inv_gamma_L
+    #     }
 
 
 
@@ -594,8 +594,8 @@ class ObjectiveFunction:
             at the current step of an optimization routine
         _gen_params_prior_means (numpy.array):
             a starting point for an optimization routine
-        _reversed_gamma_g (numpy.array): diagonal matrix containing
-            standard deviations of prior uncertain generator parameters
+        _inv_gamma_g (numpy.array): inverted covariance matrix
+            of prior generator parameters
 
     Note:
         All attributes are private. Don't change them
@@ -624,7 +624,12 @@ class ObjectiveFunction:
         self._R = ResidualVector(freq_data)
         self._gamma_L = CovarianceMatrix(freq_data)
         self._gen_params_prior_means = gen_params_prior_means.as_array
-        self._reversed_gamma_g = np.diag(gen_params_prior_std_devs.as_array)
+        self._inv_gamma_g = np.diag(
+            1.0 / (
+                (gen_params_prior_means.as_array *
+                 gen_params_prior_std_devs.as_array)**2
+            )
+        )  # Why multiplied by gen_params_prior_means.as_array (not 1.0)?
 
 
     def compute(self, optimizing_gen_params):
@@ -636,20 +641,22 @@ class ObjectiveFunction:
                 (at the current step of an optimization routine)
 
         Returns:
-            value (numpy.float64) of the objective function at the given point
+            value (numpy.float64) of the objective function
+                at the given point
         """
         curr_delta_params = (
             optimizing_gen_params.as_array - self._gen_params_prior_means
         )
 
         computed_R = self._R.compute(optimizing_gen_params)
-        computed_inverted_gamma_L = (
-            self._gamma_L.compute_and_invert(optimizing_gen_params)
+        computed_gamma_L = self._gamma_L.compute(optimizing_gen_params)
+        computed_inv_gamma_L_dot_R = (
+            np.linalg.solve(computed_gamma_L, computed_R)
         )
 
         return (
-            curr_delta_params @ self._reversed_gamma_g @ curr_delta_params
-            + computed_R @ computed_inverted_gamma_L @ computed_R
+            curr_delta_params @ self._inv_gamma_g @ curr_delta_params
+            + computed_R @ computed_inv_gamma_L_dot_R
         )
 
 
@@ -671,26 +678,25 @@ class ObjectiveFunction:
         )
 
         computed_R = self._R.compute(optimizing_gen_params)
+        computed_gamma_L = self._gamma_L.compute(optimizing_gen_params)
         computed_R_partial_derivatives = (
             self._R.compute_partial_derivatives(optimizing_gen_params)
-        )
-        computed_inv_gamma_L = (
-            self._gamma_L.compute_and_invert(optimizing_gen_params)
         )
 
         # grad_f = grad_f1 + grad_f2 (see equation 40 in the paper)
         grad_f1 = (
-            self._reversed_gamma_g + np.transpose(self._reversed_gamma_g)
+            self._inv_gamma_g + np.transpose(self._inv_gamma_g)
         ) @ curr_delta_params
 
-        auxiliary_vector = (
-            computed_inv_gamma_L + np.transpose(computed_inv_gamma_L)
-        ) @ computed_R
+        intermediate_grad_f2 = (
+            np.linalg.solve(computed_gamma_L, computed_R) +
+            np.linalg.solve(np.transpose(computed_gamma_L), computed_R)
+        )
         grad_f2 = np.array([
-            auxiliary_vector @ computed_R_partial_derivatives['D_Ya'],
-            auxiliary_vector @ computed_R_partial_derivatives['Ef_a'],
-            auxiliary_vector @ computed_R_partial_derivatives['M_Ya'],
-            auxiliary_vector @ computed_R_partial_derivatives['X_Ya'],
+            intermediate_grad_f2 @ computed_R_partial_derivatives['D_Ya'],
+            intermediate_grad_f2 @ computed_R_partial_derivatives['Ef_a'],
+            intermediate_grad_f2 @ computed_R_partial_derivatives['M_Ya'],
+            intermediate_grad_f2 @ computed_R_partial_derivatives['X_Ya'],
         ])
 
         grad_f = grad_f1 + grad_f2

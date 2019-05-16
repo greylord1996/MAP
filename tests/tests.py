@@ -335,13 +335,15 @@ class ObjectiveFunctionTests(unittest.TestCase):
             print('\n+++++++++++++++++++++++++++++++++++')
             print(
                 '$$$ TESTING:', 'TEST_OBJECTIVE_FUNCTION_VALUES, OUR/CORRECT RATIO: ',
-                func.compute_from_array(args_array) / correct_func_value
+                func.compute_from_array(args_array) / correct_func_value,
+                'OUR =', func.compute_from_array(args_array),
+                'CORRECT =', correct_func_value
             )
             print('+++++++++++++++++++++++++++++++++++\n')
-            # self.assertAlmostEqual(
-            #     func.compute_from_array(args_array) / correct_func_value, 1.0,
-            #     places=2  # WARNING! Low precision!
-            # )
+            self.assertAlmostEqual(
+                func.compute_from_array(args_array) / correct_func_value, 1.0,
+                places=1  # WARNING! Low precision!
+            )
 
 
     def _check_objective_function_gradients(self, func, test_dir):
@@ -418,11 +420,11 @@ class ObjectiveFunctionTests(unittest.TestCase):
             starting_point_gamma_L_partial_derivatives = (
                 f._gamma_L.compute_partial_derivatives(gen_params_prior_means)
             )
-            starting_point_inverted_gamma_L_partial_derivatives = (
-                f._gamma_L.compute_inverted_matrix_partial_derivatives(
-                    gen_params_prior_means
-                )
-            )
+            # starting_point_inverted_gamma_L_partial_derivatives = (
+            #     f._gamma_L.compute_inverted_matrix_partial_derivatives(
+            #         gen_params_prior_means
+            #     )
+            # )
             starting_point_f_gradient = f.compute_gradient(gen_params_prior_means)
             # starting_point_f_gradient = (
             #     f.compute_gradient_from_array(gen_params_prior_means.as_array)
