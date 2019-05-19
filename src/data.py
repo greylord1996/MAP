@@ -142,7 +142,7 @@ class FreqData(Data):
         time_points_len = len(time_data.Vm)  # N = number of data points
         assert time_points_len % 2 == 1  # Ensure that N is odd (N = 2K + 1)
 
-        # f_vec is the same as self.freqs (what about pi?)
+        # f_vec is the same as self.freqs (don't forget about the 2*pi factor!)
         self.freqs = (fs / time_points_len *
                       np.arange(0, (time_points_len + 1) / 2, 1))
 

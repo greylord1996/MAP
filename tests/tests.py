@@ -1,6 +1,7 @@
 import sys
 import os
 import os.path
+import json
 import unittest
 
 import numpy as np
@@ -88,7 +89,7 @@ class TimeDataTests(unittest.TestCase):
                 )
 
 
-    def test_snr(self):
+    def test_white_noise(self):
         for test_dir in TEST_DIRS:
             our_time_data = our_data.get_time_data_after_snr(test_dir)
             correct_time_data = correct_data.get_time_data_after_snr(test_dir)
@@ -332,17 +333,17 @@ class ObjectiveFunctionTests(unittest.TestCase):
 
         for args, correct_func_value in correct_func_values.items():
             args_array = np.array([np.float(arg) for arg in args.split(',')])
-            print('\n+++++++++++++++++++++++++++++++++++')
-            print(
-                '$$$ TESTING:', 'TEST_OBJECTIVE_FUNCTION_VALUES, OUR/CORRECT RATIO: ',
-                func.compute_from_array(args_array) / correct_func_value,
-                'OUR =', func.compute_from_array(args_array),
-                'CORRECT =', correct_func_value
-            )
-            print('+++++++++++++++++++++++++++++++++++\n')
+            # print('\n+++++++++++++++++++++++++++++++++++')
+            # print(
+            #     '$$$ TESTING:', 'TEST_OBJECTIVE_FUNCTION_VALUES, OUR/CORRECT RATIO: ',
+            #     func.compute_from_array(args_array) / correct_func_value,
+            #     'OUR =', func.compute_from_array(args_array),
+            #     'CORRECT =', correct_func_value
+            # )
+            # print('+++++++++++++++++++++++++++++++++++\n')
             self.assertAlmostEqual(
                 func.compute_from_array(args_array) / correct_func_value, 1.0,
-                places=1  # WARNING! Low precision!
+                places=13
             )
 
 
@@ -374,32 +375,35 @@ class ObjectiveFunctionTests(unittest.TestCase):
             )
 
             # perturbed generator's parameters
-            gen_params_prior_means = (
+            json_prior = None
+            with open(os.path.join(test_dir, 'prior.json'), 'r') as prior_file:
+                json_prior = json.load(prior_file)
+            gen_params_prior_mean = (
                 objective_function.OptimizingGeneratorParameters(
-                    D_Ya=0.206552362540141,   # prior value of D_Ya
-                    Ef_a=0.837172184078094,   # prior value of Ef_a
-                    M_Ya=0.665441037484483,   # prior value of M_Ya
-                    X_Ya=0.00771416811078329  # prior value of X_Ya
+                    D_Ya=json_prior['prior_mean']['D_Ya'],
+                    Ef_a=json_prior['prior_mean']['Ef_a'],
+                    M_Ya=json_prior['prior_mean']['M_Ya'],
+                    X_Ya=json_prior['prior_mean']['X_Ya']
                 )
             )
-            gen_params_prior_std_devs = (
+            gen_params_prior_std_dev = (
                 objective_function.OptimizingGeneratorParameters(
-                    D_Ya=1000.0,  # std dev of D_Ya
-                    Ef_a=1000.0,  # std dev of Ef_a
-                    M_Ya=1000.0,  # std dev of M_Ya
-                    X_Ya=1000.0   # std dev of X_Ya
+                    D_Ya=json_prior['prior_std_dev']['D_Ya'],
+                    Ef_a=json_prior['prior_std_dev']['Ef_a'],
+                    M_Ya=json_prior['prior_std_dev']['M_Ya'],
+                    X_Ya=json_prior['prior_std_dev']['X_Ya']
                 )
             )
 
             # f -- objective function to minimize
             f = objective_function.ObjectiveFunction(
                 freq_data=correct_prepared_freq_data,
-                gen_params_prior_means=gen_params_prior_means,
-                gen_params_prior_std_devs=gen_params_prior_std_devs
+                gen_params_prior_means=gen_params_prior_mean,
+                gen_params_prior_std_devs=gen_params_prior_std_dev
             )
 
             self._check_covariance_matrix(
-                our_gamma_L=f._gamma_L.compute(gen_params_prior_means),
+                our_gamma_L=f._gamma_L.compute(gen_params_prior_mean),
                 test_dir=test_dir
             )
             self._check_objective_function_values(
@@ -411,24 +415,24 @@ class ObjectiveFunctionTests(unittest.TestCase):
                 test_dir=test_dir
             )
 
-            starting_point_R = f._R.compute(gen_params_prior_means)
-            starting_point_gamma_L = f._gamma_L.compute(gen_params_prior_means)
+            starting_point_R = f._R.compute(gen_params_prior_mean)
+            starting_point_gamma_L = f._gamma_L.compute(gen_params_prior_mean)
 
             starting_point_R_partial_derivatives = (
-                f._R.compute_partial_derivatives(gen_params_prior_means)
+                f._R.compute_partial_derivatives(gen_params_prior_mean)
             )
             starting_point_gamma_L_partial_derivatives = (
-                f._gamma_L.compute_partial_derivatives(gen_params_prior_means)
+                f._gamma_L.compute_partial_derivatives(gen_params_prior_mean)
             )
             # starting_point_inverted_gamma_L_partial_derivatives = (
             #     f._gamma_L.compute_inverted_matrix_partial_derivatives(
-            #         gen_params_prior_means
+            #         gen_params_prior_mean
             #     )
             # )
-            starting_point_f_gradient = f.compute_gradient(gen_params_prior_means)
-            # starting_point_f_gradient = (
-            #     f.compute_gradient_from_array(gen_params_prior_means.as_array)
-            # )
+            starting_point_f_gradient = f.compute_gradient(gen_params_prior_mean)
+            starting_point_f_gradient = (
+                f.compute_gradient_from_array(gen_params_prior_mean.as_array)
+            )
 
 
 

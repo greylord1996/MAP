@@ -37,7 +37,7 @@ def perturb_gen_params(true_gen_params):
         0.00771416811078329 - true_gen_params.x_d2
     ]
 
-    gen_params_prior_means = (
+    gen_params_prior_mean = (
         objective_function.OptimizingGeneratorParameters(
             D_Ya=true_gen_params.d_2 + perturbations[0],   # check accordance D_Ya <-> d_2
             Ef_a=true_gen_params.e_2 + perturbations[1],   # check accordance Ef_a <-> e_2
@@ -45,7 +45,7 @@ def perturb_gen_params(true_gen_params):
             X_Ya=true_gen_params.x_d2 + perturbations[3],  # check accordance X_Ya <-> x_d2
         )
     )
-    gen_params_prior_std_devs = (
+    gen_params_prior_std_dev = (
         objective_function.OptimizingGeneratorParameters(
             D_Ya=1000.0,  # std dev of D_Ya
             Ef_a=1000.0,  # std dev of Ef_a
@@ -54,7 +54,7 @@ def perturb_gen_params(true_gen_params):
         )
     )
 
-    return gen_params_prior_means, gen_params_prior_std_devs
+    return gen_params_prior_mean, gen_params_prior_std_dev
 
 
 
@@ -83,23 +83,21 @@ def run_all_computations(all_params):
     freq_data = data.FreqData(time_data)
 
     # Perturb generator parameters (replace true parameters with prior)
-    gen_params_prior_means, gen_params_prior_std_devs = (
+    gen_params_prior_mean, gen_params_prior_std_dev = (
         perturb_gen_params(all_params['GeneratorParameters'])
     )
 
     # f denotes the objective function
     f = objective_function.ObjectiveFunction(
         freq_data=freq_data,
-        gen_params_prior_means=gen_params_prior_means,
-        gen_params_prior_std_devs=gen_params_prior_std_devs
+        gen_params_prior_means=gen_params_prior_mean,
+        gen_params_prior_std_devs=gen_params_prior_std_dev
     )
 
     # Here we should minimize the objective function
 
     # It is not clear now what should be returned
     return ode_solver_object.get_appropr_data_to_gui()
-
-
 
 
 
@@ -132,18 +130,20 @@ correct_freq_data = correct_data.get_prepared_freq_data(TEST_DIR)
 print('=================== DATA HAVE BEEN PREPARED ========================')
 
 
-gen_params_prior_means, gen_params_prior_std_devs = perturb_gen_params(
+gen_params_prior_mean, gen_params_prior_std_dev = perturb_gen_params(
     initial_params.generator_parameters
 )  # now params are perturbed and uncertain
 
 start_time = time.time()
 f = objective_function.ObjectiveFunction(
     freq_data=correct_freq_data,
-    gen_params_prior_means=gen_params_prior_means,
-    gen_params_prior_std_devs=gen_params_prior_std_devs
+    gen_params_prior_means=gen_params_prior_mean,
+    gen_params_prior_std_devs=gen_params_prior_std_dev
 )
-
 print("constructing objective function : %s seconds" % (time.time() - start_time))
+
+
+# f.compute_from_array([0.25, 1.00, 1.00, 0.01])
 
 
 # import matplotlib.pyplot as plt
@@ -159,26 +159,26 @@ print("constructing objective function : %s seconds" % (time.time() - start_time
 # assert true_gen_params.M_Ya == 1.00
 # assert true_gen_params.X_Ya == 0.01
 #
-# thetas4 = np.arange(start=0.001, stop=0.090, step=0.001)
+# thetas1 = np.arange(start=-2.75, stop=3.25, step=0.05)
 # repeated_true_gen_params_arrays = objective_function._construct_gen_params_arrays(
 #     true_gen_params,
-#     len(thetas4)
+#     len(thetas1)
 # )
 #
 # f_values = np.array([
 #     f.compute_from_array(np.array([
-#         repeated_true_gen_params_arrays['D_Ya'][i],
+#         thetas1[i],
 #         repeated_true_gen_params_arrays['Ef_a'][i],
 #         repeated_true_gen_params_arrays['M_Ya'][i],
-#         thetas4[i],
+#         repeated_true_gen_params_arrays['X_Ya'][i]
 #     ]))
-#     for i in range(len(thetas4))
+#     for i in range(len(thetas1))
 # ])
 #
-# plt.xlabel('theta4')
+# plt.xlabel('theta1')
 # plt.ylabel('objective function (f)')
-# plt.plot(thetas4, f_values)
-# plt.savefig(os.path.join(PATH_TO_THIS_FILE, '..', 'samples', 'theta4.pdf'), dpi=180, format='pdf')
+# plt.plot(thetas1, f_values)
+# plt.savefig(os.path.join(PATH_TO_THIS_FILE, '..', 'samples', 'theta1.pdf'), dpi=180, format='pdf')
 
 #
 # print('f(0.2500, 1.0000, 1.0000, 0.0100) =', f.compute_from_array([0.2500, 1.0000, 1.0000, 0.0100]))
@@ -196,19 +196,19 @@ print("constructing objective function : %s seconds" % (time.time() - start_time
 # print()
 #
 #
-opt_res = sp.optimize.minimize(
-    fun=f.compute_from_array,
-    x0=[0.25, 1.0, 1.0, 0.01],
-    # method='',
-    jac=f.compute_gradient_from_array,
-    # tol=15.5,
-    # options={
-    #     'maxiter': 5,
-    #     'disp': True
-    # }
-)
-
-print('opt_success?', opt_res.success)
-print('opt_message:', opt_res.message)
-print('theta_MAP1 =', opt_res.x)
+# opt_res = sp.optimize.minimize(
+#     fun=f.compute_from_array,
+#     x0=[0.25, 1.0, 1.0, 0.01],
+#     # method='',
+#     jac=f.compute_gradient_from_array,
+#     # tol=15.5,
+#     # options={
+#     #     'maxiter': 5,
+#     #     'disp': True
+#     # }
+# )
+#
+# print('opt_success?', opt_res.success)
+# print('opt_message:', opt_res.message)
+# print('theta_MAP1 =', opt_res.x)
 

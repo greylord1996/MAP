@@ -471,6 +471,7 @@ class CovarianceMatrix:
         return gamma_L
 
 
+    # DEPRECATED METHOD!
     # def compute_and_invert(self, optimizing_gen_params):
     #     """Computes the inverse of the covariance matrix at the given point.
     #
@@ -544,6 +545,7 @@ class CovarianceMatrix:
         return gamma_L_partial_derivatives
 
 
+    # DEPRECATED METHOD!
     # def compute_inverted_matrix_partial_derivatives(self, optimizing_gen_params):
     #     """Computes partial_derivatives of the inverted covariance matrix.
     #
@@ -724,8 +726,8 @@ class ObjectiveFunction:
             Be cautious using this method! The order of parameters
             is extremely important!
         """
-        print('\n### DEBUG: computing value of objective function...', end=' ')
-        print('curr_point =', optimizing_gen_params)
+        print('\n### DEBUG: computing value of objective function', end=' ')
+        print('at the point =', optimizing_gen_params)
         func_value = self.compute(OptimizingGeneratorParameters(
             D_Ya=optimizing_gen_params[0],
             Ef_a=optimizing_gen_params[1],
@@ -765,6 +767,6 @@ class ObjectiveFunction:
             M_Ya=optimizing_gen_params[2],
             X_Ya=optimizing_gen_params[3]
         ))
-        print('### DEBUG: gradient =', func_gradient)
+        # print('### DEBUG: gradient =', func_gradient)
         return func_gradient
 
