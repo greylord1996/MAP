@@ -60,10 +60,10 @@ def perturb_gen_params(true_gen_params):
 
 def run_all_computations(all_params):
     ode_solver_object = dynamic_equations_to_simulate.OdeSolver(
-        white_noise=all_params['WhiteNoise'],
-        gen_param=all_params['GeneratorParameters'],
-        osc_param=all_params['OscillationParameters'],
-        integr_param=all_params['IntegrationSettings']
+        white_noise=all_params.white_noise,
+        gen_param=all_params.generator_parameters,
+        osc_param=all_params.oscillation_parameters,
+        integr_param=all_params.integration_settings
     )
     # ode_solver_object.solve()
 
@@ -84,7 +84,7 @@ def run_all_computations(all_params):
 
     # Perturb generator parameters (replace true parameters with prior)
     gen_params_prior_mean, gen_params_prior_std_dev = (
-        perturb_gen_params(all_params['GeneratorParameters'])
+        perturb_gen_params(all_params.generator_parameters)
     )
 
     # f denotes the objective function
@@ -143,6 +143,9 @@ f = objective_function.ObjectiveFunction(
 print("constructing objective function : %s seconds" % (time.time() - start_time))
 
 
+# print(np.linalg.cond(f._gamma_L.compute(gen_params_prior_mean)))
+# my_x = objective_function.OptimizingGeneratorParameters(2.0, 1.2, 0.6, 0.012)
+# print(np.linalg.cond(f._gamma_L.compute(my_x)))
 
 # import matplotlib.pyplot as plt
 #
