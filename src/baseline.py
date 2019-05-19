@@ -47,10 +47,10 @@ def perturb_gen_params(true_gen_params):
     )
     gen_params_prior_std_dev = (
         objective_function.OptimizingGeneratorParameters(
-            D_Ya=1000.0,  # std dev of D_Ya
-            Ef_a=1000.0,  # std dev of Ef_a
-            M_Ya=1000.0,  # std dev of M_Ya
-            X_Ya=1000.0   # std dev of X_Ya
+            D_Ya=1000.0,  # std_dev of D_Ya
+            Ef_a=1000.0,  # std_dev of Ef_a
+            M_Ya=1000.0,  # std_dev of M_Ya
+            X_Ya=1000.0   # std_dev of X_Ya
         )
     )
 
@@ -77,6 +77,7 @@ def run_all_computations(all_params):
         dt=ode_solver_object.dt
     )
     # Apply white noise to simulated data in time domain
+    # TODO: Move snr and d_coi to GUI
     time_data.apply_white_noise(snr=45.0, d_coi=0.0)
 
     # Moving from time domain to frequency domain
@@ -116,7 +117,7 @@ import sys
 import os
 import os.path
 
-# ONLY FOR TESTING!
+# WARNING! ONLY FOR TESTING!
 PATH_TO_THIS_FILE = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(os.path.join(PATH_TO_THIS_FILE, '..', 'tests'))
 import our_data
@@ -132,7 +133,7 @@ print('=================== DATA HAVE BEEN PREPARED ========================')
 
 gen_params_prior_mean, gen_params_prior_std_dev = perturb_gen_params(
     initial_params.generator_parameters
-)  # now params are perturbed and uncertain
+)  # now generator parameters are perturbed and uncertain
 
 start_time = time.time()
 f = objective_function.ObjectiveFunction(
@@ -147,42 +148,8 @@ print("constructing objective function : %s seconds" % (time.time() - start_time
 # my_x = objective_function.OptimizingGeneratorParameters(2.0, 1.2, 0.6, 0.012)
 # print(np.linalg.cond(f._gamma_L.compute(my_x)))
 
-# import matplotlib.pyplot as plt
-#
-# true_gen_params = objective_function.OptimizingGeneratorParameters(
-#     D_Ya=initial_params.generator_parameters.d_2,
-#     Ef_a=initial_params.generator_parameters.e_2,
-#     M_Ya=initial_params.generator_parameters.m_2,
-#     X_Ya=initial_params.generator_parameters.x_d2
-# )
-# assert true_gen_params.D_Ya == 0.25
-# assert true_gen_params.Ef_a == 1.00
-# assert true_gen_params.M_Ya == 1.00
-# assert true_gen_params.X_Ya == 0.01
-#
-# thetas4 = np.arange(start=0.001, stop=0.090, step=0.001)
-# repeated_true_gen_params_arrays = objective_function._construct_gen_params_arrays(
-#     true_gen_params,
-#     len(thetas4)
-# )
-#
-# f_values = np.array([
-#     f.compute_from_array(np.array([
-#         repeated_true_gen_params_arrays['D_Ya'][i],
-#         repeated_true_gen_params_arrays['Ef_a'][i],
-#         repeated_true_gen_params_arrays['M_Ya'][i],
-#         thetas4[i]
-#     ]))
-#     for i in range(len(thetas4))
-# ])
-#
-# plt.xlabel('theta4')
-# plt.ylabel('objective function (f)')
-# plt.plot(thetas4, f_values)
-# plt.savefig(os.path.join(PATH_TO_THIS_FILE, '..', 'samples', 'theta4.pdf'), dpi=180, format='pdf')
 
-
-# Before optimizing the objective function let's compare its values at the following points:
+# Before optimizing the objective function let's compare its values at the following random points:
 # print('f(0.2500, 1.0000, 1.0000, 0.0100) =', f.compute_from_array([0.2500, 1.0000, 1.0000, 0.0100]))
 # print('f(0.3015, 1.2460, 1.1922, 0.0484) =', f.compute_from_array([0.3015, 1.2460, 1.1922, 0.0484]))
 # print('f(0.2200, 1.1200, 1.3700, 0.0500) =', f.compute_from_array([0.2200, 1.1200, 1.3700, 0.0500]))
@@ -212,4 +179,5 @@ print("constructing objective function : %s seconds" % (time.time() - start_time
 # print('opt_success?', opt_res.success)
 # print('opt_message:', opt_res.message)
 # print('theta_MAP1 =', opt_res.x)
+
 

@@ -11,11 +11,11 @@ class AdmittanceMatrix:
     Normally, it is not necessary to recompute this matrix
     every time when you create an instance of this class.
     But if you want to force recomputation from the scratch
-    you should provide one argument for constructor:
+    you should provide one argument for the constructor:
     >>> admittance_matrix = AdmittanceMatrix(is_actual=False).Ys
 
     Attributes:
-        Ys: admittance matrix
+        Ys: admittance matrix (with symbolic components)
     """
 
     def __init__(self, is_actual=True):  # set True in release
@@ -25,7 +25,6 @@ class AdmittanceMatrix:
             '..', 'data', 'precomputed', 'admittance_matrix.pickle'
         )
         if not is_actual:
-            # j = np.complex(0, 1)
             j = sympy.I
             D_Ya, Ef_a, M_Ya, X_Ya, Omega_a = sympy.symbols(
                 'D_Ya Ef_a M_Ya X_Ya Omega_a',
@@ -76,6 +75,3 @@ class AdmittanceMatrix:
             with open(path_to_matrix_file, 'rb') as matrix_file:
                 self.Ys = pickle.load(matrix_file)
 
-
-
-# Ys = AdmittanceMatrix().Ys

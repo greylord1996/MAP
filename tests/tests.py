@@ -213,7 +213,7 @@ class FreqDataTests(unittest.TestCase):
     def _check_std_deviations(self, our_freq_data, test_dir):
         all_correct_values = correct_data.get_correct_values(test_dir)
         correct_std_deviations = all_correct_values['freq_data_std_dev_eps']
-        relative_precision = 3
+        relative_precision = 13
 
         self.assertAlmostEqual(
             our_freq_data.std_w_Vm / correct_std_deviations['std_dev_eps_Vm'],
@@ -312,6 +312,7 @@ class ObjectiveFunctionTests(unittest.TestCase):
     """
 
     def _check_covariance_matrix(self, our_gamma_L, test_dir):
+        # gamma_L is calculated at prior_mean point (see prior.json)
         correct_values = correct_data.get_correct_values(test_dir)
         correct_gamma_L = correct_values['CovarianceMatrix']
 
@@ -333,14 +334,6 @@ class ObjectiveFunctionTests(unittest.TestCase):
 
         for args, correct_func_value in correct_func_values.items():
             args_array = np.array([np.float(arg) for arg in args.split(',')])
-            # print('\n+++++++++++++++++++++++++++++++++++')
-            # print(
-            #     '$$$ TESTING:', 'TEST_OBJECTIVE_FUNCTION_VALUES, OUR/CORRECT RATIO: ',
-            #     func.compute_from_array(args_array) / correct_func_value,
-            #     'OUR =', func.compute_from_array(args_array),
-            #     'CORRECT =', correct_func_value
-            # )
-            # print('+++++++++++++++++++++++++++++++++++\n')
             self.assertAlmostEqual(
                 func.compute_from_array(args_array) / correct_func_value, 1.0,
                 places=13
