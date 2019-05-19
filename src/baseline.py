@@ -22,7 +22,7 @@ def perturb_gen_params(true_gen_params):
     Returns:
         perturbed_gen_params (tuple): perturbed parameters of a generator.
             perturbed_gen_params[0] (class OptimizingGeneratorParameters):
-                prior means of generator parameters
+                prior mean of generator parameters
             perturbed_gen_params[1] (class OptimizingGeneratorParameters):
                 prior standard deviations of generator parameters
     """
@@ -90,8 +90,8 @@ def run_all_computations(all_params):
     # f denotes the objective function
     f = objective_function.ObjectiveFunction(
         freq_data=freq_data,
-        gen_params_prior_means=gen_params_prior_mean,
-        gen_params_prior_std_devs=gen_params_prior_std_dev
+        gen_params_prior_mean=gen_params_prior_mean,
+        gen_params_prior_std_dev=gen_params_prior_std_dev
     )
 
     # Here we should minimize the objective function
@@ -137,13 +137,11 @@ gen_params_prior_mean, gen_params_prior_std_dev = perturb_gen_params(
 start_time = time.time()
 f = objective_function.ObjectiveFunction(
     freq_data=correct_freq_data,
-    gen_params_prior_means=gen_params_prior_mean,
-    gen_params_prior_std_devs=gen_params_prior_std_dev
+    gen_params_prior_mean=gen_params_prior_mean,
+    gen_params_prior_std_dev=gen_params_prior_std_dev
 )
 print("constructing objective function : %s seconds" % (time.time() - start_time))
 
-
-# f.compute_from_array([0.25, 1.00, 1.00, 0.01])
 
 
 # import matplotlib.pyplot as plt
@@ -159,28 +157,29 @@ print("constructing objective function : %s seconds" % (time.time() - start_time
 # assert true_gen_params.M_Ya == 1.00
 # assert true_gen_params.X_Ya == 0.01
 #
-# thetas1 = np.arange(start=-2.75, stop=3.25, step=0.05)
+# thetas4 = np.arange(start=0.001, stop=0.090, step=0.001)
 # repeated_true_gen_params_arrays = objective_function._construct_gen_params_arrays(
 #     true_gen_params,
-#     len(thetas1)
+#     len(thetas4)
 # )
 #
 # f_values = np.array([
 #     f.compute_from_array(np.array([
-#         thetas1[i],
+#         repeated_true_gen_params_arrays['D_Ya'][i],
 #         repeated_true_gen_params_arrays['Ef_a'][i],
 #         repeated_true_gen_params_arrays['M_Ya'][i],
-#         repeated_true_gen_params_arrays['X_Ya'][i]
+#         thetas4[i]
 #     ]))
-#     for i in range(len(thetas1))
+#     for i in range(len(thetas4))
 # ])
 #
-# plt.xlabel('theta1')
+# plt.xlabel('theta4')
 # plt.ylabel('objective function (f)')
-# plt.plot(thetas1, f_values)
-# plt.savefig(os.path.join(PATH_TO_THIS_FILE, '..', 'samples', 'theta1.pdf'), dpi=180, format='pdf')
+# plt.plot(thetas4, f_values)
+# plt.savefig(os.path.join(PATH_TO_THIS_FILE, '..', 'samples', 'theta4.pdf'), dpi=180, format='pdf')
 
-#
+
+# Before optimizing the objective function let's compare its values at the following points:
 # print('f(0.2500, 1.0000, 1.0000, 0.0100) =', f.compute_from_array([0.2500, 1.0000, 1.0000, 0.0100]))
 # print('f(0.3015, 1.2460, 1.1922, 0.0484) =', f.compute_from_array([0.3015, 1.2460, 1.1922, 0.0484]))
 # print('f(0.2200, 1.1200, 1.3700, 0.0500) =', f.compute_from_array([0.2200, 1.1200, 1.3700, 0.0500]))
@@ -195,10 +194,9 @@ print("constructing objective function : %s seconds" % (time.time() - start_time
 # print('######################################################')
 # print()
 #
-#
 # opt_res = sp.optimize.minimize(
 #     fun=f.compute_from_array,
-#     x0=[0.25, 1.0, 1.0, 0.01],
+#     x0=[0.20, 0.82, 0.66, 0.007],
 #     # method='',
 #     jac=f.compute_gradient_from_array,
 #     # tol=15.5,

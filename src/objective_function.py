@@ -87,9 +87,9 @@ class ResidualVector:
             'X_Ya': (function) for computing partial derivative at X_Ya
 
     Note:
-        All attributes are private. Don't change them
-        outside this class. Communicate with an instance of this class
-        only via its public methods.
+        All attributes are private. Don't use them outside this class.
+        Communicate with an instance of this class only via
+        its public methods.
     """
 
     def __init__(self, freq_data):
@@ -195,7 +195,7 @@ class ResidualVector:
                 (at the current step of an optimization routine)
 
         Returns:
-            vector_R (numpy.array): residual vector (containing 4K+4 numbers)
+            vector_R (numpy.array of (4K+4) numbers): residual vector
                 evaluated at the given 4-dimensional point (specified by
                 the 'optimizing_gen_params' argument of this method)
         """
@@ -301,9 +301,9 @@ class CovarianceMatrix:
             'X_Ya': (function) for computing partial derivative at X_Ya
 
     Note:
-        All attributes are private. Don't change them
-        outside this class. Communicate with an instance of this class
-        only via its public methods.
+        All attributes are private. Don't use them outside this class.
+        Communicate with an instance of this class only via
+        its public methods.
     """
 
     def __init__(self, freq_data):
@@ -437,8 +437,9 @@ class CovarianceMatrix:
         """Computes the covariance matrix at the given point.
 
         Computes and builds the numerical value of the covariance matrix
-        at the point specified by 'optimizing_gen_params'. The obtained matrix
-        will have sizes (4K+4)*(4K+4) and contain only numbers (not symbols).
+        at the point specified by 'optimizing_gen_params'.
+        The obtained matrix will have sizes (4K+4)*(4K+4)
+        and contain only numbers (not symbols).
 
         Args:
             optimizing_gen_params (class OptimizingGeneratorParameters):
@@ -594,44 +595,44 @@ class ObjectiveFunction:
         _gamma_L (class CovarianceMatrix): attribute to simplify
             calculations of gamma_L (covariance matrix)
             at the current step of an optimization routine
-        _gen_params_prior_means (numpy.array):
+        _gen_params_prior_mean (numpy.array):
             a starting point for an optimization routine
         _inv_gamma_g (numpy.array): inverted covariance matrix
             of prior generator parameters
 
     Note:
-        All attributes are private. Don't change them
-        outside this class. Communicate with an instance of this class
-        only via its public methods.
+        All attributes are private. Don't use them outside this class.
+        Communicate with an instance of this class only via
+        its public methods.
     """
 
     def __init__(self, freq_data,
-                 gen_params_prior_means, gen_params_prior_std_devs):
+                 gen_params_prior_mean, gen_params_prior_std_dev):
         """Prepares for computing the objective function at any point.
 
-        Stores data in frequency domain, prior means of generator parameters,
-        diagonal covariance matrix of its parameters. Prepares the vector R
-        (residual vector) and gamma_L (covariance matrix) for computing
-        at any point.
+        Stores data in frequency domain, prior mean
+        of generator parameters, diagonal covariance matrix
+        of its parameters. Prepares the vector R (residual vector)
+        and gamma_L (covariance matrix) for computing at any point.
 
         Args:
             freq_data (class FreqData): data in frequency domain
-            gen_params_prior_means (class OptimizingGeneratorParameters):
-                prior means of generator's parameters
+            gen_params_prior_mean (class OptimizingGeneratorParameters):
+                prior mean of generator's parameters
                 (we are uncertain in their values)
-            gen_params_prior_std_devs (class OptimizingGeneratorParameters):
+            gen_params_prior_std_dev (class OptimizingGeneratorParameters):
                 standard deviations of generator's parameters
                 (how much we are uncertain in their values)
         """
         self._R = ResidualVector(freq_data)
         self._gamma_L = CovarianceMatrix(freq_data)
-        self._gen_params_prior_means = gen_params_prior_means.as_array
+        self._gen_params_prior_mean = gen_params_prior_mean.as_array
         self._inv_gamma_g = np.diag(
             1.0 / (
-                (gen_params_prior_means.as_array *
-                 gen_params_prior_std_devs.as_array)**2
+                (gen_params_prior_mean.as_array *
+                 gen_params_prior_std_dev.as_array)**2
             )
-        )  # Why multiplied by gen_params_prior_means.as_array (not 1.0)?
+        )  # Why multiplied by gen_params_prior_mean.as_array (not 1.0)?
 
 
     def compute(self, optimizing_gen_params):
@@ -647,7 +648,7 @@ class ObjectiveFunction:
                 at the given point
         """
         curr_delta_params = (
-            optimizing_gen_params.as_array - self._gen_params_prior_means
+            optimizing_gen_params.as_array - self._gen_params_prior_mean
         )
 
         computed_R = self._R.compute(optimizing_gen_params)
@@ -676,7 +677,7 @@ class ObjectiveFunction:
                 evaluated at the given point
         """
         curr_delta_params = (
-            optimizing_gen_params.as_array - self._gen_params_prior_means
+            optimizing_gen_params.as_array - self._gen_params_prior_mean
         )
 
         computed_R = self._R.compute(optimizing_gen_params)
@@ -749,8 +750,9 @@ class ObjectiveFunction:
 
         Args:
             optimizing_gen_params (numpy.array of 4 numbers):
-                current values of optimizing generator parameters (array of 4
-                numbers) at the current iteration of an optimization routine
+                current values of optimizing generator parameters
+                (array of 4 numbers) at the current iteration
+                of an optimization routine
 
         Returns:
             gradient (numpy.array of 4 numbers) of the objective function
