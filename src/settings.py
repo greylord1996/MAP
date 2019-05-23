@@ -21,24 +21,21 @@ class IntegrationSettings:
 # Frequency settings
 class FreqData:
 
-    def __init__(self, lower_fb, upper_fb, max_freq, dt):
+    def __init__(self, lower_fb, upper_fb, max_freq):
         self.lower_fb = lower_fb  # Set lower frequency (band edge) for current injections
         self.upper_fb = upper_fb  # Set lower frequency (band edge) for current injections
         self.max_freq = max_freq  # Set max frequency
-        self.dt = dt
 
     def set_values_from_dict(self, new_values):
         self.lower_fb = new_values['lower_fb']
         self.upper_fb = new_values['upper_fb']
         self.max_freq = new_values['max_freq']
-        self.dt = new_values['dt']
 
     def get_values_as_dict(self):
         return {
             'lower_fb': self.lower_fb,
             'upper_fb': self.upper_fb,
-            'max_freq': self.max_freq,
-            'dt': self.dt
+            'max_freq': self.max_freq
         }
 
 

@@ -144,6 +144,59 @@ f = objective_function.ObjectiveFunction(
 print("constructing objective function : %s seconds" % (time.time() - start_time))
 
 
+#
+# import matplotlib.pyplot as plt
+#
+# thetas4 = np.arange(start=0.001, stop=0.090, step=0.001)
+# f_values = np.zeros(len(thetas4))
+#
+# for i in range(len(f_values)):
+#     f_values[i] = f.compute_from_array([0.25, 1.00, 1.00, thetas4[i]])
+#
+# plt.xlabel('theta_g4')
+# plt.ylabel('objective function (f)')
+# plt.ylim((1.7172 * 10**7, 1.7188 * 10**7))
+#
+# plt.annotate(
+#     '4th true generator parameter',
+#     xy=(0.01, 17177210.614697646),
+#     xytext=(0.004, 17174000),
+#     arrowprops=dict(facecolor='black', shrink=0.02)
+# )
+#
+# plt.plot(thetas4, f_values)
+# plt.savefig(os.path.join(PATH_TO_THIS_FILE, '..', 'samples', 'theta_g4.pdf'), dpi=180, format='pdf')
+
+
+
+from mpl_toolkits.mplot3d import Axes3D
+# Axes3D import has side effects, it enables using projection='3d' in add_subplot
+import matplotlib.pyplot as plt
+
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+thetas2 = np.arange(-0.25, 2.26, 0.05)
+thetas3 = np.arange(-0.25, 2.26, 0.05)
+X, Y = np.meshgrid(thetas2, thetas3)
+
+zs = np.array([
+    f.compute_from_array([0.25, np.ravel(X)[i], np.ravel(Y)[i], 0.01])
+    for i in range(len(np.ravel(X)))
+])
+Z = zs.reshape(X.shape)
+
+ax.plot_wireframe(X, Y, Z)
+
+ax.set_xlabel('theta_g2')
+ax.set_ylabel('theta_g3')
+ax.set_zlabel('f')
+ax.set_zlim(1.7172 * 10**7, 1.7188 * 10**7)
+
+# plt.plot()
+plt.savefig(os.path.join(PATH_TO_THIS_FILE, '..', 'samples', 'vary_theta_g2_theta_g3.pdf'), dpi=180, format='pdf')
+
+
+
 # print(np.linalg.cond(f._gamma_L.compute(gen_params_prior_mean)))
 # my_x = objective_function.OptimizingGeneratorParameters(2.0, 1.2, 0.6, 0.012)
 # print(np.linalg.cond(f._gamma_L.compute(my_x)))

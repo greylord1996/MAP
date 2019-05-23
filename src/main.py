@@ -54,8 +54,7 @@ class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
             'FreqData': {
                 'lower_fb': self.lower_fb.value(),
                 'upper_fb': self.upper_fb.value(),
-                'max_freq': self.max_freq.value(),
-                'dt': self.dt.value()
+                'max_freq': self.max_freq.value()
             },
             'OptimizerSettings': {
                 'opt_tol': self.opt_tol.value(),
@@ -104,7 +103,6 @@ class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
         self.lower_fb.setValue(new_params.freq_data.lower_fb)
         self.upper_fb.setValue(new_params.freq_data.upper_fb)
         self.max_freq.setValue(new_params.freq_data.max_freq)
-        self.dt.setValue(new_params.freq_data.dt)
 
         self.opt_tol.setValue(new_params.optimizer_settings.opt_tol)
         self.fun_tol.setValue(new_params.optimizer_settings.fun_tol)
