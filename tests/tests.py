@@ -10,7 +10,7 @@ import numpy as np
 PATH_TO_THIS_FILE = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(os.path.join(PATH_TO_THIS_FILE, '..', 'src'))
 
-import admittance_matrix
+# import admittance_matrix
 import objective_function
 
 import our_data
@@ -100,11 +100,6 @@ class TimeDataTests(unittest.TestCase):
             # how far can they be from each other?
             sigma_factor = 6.0  # less far than 6.0*sigma
 
-            # print('@@@ std Vm = ', sigma_factor * our_time_data.std_dev_Vm)
-            # print('@@@ std Va = ', sigma_factor * our_time_data.std_dev_Va)
-            # print('@@@ std Im = ', sigma_factor * our_time_data.std_dev_Im)
-            # print('@@@ std Ia = ', sigma_factor * our_time_data.std_dev_Ia)
-
             time_data_points_len = len(our_time_data.Vm)
             for i in range(time_data_points_len):
                 self.assertLessEqual(
@@ -123,7 +118,6 @@ class TimeDataTests(unittest.TestCase):
                     abs(our_time_data.Ia[i] - correct_time_data['Ia'][i]),
                     sigma_factor * our_time_data.std_dev_Ia
                 )
-
 
 
 
@@ -408,6 +402,7 @@ class ObjectiveFunctionTests(unittest.TestCase):
                 test_dir=test_dir
             )
 
+            # just check that the following objects can be successfully computed
             starting_point_R = f._R.compute(gen_params_prior_mean)
             starting_point_gamma_L = f._gamma_L.compute(gen_params_prior_mean)
 

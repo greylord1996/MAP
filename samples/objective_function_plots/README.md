@@ -7,5 +7,5 @@ theta_g4 = 0.01 \
 
 To study the objective function in proximity to this point we have prepared some plots.
 For example, vary_theta_g1.pdf plot fixes all generator parameters except for the first one.
-The first parameter is varied and values of the objective function is calculated.
+The first parameter is varied and values of the objective function are calculated.
 Other plots should be interpreted in a similar way.

@@ -144,7 +144,34 @@ f = objective_function.ObjectiveFunction(
 print("constructing objective function : %s seconds" % (time.time() - start_time))
 
 
+# WARNING! The following code requires hours of computations
+thetas1 = 0.01 * np.arange(start=5, stop=50, step=5)
+thetas2 = 0.01 * np.arange(start=50, stop=150, step=5)
+thetas3 = 0.01 * np.arange(start=50, stop=150, step=5)
+thetas4 = 0.001 * np.arange(start=5, stop=16, step=1)
 
+min_f_value = f.compute_from_array([
+    thetas1[0], thetas2[0], thetas3[0], thetas4[0]
+])
+min_point = (None, None, None, None)
+
+for theta1 in thetas1:
+    for theta2 in thetas2:
+        for theta3 in thetas3:
+            for theta4 in thetas4:
+                f_value = f.compute_from_array([theta1, theta2, theta3, theta4])
+                if f_value <= min_f_value:
+                    min_f_value = f_value
+                    min_point = (theta1, theta2, theta3, theta4)
+
+
+print('min_f_value =', min_f_value)  # min_f_value = 17168977.118723236
+print('min_point =', min_point)  # min_point = (0.05, 0.5, 1.45, 0.005)
+
+
+
+
+# 2D plots
 # import matplotlib.pyplot as plt
 #
 # thetas4 = 0.001 * np.arange(start=1, stop=50, step=1)
@@ -169,6 +196,7 @@ print("constructing objective function : %s seconds" % (time.time() - start_time
 
 
 
+# 3D plots
 # from mpl_toolkits.mplot3d import Axes3D
 # # Axes3D import has side effects, it enables using projection='3d' in add_subplot
 # import matplotlib.pyplot as plt
