@@ -58,14 +58,14 @@ def perturb_gen_params(true_gen_params):
 
 
 
-def run_all_computations(all_params):
+def run_all_computations(all_params):  # using our simulated data
     ode_solver_object = dynamic_equations_to_simulate.OdeSolver(
         white_noise=all_params.white_noise,
         gen_param=all_params.generator_parameters,
         osc_param=all_params.oscillation_parameters,
         integr_param=all_params.integration_settings
     )
-    # ode_solver_object.solve()
+    # ode_solver_object.solve() -- shouldn't be called???
 
     # Simulate data in time domain
     ode_solver_object.simulate_time_data()
@@ -76,12 +76,22 @@ def run_all_computations(all_params):
         Ia_time_data=ode_solver_object.Ig_angle,
         dt=ode_solver_object.dt
     )
+
     # Apply white noise to simulated data in time domain
     # TODO: Move snr and d_coi to GUI
     time_data.apply_white_noise(snr=45.0, d_coi=0.0)
 
     # Moving from time domain to frequency domain
     freq_data = data.FreqData(time_data)
+    freq_data.remove_zero_frequency()
+    freq_data.trim(
+        min_freq=0.0,
+        max_freq=all_params.freq_data.max_freq
+    )
+    freq_data.remove_data_from_fo_band(
+        min_fo_freq=all_params.freq_data.lower_fb,
+        max_fo_freq=all_params.freq_data.upper_fb
+    )
 
     # Perturb generator parameters (replace true parameters with prior)
     gen_params_prior_mean, gen_params_prior_std_dev = (
@@ -95,7 +105,27 @@ def run_all_computations(all_params):
         gen_params_prior_std_dev=gen_params_prior_std_dev
     )
 
-    # Here we should minimize the objective function
+    print()
+    print('######################################################')
+    print('### DEBUG: OPTIMIZATION ROUTINE IS STARTING NOW!!! ###')
+    print('######################################################')
+    print()
+
+    opt_res = sp.optimize.minimize(
+        fun=f.compute_from_array,
+        x0=gen_params_prior_mean.as_array,
+        # method='CG'
+        # jac=f.compute_gradient_from_array,
+        # tol=100.0,  What does this argument mean?
+        options={
+            'maxiter': 20,
+            'disp': True
+        }
+    )
+
+    print('opt_success?', opt_res.success)
+    print('opt_message:', opt_res.message)
+    print('theta_MAP1 =', opt_res.x)
 
     # It is not clear now what should be returned
     return ode_solver_object.get_appropr_data_to_gui()
@@ -112,117 +142,61 @@ def run_all_computations(all_params):
 # ----------------------- Testing now ----------------------------
 # ----------------------------------------------------------------
 
-import time
-import sys
-import os
-import os.path
-
-# WARNING! ONLY FOR TESTING!
-PATH_TO_THIS_FILE = os.path.abspath(os.path.dirname(__file__))
-sys.path.append(os.path.join(PATH_TO_THIS_FILE, '..', 'tests'))
-import our_data
-import correct_data
-
-TEST_DIR = os.path.join(PATH_TO_THIS_FILE, '..', 'tests', 'Rnd_Amp_0002')
-
-initial_params = our_data.get_initial_params(TEST_DIR)
-correct_freq_data = correct_data.get_prepared_freq_data(TEST_DIR)
-
-print('=================== DATA HAVE BEEN PREPARED ========================')
-
-
-gen_params_prior_mean, gen_params_prior_std_dev = perturb_gen_params(
-    initial_params.generator_parameters
-)  # now generator parameters are perturbed and uncertain
-
-start_time = time.time()
-f = objective_function.ObjectiveFunction(
-    freq_data=correct_freq_data,
-    gen_params_prior_mean=gen_params_prior_mean,
-    gen_params_prior_std_dev=gen_params_prior_std_dev
-)
-print("constructing objective function : %s seconds" % (time.time() - start_time))
-
-
-# 2D plots
-# import matplotlib.pyplot as plt
+# import time
+# import sys
+# import os
+# import os.path
 #
-# thetas1 = 0.01 * np.arange(start=-275, stop=625, step=5)
-# f_values = np.zeros(len(thetas1))
+# # WARNING! ONLY FOR TESTING!
+# PATH_TO_THIS_FILE = os.path.abspath(os.path.dirname(__file__))
+# sys.path.append(os.path.join(PATH_TO_THIS_FILE, '..', 'tests'))
+# import our_data
+# import correct_data
 #
-# for i in range(len(f_values)):
-#     f_values[i] = f.compute_from_array([thetas1[i], 1.00, 1.00, 0.01])
+# TEST_DIR = os.path.join(PATH_TO_THIS_FILE, '..', 'tests', 'Rnd_Amp_0002')
 #
-# plt.xlabel('theta_g1')
-# plt.ylabel('objective function (f)')
-# plt.ylim((-5000000.0, 30000000.0))
+# initial_params = our_data.get_initial_params(TEST_DIR)
+# correct_freq_data = correct_data.get_prepared_freq_data(TEST_DIR)
 #
-# plt.annotate(
-#     '1st true generator parameter',
-#     xy=(0.25, 9687.768338166685),
-#     xytext=(-1.25, -3500000.0),
-#     arrowprops=dict(facecolor='black', shrink=0.01)
+#
+# print('=================== DATA HAVE BEEN PREPARED ========================')
+#
+#
+# gen_params_prior_mean, gen_params_prior_std_dev = perturb_gen_params(
+#     initial_params.generator_parameters
+# )  # now generator parameters are perturbed and uncertain
+#
+# start_time = time.time()
+# f = objective_function.ObjectiveFunction(
+#     freq_data=correct_freq_data,
+#     gen_params_prior_mean=gen_params_prior_mean,
+#     gen_params_prior_std_dev=gen_params_prior_std_dev
+# )
+# print("constructing objective function : %s seconds" % (time.time() - start_time))
+#
+#
+#
+#
+# print()
+# print('######################################################')
+# print('### DEBUG: OPTIMIZATION ROUTINE IS STARTING NOW!!! ###')
+# print('######################################################')
+# print()
+#
+# opt_res = sp.optimize.minimize(
+#     fun=f.compute_from_array,
+#     x0=gen_params_prior_mean.as_array,
+#     # method='CG'
+#     # jac=f.compute_gradient_from_array,
+#     # tol=100.0,  What does this argument mean?
+#     options={
+#         'maxiter': 20,
+#         'disp': True
+#     }
 # )
 #
-# plt.plot(thetas1, f_values)
-# plt.savefig(os.path.join(PATH_TO_THIS_FILE, '..', 'samples', 'vary_theta_g1.pdf'), dpi=180, format='pdf')
-
-
-
-# 3D plots
-# from mpl_toolkits.mplot3d import Axes3D
-# # Axes3D import has side effects, it enables using projection='3d' in add_subplot
-# import matplotlib.pyplot as plt
-#
-# fig = plt.figure()
-# ax = fig.add_subplot(111, projection='3d')
-# thetas2 = 0.01 * np.arange(5, 400, 5)
-# thetas3 = 0.01 * np.arange(5, 400, 5)
-# X, Y = np.meshgrid(thetas2, thetas3)
-#
-# zs = np.array([
-#     f.compute_from_array([0.25, np.ravel(X)[i], np.ravel(Y)[i], 0.01])
-#     for i in range(len(np.ravel(X)))
-# ])
-# Z = zs.reshape(X.shape)
-#
-# ax.plot_surface(X, Y, Z)
-#
-# ax.set_xlabel('theta_g2')
-# ax.set_ylabel('theta_g3')
-# ax.set_zlabel('f')
-# ax.set_zlim(-5000000.0, 30000000.0)
-#
-# plt.show()
-# plt.savefig(os.path.join(PATH_TO_THIS_FILE, '..', 'samples', 'vary_theta_g2_theta_g3.pdf'), dpi=180, format='pdf')
-
-
-# print(np.linalg.cond(f._gamma_L.compute(gen_params_prior_mean)))
-# my_x = objective_function.OptimizingGeneratorParameters(2.0, 1.2, 0.6, 0.012)
-# print(np.linalg.cond(f._gamma_L.compute(my_x)))
-
-
-
-print()
-print('######################################################')
-print('### DEBUG: OPTIMIZATION ROUTINE IS STARTING NOW!!! ###')
-print('######################################################')
-print()
-
-opt_res = sp.optimize.minimize(
-    fun=f.compute_from_array,
-    x0=gen_params_prior_mean.as_array,
-    # method='CG'
-    # jac=f.compute_gradient_from_array,
-    # tol=100.0,  What does this argument mean?
-    options={
-        'maxiter': 20,
-        'disp': True
-    }
-)
-
-print('opt_success?', opt_res.success)
-print('opt_message:', opt_res.message)
-print('theta_MAP1 =', opt_res.x)
+# print('opt_success?', opt_res.success)
+# print('opt_message:', opt_res.message)
+# print('theta_MAP1 =', opt_res.x)
 
 
