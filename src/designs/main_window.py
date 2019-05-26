@@ -163,7 +163,7 @@ class Ui_MainWindow(object):
         self.rnd_amp.setDecimals(3)
         self.rnd_amp.setMaximum(9.999)
         self.rnd_amp.setSingleStep(0.001)
-        self.rnd_amp.setProperty("value", 0.02)
+        self.rnd_amp.setProperty("value", 0.002)
         self.rnd_amp.setObjectName("rnd_amp")
         self.formLayout_5.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.rnd_amp)
         self.verticalLayout_6.addLayout(self.formLayout_5)

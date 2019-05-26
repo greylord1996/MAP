@@ -144,55 +144,28 @@ f = objective_function.ObjectiveFunction(
 print("constructing objective function : %s seconds" % (time.time() - start_time))
 
 
-# WARNING! The following code requires hours of computations
-thetas1 = 0.01 * np.arange(start=5, stop=50, step=5)
-thetas2 = 0.01 * np.arange(start=50, stop=150, step=5)
-thetas3 = 0.01 * np.arange(start=50, stop=150, step=5)
-thetas4 = 0.001 * np.arange(start=5, stop=16, step=1)
-
-min_f_value = f.compute_from_array([
-    thetas1[0], thetas2[0], thetas3[0], thetas4[0]
-])
-min_point = (None, None, None, None)
-
-for theta1 in thetas1:
-    for theta2 in thetas2:
-        for theta3 in thetas3:
-            for theta4 in thetas4:
-                f_value = f.compute_from_array([theta1, theta2, theta3, theta4])
-                if f_value <= min_f_value:
-                    min_f_value = f_value
-                    min_point = (theta1, theta2, theta3, theta4)
-
-
-print('min_f_value =', min_f_value)  # min_f_value = 17168977.118723236
-print('min_point =', min_point)  # min_point = (0.05, 0.5, 1.45, 0.005)
-
-
-
-
 # 2D plots
 # import matplotlib.pyplot as plt
 #
-# thetas4 = 0.001 * np.arange(start=1, stop=50, step=1)
-# f_values = np.zeros(len(thetas4))
+# thetas1 = 0.01 * np.arange(start=-275, stop=625, step=5)
+# f_values = np.zeros(len(thetas1))
 #
 # for i in range(len(f_values)):
-#     f_values[i] = f.compute_from_array([0.25, 1.00, 1.00, thetas4[i]])
+#     f_values[i] = f.compute_from_array([thetas1[i], 1.00, 1.00, 0.01])
 #
-# plt.xlabel('theta_g4')
+# plt.xlabel('theta_g1')
 # plt.ylabel('objective function (f)')
-# plt.ylim((1.7172 * 10**7, 1.7188 * 10**7))
+# plt.ylim((-5000000.0, 30000000.0))
 #
 # plt.annotate(
-#     '4th true generator parameter',
-#     xy=(0.01, 17177210.614697646),
-#     xytext=(0.005, 17174000),
-#     arrowprops=dict(facecolor='black', shrink=0.02)
+#     '1st true generator parameter',
+#     xy=(0.25, 9687.768338166685),
+#     xytext=(-1.25, -3500000.0),
+#     arrowprops=dict(facecolor='black', shrink=0.01)
 # )
 #
-# plt.plot(thetas4, f_values)
-# plt.savefig(os.path.join(PATH_TO_THIS_FILE, '..', 'samples', 'vary_theta_g4.pdf'), dpi=180, format='pdf')
+# plt.plot(thetas1, f_values)
+# plt.savefig(os.path.join(PATH_TO_THIS_FILE, '..', 'samples', 'vary_theta_g1.pdf'), dpi=180, format='pdf')
 
 
 
@@ -203,12 +176,12 @@ print('min_point =', min_point)  # min_point = (0.05, 0.5, 1.45, 0.005)
 #
 # fig = plt.figure()
 # ax = fig.add_subplot(111, projection='3d')
-# thetas4 = 0.001 * np.arange(2, 50, 2)
-# thetas2 = 0.01 * np.arange(5, 205, 5)
-# X, Y = np.meshgrid(thetas2, thetas4)
+# thetas2 = 0.01 * np.arange(5, 400, 5)
+# thetas3 = 0.01 * np.arange(5, 400, 5)
+# X, Y = np.meshgrid(thetas2, thetas3)
 #
 # zs = np.array([
-#     f.compute_from_array([0.25, np.ravel(X)[i], 1.00, np.ravel(Y)[i]])
+#     f.compute_from_array([0.25, np.ravel(X)[i], np.ravel(Y)[i], 0.01])
 #     for i in range(len(np.ravel(X)))
 # ])
 # Z = zs.reshape(X.shape)
@@ -216,9 +189,9 @@ print('min_point =', min_point)  # min_point = (0.05, 0.5, 1.45, 0.005)
 # ax.plot_surface(X, Y, Z)
 #
 # ax.set_xlabel('theta_g2')
-# ax.set_ylabel('theta_g4')
+# ax.set_ylabel('theta_g3')
 # ax.set_zlabel('f')
-# ax.set_zlim(1.7172 * 10**7, 1.7188 * 10**7)
+# ax.set_zlim(-5000000.0, 30000000.0)
 #
 # plt.show()
 # plt.savefig(os.path.join(PATH_TO_THIS_FILE, '..', 'samples', 'vary_theta_g2_theta_g3.pdf'), dpi=180, format='pdf')
@@ -229,35 +202,27 @@ print('min_point =', min_point)  # min_point = (0.05, 0.5, 1.45, 0.005)
 # print(np.linalg.cond(f._gamma_L.compute(my_x)))
 
 
-# Before optimizing the objective function let's compare its values at the following random points:
-# print('f(0.2500, 1.0000, 1.0000, 0.0100) =', f.compute_from_array([0.2500, 1.0000, 1.0000, 0.0100]))
-# print('f(0.3015, 1.2460, 1.1922, 0.0484) =', f.compute_from_array([0.3015, 1.2460, 1.1922, 0.0484]))
-# print('f(0.2200, 1.1200, 1.3700, 0.0500) =', f.compute_from_array([0.2200, 1.1200, 1.3700, 0.0500]))
-# print('f(0.2066, 0.8372, 0.6654, 0.0077) =', f.compute_from_array([0.2066, 0.8372, 0.6654, 0.0077]))
-# print('f(0.2462, 1.2772, 1.1675, 0.0420) =', f.compute_from_array([0.2462, 1.2772, 1.1675, 0.0420]))
-# print('f(0.1373, 1.0525, 1.4881, 0.0479) =', f.compute_from_array([0.1373, 1.0525, 1.4881, 0.0479]))
 
+print()
+print('######################################################')
+print('### DEBUG: OPTIMIZATION ROUTINE IS STARTING NOW!!! ###')
+print('######################################################')
+print()
 
-# print()
-# print('######################################################')
-# print('### DEBUG: OPTIMIZATION ROUTINE IS STARTING NOW!!! ###')
-# print('######################################################')
-# print()
-#
-# opt_res = sp.optimize.minimize(
-#     fun=f.compute_from_array,
-#     x0=[0.20, 0.82, 0.66, 0.007],
-#     # method='',
-#     jac=f.compute_gradient_from_array,
-#     # tol=15.5,
-#     # options={
-#     #     'maxiter': 5,
-#     #     'disp': True
-#     # }
-# )
-#
-# print('opt_success?', opt_res.success)
-# print('opt_message:', opt_res.message)
-# print('theta_MAP1 =', opt_res.x)
+opt_res = sp.optimize.minimize(
+    fun=f.compute_from_array,
+    x0=gen_params_prior_mean.as_array,
+    # method='CG'
+    # jac=f.compute_gradient_from_array,
+    # tol=100.0,  What does this argument mean?
+    options={
+        'maxiter': 20,
+        'disp': True
+    }
+)
+
+print('opt_success?', opt_res.success)
+print('opt_message:', opt_res.message)
+print('theta_MAP1 =', opt_res.x)
 
 

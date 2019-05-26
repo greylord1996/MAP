@@ -207,15 +207,15 @@ class ResidualVector:
         vector_R_subvectors = dict()
         for subvector_name, subvector_function in self._elements.items():
             vector_R_subvectors[subvector_name] = subvector_function(
-                self._freq_data.Vm,
-                self._freq_data.Va,
-                self._freq_data.Im,
-                self._freq_data.Ia,
-                optimizing_gen_params_arrays['D_Ya'],
-                optimizing_gen_params_arrays['Ef_a'],
-                optimizing_gen_params_arrays['M_Ya'],
-                optimizing_gen_params_arrays['X_Ya'],
-                2.0 * np.pi * self._freq_data.freqs
+                Vm=self._freq_data.Vm,
+                Va=self._freq_data.Va,
+                Im=self._freq_data.Im,
+                Ia=self._freq_data.Ia,
+                D_Ya=optimizing_gen_params_arrays['D_Ya'],
+                Ef_a=optimizing_gen_params_arrays['Ef_a'],
+                M_Ya=optimizing_gen_params_arrays['M_Ya'],
+                X_Ya=optimizing_gen_params_arrays['X_Ya'],
+                Omega_a=2.0 * np.pi * self._freq_data.freqs
             )
 
         vector_R = self._construct_vector_from_subvectors(vector_R_subvectors)
@@ -258,15 +258,15 @@ class ResidualVector:
                     self._partial_derivatives.items()):
                 partial_derivatives_subvectors[subvector_name] = (
                     partial_derivatives_functions[optimizing_gen_param_name](
-                        self._freq_data.Vm,
-                        self._freq_data.Va,
-                        self._freq_data.Im,
-                        self._freq_data.Ia,
-                        optimizing_gen_params_arrays['D_Ya'],
-                        optimizing_gen_params_arrays['Ef_a'],
-                        optimizing_gen_params_arrays['M_Ya'],
-                        optimizing_gen_params_arrays['X_Ya'],
-                        2.0 * np.pi * self._freq_data.freqs
+                        Vm=self._freq_data.Vm,
+                        Va=self._freq_data.Va,
+                        Im=self._freq_data.Im,
+                        Ia=self._freq_data.Ia,
+                        D_Ya=optimizing_gen_params_arrays['D_Ya'],
+                        Ef_a=optimizing_gen_params_arrays['Ef_a'],
+                        M_Ya=optimizing_gen_params_arrays['M_Ya'],
+                        X_Ya=optimizing_gen_params_arrays['X_Ya'],
+                        Omega_a=2.0 * np.pi * self._freq_data.freqs
                     )
                 )
 
@@ -458,15 +458,13 @@ class CovarianceMatrix:
 
         gamma_L_blocks = dict()
         for block_name, block_function in self._elements.items():
-            gamma_L_blocks[block_name] = np.diag(
-                block_function(
-                    optimizing_gen_params_arrays['D_Ya'],
-                    optimizing_gen_params_arrays['Ef_a'],
-                    optimizing_gen_params_arrays['M_Ya'],
-                    optimizing_gen_params_arrays['X_Ya'],
-                    2.0 * np.pi * self._freqs
-                )
-            )
+            gamma_L_blocks[block_name] = np.diag(block_function(
+                D_Ya=optimizing_gen_params_arrays['D_Ya'],
+                Ef_a=optimizing_gen_params_arrays['Ef_a'],
+                M_Ya=optimizing_gen_params_arrays['M_Ya'],
+                X_Ya=optimizing_gen_params_arrays['X_Ya'],
+                Omega_a=2.0 * np.pi * self._freqs
+            ))
 
         gamma_L = self._construct_matrix_from_blocks(gamma_L_blocks)
         return gamma_L
@@ -531,11 +529,11 @@ class CovarianceMatrix:
                     self._partial_derivatives.items()):
                 partial_derivatives_blocks[block_name] = np.diag(
                     partial_derivatives_functions[optimizing_gen_param_name](
-                        optimizing_gen_params_arrays['D_Ya'],
-                        optimizing_gen_params_arrays['Ef_a'],
-                        optimizing_gen_params_arrays['M_Ya'],
-                        optimizing_gen_params_arrays['X_Ya'],
-                        2.0 * np.pi * self._freqs
+                        D_Ya=optimizing_gen_params_arrays['D_Ya'],
+                        Ef_a=optimizing_gen_params_arrays['Ef_a'],
+                        M_Ya=optimizing_gen_params_arrays['M_Ya'],
+                        X_Ya=optimizing_gen_params_arrays['X_Ya'],
+                        Omega_a=2.0 * np.pi * self._freqs
                     )
                 )
 
