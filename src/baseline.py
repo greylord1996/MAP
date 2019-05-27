@@ -176,95 +176,35 @@ def run_all_computations(initial_params):
 # ----------------------- Testing now ----------------------------
 # ----------------------------------------------------------------
 #
-# import time
-# import sys
-# import os
-# import os.path
-# import matplotlib.pyplot as plt
-#
-# # WARNING! ONLY FOR TESTING!
-# PATH_TO_THIS_FILE = os.path.abspath(os.path.dirname(__file__))
-# sys.path.append(os.path.join(PATH_TO_THIS_FILE, '..', 'tests'))
-# import our_data
-# import correct_data
-#
-# TEST_DIR = os.path.join(PATH_TO_THIS_FILE, '..', 'tests', 'Rnd_Amp_0002')
-#
-# initial_params = our_data.get_initial_params(TEST_DIR)
-# # correct_freq_data = correct_data.get_prepared_freq_data(TEST_DIR)
-#
-#
-# assert initial_params.integration_settings.dt_step == 0.05
-# time_data = data.TimeData(
-#     Vm_time_data=correct_data.get_initial_time_data(TEST_DIR)['Vm'],
-#     Va_time_data=correct_data.get_initial_time_data(TEST_DIR)['Va'],
-#     Im_time_data=correct_data.get_initial_time_data(TEST_DIR)['Im'],
-#     Ia_time_data=correct_data.get_initial_time_data(TEST_DIR)['Ia'],
-#     dt=initial_params.integration_settings.dt_step
-# )
-#
-# # SNRS = (25.0, 30.0, 35.0, 40.0, 45.0, 50.0)
-# # SNRS = (20.0, 22.5, 25.0, 27.5, 30.0)
-# SNRS = (20.0, )
-# for snr in SNRS:
-#     time_data.apply_white_noise(snr=snr, d_coi=0.0)
-#
-#     # Moving from time domain to frequency domain
-#     freq_data = data.FreqData(time_data)
-#
-#     # Trim data
-#     freq_data.remove_zero_frequency()
-#     freq_data.trim(
-#         min_freq=0.0,
-#         max_freq=initial_params.freq_data.max_freq
-#     )
-#
-#     freq_data.remove_data_from_fo_band(
-#         min_fo_freq=initial_params.freq_data.lower_fb,
-#         max_fo_freq=initial_params.freq_data.upper_fb
-#     )
-#     # print('=================== DATA HAVE BEEN PREPARED ========================')
-#
-#     gen_params_prior_mean, gen_params_prior_std_dev = perturb_gen_params(
-#         initial_params.generator_parameters
-#     )  # now generator parameters are perturbed and uncertain
-#
-#     start_time = time.time()
-#     f = objective_function.ObjectiveFunction(
-#         freq_data=freq_data,
-#         gen_params_prior_mean=gen_params_prior_mean,
-#         gen_params_prior_std_dev=gen_params_prior_std_dev
-#     )
-#     print("constructing objective function : %s seconds" % (time.time() - start_time))
-#
-#
-#     thetas1 = 0.1 * np.arange(start=40, stop=500, step=5)
-#     f_values = np.zeros(len(thetas1))
-#
-#     for i in range(len(f_values)):
-#         f_values[i] = f.compute_from_array([thetas1[i], 1.00, 1.00, 0.01])
-#
-#     # plt.title('SNR = ' + str(snr))
-#     plt.xlabel('theta_g1')
-#     plt.ylabel('objective function (f)')
-#     # plt.ylim((-5000000.0, 30000000.0))
-#
-#     plt.plot(thetas1, f_values, label='SNR=' + str(snr))
-#
-#
-# # plt.xticks([-2.0, -1.0, 0.25, 1.0, 2.0, 3.0, 4.0, 5.0])
-# # plt.gca().get_xticklabels()[2].set_color("red")
-# plt.legend()
-# plt.savefig(
-#     os.path.join(
-#         PATH_TO_THIS_FILE, '..', 'samples',
-#         'vary_theta_g1_large.pdf'
-#     ),
-#     dpi=180,
-#     format='pdf'
-# )
+import time
+import sys
+import os
+import os.path
+import matplotlib.pyplot as plt
+
+# WARNING! ONLY FOR TESTING!
+PATH_TO_THIS_FILE = os.path.abspath(os.path.dirname(__file__))
+sys.path.append(os.path.join(PATH_TO_THIS_FILE, '..', 'tests'))
+import our_data
+import correct_data
+
+TEST_DIR = os.path.join(PATH_TO_THIS_FILE, '..', 'tests', 'Rnd_Amp_0002')
+
+initial_params = our_data.get_initial_params(TEST_DIR)
+correct_freq_data = correct_data.get_prepared_freq_data(TEST_DIR)
 
 
+gen_params_prior_mean, gen_params_prior_std_dev = perturb_gen_params(
+    initial_params.generator_parameters
+)  # now generator parameters are perturbed and uncertain
+
+start_time = time.time()
+f = objective_function.ObjectiveFunction(
+    freq_data=correct_freq_data,
+    gen_params_prior_mean=gen_params_prior_mean,
+    gen_params_prior_std_dev=gen_params_prior_std_dev
+)
+print("constructing objective function : %s seconds" % (time.time() - start_time))
 
 # print()
 # print('######################################################')
