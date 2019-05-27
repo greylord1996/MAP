@@ -64,7 +64,7 @@ def _construct_gen_params_arrays(optimizing_gen_params, freq_data_points_n):
 
 
 
-@utils.singleton
+# @utils.singleton
 class ResidualVector:
     """Wrapper for calculations of R (residual vector).
 
@@ -280,7 +280,7 @@ class ResidualVector:
 
 
 
-@utils.singleton
+# @utils.singleton
 class CovarianceMatrix:
     """Wrapper for calculations of covariance matrix at any point.
 
@@ -582,7 +582,7 @@ class CovarianceMatrix:
 
 
 
-@utils.singleton
+# @utils.singleton
 class ObjectiveFunction:
     """Wrapper for calculations of the objective function at any point.
 

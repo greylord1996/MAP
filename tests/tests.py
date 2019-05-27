@@ -70,23 +70,60 @@ class TimeDataTests(unittest.TestCase):
 
             relative_precision = 0  # WARNING! Low precision!
             time_data_points_len = len(our_time_data.Vm)
+            # for i in range(time_data_points_len):
+            #     self.assertAlmostEqual(
+            #         our_time_data.Vm[i] / correct_time_data['Vm'][i], 1.0,
+            #         places=relative_precision
+            #     )
+            #     self.assertAlmostEqual(
+            #         our_time_data.Va[i] / correct_time_data['Va'][i], 1.0,
+            #         places=relative_precision
+            #     )
+            #     self.assertAlmostEqual(
+            #         our_time_data.Im[i] / correct_time_data['Im'][i], 1.0,
+            #         places=relative_precision
+            #     )
+            #     self.assertAlmostEqual(
+            #         our_time_data.Ia[i] / correct_time_data['Ia'][i], 1.0,
+            #         places=relative_precision
+            #     )
+
             for i in range(time_data_points_len):
-                self.assertAlmostEqual(
-                    our_time_data.Vm[i] / correct_time_data['Vm'][i], 1.0,
-                    places=relative_precision
-                )
-                self.assertAlmostEqual(
-                    our_time_data.Va[i] / correct_time_data['Va'][i], 1.0,
-                    places=relative_precision
-                )
-                self.assertAlmostEqual(
-                    our_time_data.Im[i] / correct_time_data['Im'][i], 1.0,
-                    places=relative_precision
-                )
-                self.assertAlmostEqual(
-                    our_time_data.Ia[i] / correct_time_data['Ia'][i], 1.0,
-                    places=relative_precision
-                )
+                if (our_time_data.Vm[i] / correct_time_data['Vm'][i] < 0.25
+                        or our_time_data.Vm[i] / correct_time_data['Vm'][i] > 2.00):
+                    print(
+                        'i =', i,
+                        'our.Vm[i] =', our_time_data.Vm[i],
+                        'correct.Vm[i] =', correct_time_data['Vm'][i]
+                    )
+
+            for i in range(time_data_points_len):
+                if (our_time_data.Va[i] / correct_time_data['Va'][i] < 0.25
+                        or our_time_data.Va[i] / correct_time_data['Va'][i] > 2.00):
+                    print(
+                        'i =', i,
+                        'our.Va[i] =', our_time_data.Va[i],
+                        'correct.Va[i] =', correct_time_data['Va'][i]
+                    )
+
+            for i in range(time_data_points_len):
+                if (our_time_data.Im[i] / correct_time_data['Im'][i] < 0.25
+                        or our_time_data.Im[i] / correct_time_data['Im'][i] > 2.00):
+                    print(
+                        'i =', i,
+                        'our.Im[i] =', our_time_data.Im[i],
+                        'correct.Im[i] =', correct_time_data['Im'][i]
+                    )
+
+            for i in range(time_data_points_len):
+                if (our_time_data.Ia[i] / correct_time_data['Ia'][i] < 0.25
+                        or our_time_data.Ia[i] / correct_time_data['Ia'][i] > 2.00):
+                    print(
+                        'i =', i,
+                        'our.Ia[i] =', our_time_data.Ia[i],
+                        'correct.Ia[i] =', correct_time_data['Ia'][i]
+                    )
+
 
 
     def test_white_noise(self):
@@ -352,6 +389,7 @@ class ObjectiveFunctionTests(unittest.TestCase):
                 self.assertAlmostEqual(
                     computed_func_gradient[i] / correct_gradient_array[i], 1.0,
                     places=5  # WARNING! Low precision! What about Grad_P?
+                    # Updating prior_mean after every iteration?
                 )
 
 

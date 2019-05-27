@@ -150,15 +150,13 @@ class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
     # TODO: look here !!!!!! REFAAAAACTOR NEED TO DO
     def run_computations(self):
         """Runs computations and drawing plots (not implemented yet)."""
-        # self.get_params_from_gui()
-        # plot_title = self.title.text()
-
         params_from_gui = self.get_params_from_gui()
         data_to_gui = baseline.run_all_computations(params_from_gui)
 
         plot_color = pyqtgraph.hsvColor(1, alpha=.9)
         pen = pyqtgraph.mkPen(color=plot_color, width=0.4)
-        self.plot_view.plot(data_to_gui['t_vec'], data_to_gui['w2'], pen=pen, clear=True)
+        # plot_title = self.title.text()
+        # self.plot_view.plot(data_to_gui['t_vec'], data_to_gui['w2'], pen=pen, clear=True)
 
 
     def save_params(self):
@@ -172,7 +170,7 @@ class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
         path_to_this_file = os.path.abspath(os.path.dirname(__file__))
         path_to_saving_file = QtWidgets.QFileDialog.getSaveFileName(
             self,
-            'Please, specify the file for saving your current workspace',
+            'Please, specify a file to save your current workspace',
             os.path.join(path_to_this_file, '..', 'data', 'workspaces')
         )[0]
         if path_to_saving_file:

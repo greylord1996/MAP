@@ -129,33 +129,37 @@ class OdeSolver:
 
 # Test mode, just for checking correct working
 
-import settings
-
-
-WN = settings.WhiteNoise(
-    rnd_amp=0.000
-)
-
-GP = settings.GeneratorParameters(  # true generator parameters
-    d_2=0.25,
-    e_2=1.0,
-    m_2=1.0,
-    x_d2=0.01,
-    ic_d2=1.0
-)
-
-IS = settings.IntegrationSettings(
-    dt_step=0.05,
-    df_length=100.0
-)
-
-OP = settings.OscillationParameters(
-    osc_amp=2.00,
-    osc_freq=0.005
-)
+# import settings
+#
+#
+# WN = settings.WhiteNoise(
+#     rnd_amp=0.002  # CHECK THIS VALUE!!!
+# )
+#
+# GP = settings.GeneratorParameters(  # true generator parameters
+#     d_2=0.25,
+#     e_2=1.0,
+#     m_2=1.0,
+#     x_d2=0.01,
+#     ic_d2=1.0
+# )
+#
+# IS = settings.IntegrationSettings(
+#     dt_step=0.05,
+#     df_length=100.0
+# )
+#
+# OP = settings.OscillationParameters(
+#     osc_amp=2.00,
+#     osc_freq=0.005
+# )
 
 
 
 # solver = OdeSolver(WN, GP, OP, IS)
+
+# WHAT SHOULD WE CALL? solve or simulate_time_data?
 # solver.solve()
+# solver.simulate_time_data()
+
 

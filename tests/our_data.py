@@ -59,6 +59,8 @@ def get_initial_time_data(test_dir):
         integr_param=initial_params.integration_settings
     )
     solver.simulate_time_data()
+
+    assert solver.dt == initial_params.integration_settings.dt_step
     return data.TimeData(
         Vm_time_data=solver.Vc1_abs,
         Va_time_data=solver.Vc1_angle,
@@ -89,6 +91,7 @@ def get_time_data_after_snr(test_dir):
         Ia_time_data=correct_initial_time_data_dict['Ia'],
         dt=get_initial_params(test_dir).integration_settings.dt_step
     )
+
     # note: applying white noise includes generation random numbers
     our_time_data.apply_white_noise(snr=45.0, d_coi=0.0)
     return our_time_data
@@ -131,7 +134,7 @@ def get_freq_data_after_remove_dc_and_trim(test_dir):
     """
     our_freq_data = get_freq_data_after_fft(test_dir)
     correct_freq_data_dict = (
-        correct_data.get_freq_data_after_remove_dc_and_trim(test_dir)
+        correct_data.get_freq_data_after_fft(test_dir)
     )
 
     our_freq_data.freqs = correct_freq_data_dict['freqs']
@@ -147,6 +150,11 @@ def get_freq_data_after_remove_dc_and_trim(test_dir):
     our_freq_data.std_w_Im = correct_std_deviations['std_dev_eps_Im']
     our_freq_data.std_w_Ia = correct_std_deviations['std_dev_eps_Ia']
 
+    our_freq_data.remove_zero_frequency()
+    our_freq_data.trim(
+        min_freq=0.0,
+        max_freq=get_initial_params(test_dir).freq_data.max_freq
+    )
     return our_freq_data
 
 
@@ -166,7 +174,7 @@ def get_freq_data_after_remove_fo_band(test_dir):
     """
     our_freq_data = get_freq_data_after_remove_dc_and_trim(test_dir)
     correct_freq_data_dict = (
-        correct_data.get_freq_data_after_remove_fo_band(test_dir)
+        correct_data.get_freq_data_after_remove_dc_and_trim(test_dir)
     )
 
     our_freq_data.freqs = correct_freq_data_dict['freqs']
@@ -182,5 +190,10 @@ def get_freq_data_after_remove_fo_band(test_dir):
     assert our_freq_data.std_w_Im == correct_std_deviations['std_dev_eps_Im']
     assert our_freq_data.std_w_Ia == correct_std_deviations['std_dev_eps_Ia']
 
+    initial_params = get_initial_params(test_dir)
+    our_freq_data.remove_data_from_fo_band(
+        min_fo_freq=initial_params.freq_data.lower_fb,
+        max_fo_freq=initial_params.freq_data.upper_fb
+    )
     return our_freq_data
 
