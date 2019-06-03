@@ -157,9 +157,6 @@ class OdeSolver:
 
 
 # solver = OdeSolver(WN, GP, OP, IS)
-
-# WHAT SHOULD WE CALL? solve or simulate_time_data?
-# solver.solve()
 # solver.simulate_time_data()
 
 

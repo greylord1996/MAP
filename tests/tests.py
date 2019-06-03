@@ -370,27 +370,27 @@ class ObjectiveFunctionTests(unittest.TestCase):
                 places=12
             )
 
-
-    def _check_objective_function_gradients(self, func, test_dir):
-        correct_values = correct_data.get_correct_values(test_dir)
-        correct_gradients = correct_values['ObjectiveFunction']['gradients']
-
-        for args, correct_gradient in correct_gradients.items():
-            args_array = np.array([np.float(arg) for arg in args.split(',')])
-            correct_gradient_array = np.array([
-                np.float(correct_gradient_component)
-                for correct_gradient_component in correct_gradient.split(',')
-            ])
-
-            computed_func_gradient = (
-                func.compute_gradient_from_array(args_array)
-            )
-            for i in range(len(args_array)):
-                self.assertAlmostEqual(
-                    computed_func_gradient[i] / correct_gradient_array[i], 1.0,
-                    places=5  # WARNING! Low precision! What about Grad_P?
-                    # Updating prior_mean after every iteration?
-                )
+    # DEPRECATED METHOD!
+    # def _check_objective_function_gradients(self, func, test_dir):
+    #     correct_values = correct_data.get_correct_values(test_dir)
+    #     correct_gradients = correct_values['ObjectiveFunction']['gradients']
+    #
+    #     for args, correct_gradient in correct_gradients.items():
+    #         args_array = np.array([np.float(arg) for arg in args.split(',')])
+    #         correct_gradient_array = np.array([
+    #             np.float(correct_gradient_component)
+    #             for correct_gradient_component in correct_gradient.split(',')
+    #         ])
+    #
+    #         computed_func_gradient = (
+    #             func.compute_gradient_from_array(args_array)
+    #         )
+    #         for i in range(len(args_array)):
+    #             self.assertAlmostEqual(
+    #                 computed_func_gradient[i] / correct_gradient_array[i], 1.0,
+    #                 places=5  # WARNING! Low precision! What about Grad_P?
+    #                 # Updating prior_mean after every iteration?
+    #             )
 
 
     def test_objective_function(self):
@@ -435,10 +435,12 @@ class ObjectiveFunctionTests(unittest.TestCase):
                 func=f,
                 test_dir=test_dir
             )
-            self._check_objective_function_gradients(
-                func=f,
-                test_dir=test_dir
-            )
+
+            # DEPRECATED METHOD!
+            # self._check_objective_function_gradients(
+            #     func=f,
+            #     test_dir=test_dir
+            # )
 
             # just check that the following objects can be successfully computed
             starting_point_R = f._R.compute(gen_params_prior_mean)
@@ -450,15 +452,17 @@ class ObjectiveFunctionTests(unittest.TestCase):
             starting_point_gamma_L_partial_derivatives = (
                 f._gamma_L.compute_partial_derivatives(gen_params_prior_mean)
             )
+
+            # DEPRECATED METHODS!
             # starting_point_inverted_gamma_L_partial_derivatives = (
             #     f._gamma_L.compute_inverted_matrix_partial_derivatives(
             #         gen_params_prior_mean
             #     )
             # )
-            starting_point_f_gradient = f.compute_gradient(gen_params_prior_mean)
-            starting_point_f_gradient = (
-                f.compute_gradient_from_array(gen_params_prior_mean.as_array)
-            )
+            # starting_point_f_gradient = f.compute_gradient(gen_params_prior_mean)
+            # starting_point_f_gradient = (
+            #     f.compute_gradient_from_array(gen_params_prior_mean.as_array)
+            # )
 
 
 
