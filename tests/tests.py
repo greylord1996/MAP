@@ -70,60 +70,72 @@ class TimeDataTests(unittest.TestCase):
 
             relative_precision = 0  # WARNING! Low precision!
             time_data_points_len = len(our_time_data.Vm)
-            # for i in range(time_data_points_len):
-            #     self.assertAlmostEqual(
-            #         our_time_data.Vm[i] / correct_time_data['Vm'][i], 1.0,
-            #         places=relative_precision
-            #     )
-            #     self.assertAlmostEqual(
-            #         our_time_data.Va[i] / correct_time_data['Va'][i], 1.0,
-            #         places=relative_precision
-            #     )
-            #     self.assertAlmostEqual(
-            #         our_time_data.Im[i] / correct_time_data['Im'][i], 1.0,
-            #         places=relative_precision
-            #     )
-            #     self.assertAlmostEqual(
-            #         our_time_data.Ia[i] / correct_time_data['Ia'][i], 1.0,
-            #         places=relative_precision
-            #     )
-
             for i in range(time_data_points_len):
-                if (our_time_data.Vm[i] / correct_time_data['Vm'][i] < 0.25
-                        or our_time_data.Vm[i] / correct_time_data['Vm'][i] > 2.00):
+                self.assertAlmostEqual(
+                    our_time_data.Vm[i] / correct_time_data['Vm'][i], 1.0,
+                    places=relative_precision
+                )
+                self.assertAlmostEqual(
+                    our_time_data.Va[i] / correct_time_data['Va'][i], 1.0,
+                    places=relative_precision
+                )
+                self.assertAlmostEqual(
+                    our_time_data.Im[i] / correct_time_data['Im'][i], 1.0,
+                    places=relative_precision
+                )
+                self.assertAlmostEqual(
+                    our_time_data.Ia[i] / correct_time_data['Ia'][i], 1.0,
+                    places=relative_precision
+                )
+
+            Vm_anomalies_number = 0
+            for i in range(time_data_points_len):
+                if (our_time_data.Vm[i] / correct_time_data['Vm'][i] < 0.98
+                        or our_time_data.Vm[i] / correct_time_data['Vm'][i] > 1.02):
+                    Vm_anomalies_number += 1
                     print(
                         'i =', i,
                         'our.Vm[i] =', our_time_data.Vm[i],
                         'correct.Vm[i] =', correct_time_data['Vm'][i]
                     )
 
+            Va_anomalies_number = 0
             for i in range(time_data_points_len):
-                if (our_time_data.Va[i] / correct_time_data['Va'][i] < 0.25
-                        or our_time_data.Va[i] / correct_time_data['Va'][i] > 2.00):
+                if (our_time_data.Va[i] / correct_time_data['Va'][i] < 0.98
+                        or our_time_data.Va[i] / correct_time_data['Va'][i] > 1.02):
+                    Va_anomalies_number += 1
                     print(
                         'i =', i,
                         'our.Va[i] =', our_time_data.Va[i],
                         'correct.Va[i] =', correct_time_data['Va'][i]
                     )
 
+            Im_anomalies_number = 0
             for i in range(time_data_points_len):
-                if (our_time_data.Im[i] / correct_time_data['Im'][i] < 0.25
-                        or our_time_data.Im[i] / correct_time_data['Im'][i] > 2.00):
+                if (our_time_data.Im[i] / correct_time_data['Im'][i] < 0.98
+                        or our_time_data.Im[i] / correct_time_data['Im'][i] > 1.02):
+                    Im_anomalies_number += 1
                     print(
                         'i =', i,
                         'our.Im[i] =', our_time_data.Im[i],
                         'correct.Im[i] =', correct_time_data['Im'][i]
                     )
 
+            Ia_anomalies_number = 0
             for i in range(time_data_points_len):
-                if (our_time_data.Ia[i] / correct_time_data['Ia'][i] < 0.25
-                        or our_time_data.Ia[i] / correct_time_data['Ia'][i] > 2.00):
+                if (our_time_data.Ia[i] / correct_time_data['Ia'][i] < 0.98
+                        or our_time_data.Ia[i] / correct_time_data['Ia'][i] > 1.02):
+                    Ia_anomalies_number += 1
                     print(
                         'i =', i,
                         'our.Ia[i] =', our_time_data.Ia[i],
                         'correct.Ia[i] =', correct_time_data['Ia'][i]
                     )
 
+            self.assertLessEqual(Vm_anomalies_number, 200)
+            self.assertLessEqual(Va_anomalies_number, 200)
+            self.assertLessEqual(Im_anomalies_number, 500)  # WARNING! Check Im!
+            self.assertLessEqual(Ia_anomalies_number, 200)
 
 
     def test_white_noise(self):
@@ -420,19 +432,20 @@ class ObjectiveFunctionTests(unittest.TestCase):
                 )
             )
 
-            # f -- objective function to minimize
-            f = objective_function.ObjectiveFunction(
+            # f1 -- objective function to minimize (in stage1)
+            f1 = objective_function.ObjectiveFunction(
                 freq_data=correct_prepared_freq_data,
                 gen_params_prior_mean=gen_params_prior_mean,
-                gen_params_prior_std_dev=gen_params_prior_std_dev
+                gen_params_prior_std_dev=gen_params_prior_std_dev,
+                stage=1
             )
 
             self._check_covariance_matrix(
-                our_gamma_L=f._gamma_L.compute(gen_params_prior_mean),
+                our_gamma_L=f1._gamma_L.compute(gen_params_prior_mean),
                 test_dir=test_dir
             )
             self._check_objective_function_values(
-                func=f,
+                func=f1,
                 test_dir=test_dir
             )
 
@@ -443,25 +456,25 @@ class ObjectiveFunctionTests(unittest.TestCase):
             # )
 
             # just check that the following objects can be successfully computed
-            starting_point_R = f._R.compute(gen_params_prior_mean)
-            starting_point_gamma_L = f._gamma_L.compute(gen_params_prior_mean)
+            starting_point_R = f1._R.compute(gen_params_prior_mean)
+            starting_point_gamma_L = f1._gamma_L.compute(gen_params_prior_mean)
 
             starting_point_R_partial_derivatives = (
-                f._R.compute_partial_derivatives(gen_params_prior_mean)
+                f1._R.compute_partial_derivatives(gen_params_prior_mean)
             )
             starting_point_gamma_L_partial_derivatives = (
-                f._gamma_L.compute_partial_derivatives(gen_params_prior_mean)
+                f1._gamma_L.compute_partial_derivatives(gen_params_prior_mean)
             )
 
             # DEPRECATED METHODS!
             # starting_point_inverted_gamma_L_partial_derivatives = (
-            #     f._gamma_L.compute_inverted_matrix_partial_derivatives(
+            #     f1._gamma_L.compute_inverted_matrix_partial_derivatives(
             #         gen_params_prior_mean
             #     )
             # )
-            # starting_point_f_gradient = f.compute_gradient(gen_params_prior_mean)
-            # starting_point_f_gradient = (
-            #     f.compute_gradient_from_array(gen_params_prior_mean.as_array)
+            # starting_point_f1_gradient = f1.compute_gradient(gen_params_prior_mean)
+            # starting_point_f1_gradient = (
+            #     f1.compute_gradient_from_array(gen_params_prior_mean.as_array)
             # )
 
 

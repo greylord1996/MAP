@@ -53,7 +53,7 @@ def get_initial_time_data(test_dir):
     """
     initial_params = get_initial_params(test_dir)
     solver = dynamic_equations_to_simulate.OdeSolver(
-        white_noise=initial_params.white_noise,
+        noise=initial_params.noise,
         gen_param=initial_params.generator_parameters,
         osc_param=initial_params.oscillation_parameters,
         integr_param=initial_params.integration_settings

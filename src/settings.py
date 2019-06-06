@@ -121,18 +121,21 @@ class OscillationParameters:
 
 
 
-# White Noise Settings
-class WhiteNoise:
+# Noise Settings
+class Noise:
 
-    def __init__(self, rnd_amp):
+    def __init__(self, rnd_amp, snr):
         self.rnd_amp = rnd_amp
+        self.snr = snr
 
     def set_values_from_dict(self, new_values):
         self.rnd_amp = new_values['rnd_amp']
+        self.snr = new_values['snr']
 
     def get_values_as_dict(self):
         return {
-            'rnd_amp': self.rnd_amp
+            'rnd_amp': self.rnd_amp,
+            'snr': self.snr
         }
 
 
@@ -171,7 +174,7 @@ class Settings:
         self.optimizer_settings = None
         self.generator_parameters = None
         self.oscillation_parameters = None
-        self.white_noise = None
+        self.noise = None
         self.inf_bus_initializer = None
         self.set_values_from_dict(all_settings_as_dict)
 
@@ -193,8 +196,8 @@ class Settings:
             'OscillationParameters': (
                 self.oscillation_parameters.get_values_as_dict()
             ),
-            'WhiteNoise': (
-                self.white_noise.get_values_as_dict()
+            'Noise': (
+                self.noise.get_values_as_dict()
             ),
             'InfBusInitializer': (
                 self.inf_bus_initializer.get_values_as_dict()
@@ -218,8 +221,8 @@ class Settings:
         self.oscillation_parameters = OscillationParameters(
             **all_settings_as_dict['OscillationParameters']
         )
-        self.white_noise = WhiteNoise(
-            **all_settings_as_dict['WhiteNoise']
+        self.noise = Noise(
+            **all_settings_as_dict['Noise']
         )
         self.inf_bus_initializer = InfBusInitializer(
             **all_settings_as_dict['InfBusInitializer']

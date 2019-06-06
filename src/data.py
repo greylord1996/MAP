@@ -1,8 +1,10 @@
 import abc
+import copy
 import numpy as np
 import scipy
 import scipy.signal
 
+import dynamic_equations_to_simulate
 import utils
 
 
@@ -38,7 +40,6 @@ class Data(abc.ABC):
 
 
 
-# @utils.singleton -- uncomment in release
 class TimeData(Data):
     """Represents data in time domain.
 
@@ -115,7 +116,6 @@ class TimeData(Data):
 
 
 
-# @utils.singleton -- uncomment in release
 class FreqData(Data):
     """Represents data in frequency domain.
 
@@ -240,4 +240,109 @@ class FreqData(Data):
         self.Va = np.delete(self.Va, removing_indexes)
         self.Im = np.delete(self.Im, removing_indexes)
         self.Ia = np.delete(self.Ia, removing_indexes)
+
+
+
+@utils.singleton
+class DataHolder:
+    """Wrapper for storing different prepared data from a generator.
+
+    Attributes:
+        _initial_time_data (class TimeData): initial data in time domain
+        _time_data_after_snr (class TimeData): data in time domain
+            after applying white noise (specified by SNR)
+        _freq_data_after_fft (class FreqData): data after FFT
+        _freq_data_after_trim (class FreqData): data (in frequency domain)
+            after removing zero frequency and trimming data
+            (for stage2 of the optimization routine)
+        _freq_data_after_remove_fo_band (class FreqData): data
+            (in frequency domain) after excluding data from FO band
+            (for stage1 of the optimization routine)
+
+    Note:
+        All attributes are private. Don't use them outside this class.
+        Communicate with an instance of this class only via
+        its public methods.
+    """
+
+    def __init__(self, initial_params):
+        """Prepares different data for the optimization routine.
+
+        Args:
+            initial_params (class Settings): all configuration parameters
+                (should be obtained from GUI)
+        """
+        # Simulate data in time domain (initial data)
+        ode_solver_object = dynamic_equations_to_simulate.OdeSolver(
+            noise=initial_params.noise,
+            gen_param=initial_params.generator_parameters,
+            osc_param=initial_params.oscillation_parameters,
+            integr_param=initial_params.integration_settings
+        )
+        ode_solver_object.simulate_time_data()
+        self._initial_time_data = TimeData(
+            Vm_time_data=ode_solver_object.Vc1_abs,
+            Va_time_data=ode_solver_object.Vc1_angle,
+            Im_time_data=ode_solver_object.Ig_abs,
+            Ia_time_data=ode_solver_object.Ig_angle,
+            dt=ode_solver_object.dt
+        )
+
+        # Apply white noise to simulated data in time domain
+        self._time_data_after_snr = copy.copy(self._initial_time_data)
+        self._time_data_after_snr.apply_white_noise(
+            snr=initial_params.noise.snr,
+            d_coi=0.0
+        )
+
+        # Moving from time domain to frequency domain
+        self._freq_data_after_fft = FreqData(self._time_data_after_snr)
+
+        # Trim data
+        self._freq_data_after_trim = copy.copy(self._freq_data_after_fft)
+        self._freq_data_after_trim.remove_zero_frequency()
+        self._freq_data_after_trim.trim(
+            min_freq=0.0,
+            max_freq=initial_params.freq_data.max_freq
+        )
+
+        # Remove data from forced oscillation band
+        # (it is necessary only for running stage1, not stage2)
+        self._freq_data_after_remove_fo_band = (
+            copy.copy(self._freq_data_after_trim)
+        )
+        self._freq_data_after_remove_fo_band.remove_data_from_fo_band(
+            min_fo_freq=initial_params.freq_data.lower_fb,
+            max_fo_freq=initial_params.freq_data.upper_fb
+        )
+
+
+    def get_data(self, stage):
+        """Returns prepared data for stage1 or stage2.
+
+        If you need data (in frequency domain) for stage1
+        of the optimization routine, shallow copy of
+        self._freq_data_after_remove_fo_band will be returned.
+        Data for stage2 are the same except for
+        it has data in the forced oscillation band (FO band).
+
+        Args:
+            stage (int): stage number (1 or 2)
+                1 -- clarify generator parameters
+                2 -- find the source of forced oscillations
+
+        Returns:
+            freq_data (class FreqData): data in frequency domain
+                which has been prepared for stage1 or stage2
+                of the optimization routine
+        """
+        if stage not in (1, 2):
+            raise ValueError('You should specify the stage (1 or 2) '
+                             'for the objective function.')
+        freq_data = None
+        if stage == 1:
+            freq_data = copy.copy(self._freq_data_after_remove_fo_band)
+        if stage == 2:
+            freq_data = copy.copy(self._freq_data_after_trim)
+        return freq_data
 

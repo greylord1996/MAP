@@ -605,7 +605,8 @@ class ObjectiveFunction:
     """
 
     def __init__(self, freq_data,
-                 gen_params_prior_mean, gen_params_prior_std_dev):
+                 gen_params_prior_mean, gen_params_prior_std_dev,
+                 stage):
         """Prepares for computing the objective function at any point.
 
         Stores data in frequency domain, prior mean
@@ -621,7 +622,14 @@ class ObjectiveFunction:
             gen_params_prior_std_dev (class OptimizingGeneratorParameters):
                 standard deviations of generator's parameters
                 (how much we are uncertain in their values)
+            stage (int): stage number (1 or 2)
+                1 -- clarify generator parameters
+                2 -- find the source of forced oscillations
         """
+        if stage not in (1, 2):
+            raise ValueError('You should specify the stage (1 or 2) '
+                             'for the objective function.')
+        self._stage = stage
         self._R = ResidualVector(freq_data)
         self._gamma_L = CovarianceMatrix(freq_data)
         self._gen_params_prior_mean = gen_params_prior_mean.as_array

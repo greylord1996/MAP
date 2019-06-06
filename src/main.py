@@ -48,7 +48,7 @@ class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
         and returns all of them as an instance of class settings.Settings.
 
         Returns:
-            all_settings (class settings.Settings): all settings from GUI
+            all_settings (class Settings): all settings from GUI
         """
         return settings.Settings({
             'FreqData': {
@@ -76,8 +76,9 @@ class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
                 'osc_amp': self.osc_amp.value(),
                 'osc_freq': self.osc_freq.value()
             },
-            'WhiteNoise': {
-                'rnd_amp': self.rnd_amp.value()
+            'Noise': {
+                'rnd_amp': self.rnd_amp.value(),
+                'snr': self.snr.value()
             },
             'InfBusInitializer': {
                 'ic_v1': self.ic_v1.value(),
@@ -94,8 +95,8 @@ class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
         """Updates parameters in the GUI.
 
         Args:
-            new_params (dict of classes which are declared in settings.py):
-                new values of all parameters which will be updated in GUI
+            new_params (class Settings): new values of all parameters
+                which will be updated in GUI
         """
         self.df_length.setValue(new_params.integration_settings.df_length)
         self.dt_step.setValue(new_params.integration_settings.dt_step)
@@ -121,7 +122,8 @@ class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
         self.osc_amp.setValue(new_params.oscillation_parameters.osc_amp)
         self.osc_freq.setValue(new_params.oscillation_parameters.osc_freq)
 
-        self.rnd_amp.setValue(new_params.white_noise.rnd_amp)
+        self.rnd_amp.setValue(new_params.noise.rnd_amp)
+        self.snr.setValue(new_params.noise.snr)
 
         self.ic_v1.setValue(new_params.inf_bus_initializer.ic_v1)
         self.ic_t1.setValue(new_params.inf_bus_initializer.ic_t1)

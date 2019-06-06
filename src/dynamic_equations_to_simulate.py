@@ -10,8 +10,8 @@ j = np.complex(0, 1)
 
 class OdeSolver:
 
-    def __init__(self, white_noise, gen_param, osc_param, integr_param):
-        self.white_noise = white_noise
+    def __init__(self, noise, gen_param, osc_param, integr_param):
+        self.noise = noise
         self.generator_param = gen_param
         self.osc_param = osc_param
         # self.white_noise = WhiteNoise(white_noise['rnd_amp'])
@@ -49,7 +49,7 @@ class OdeSolver:
         return Pm2_0
 
     def get_V1t(self):
-        vn_vec = np.random.normal(0, 1, self.test_length.size) * self.white_noise.rnd_amp + self.IC_V1
+        vn_vec = np.random.normal(0, 1, self.test_length.size) * self.noise.rnd_amp + self.IC_V1
         V1t = interp1d(self.t_vec, vn_vec, kind='cubic', fill_value="extrapolate")
         return V1t
 
@@ -59,7 +59,7 @@ class OdeSolver:
         plt.show()
 
     def get_T1t(self):
-        tn_vec = np.random.normal(0, 1, self.test_length.size) * self.white_noise.rnd_amp + self.IC_T1
+        tn_vec = np.random.normal(0, 1, self.test_length.size) * self.noise.rnd_amp + self.IC_T1
         T1t = interp1d(self.t_vec, tn_vec, kind='cubic', fill_value="extrapolate")
         return T1t
 
@@ -132,8 +132,9 @@ class OdeSolver:
 # import settings
 #
 #
-# WN = settings.WhiteNoise(
-#     rnd_amp=0.002  # CHECK THIS VALUE!!!
+# WN = settings.Noise(
+#     rnd_amp=0.002,
+#     snr=45.0
 # )
 #
 # GP = settings.GeneratorParameters(  # true generator parameters

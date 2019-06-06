@@ -1,14 +1,10 @@
-## Now it looks like this:
-
-![](data/demo.png)
-
 There are installers for Windows and Ubuntu/Debian ([see releases](https://github.com/greylord1996/MAP/releases)). You can just download appropriate installer and run it ignoring all steps below.
 
 ## How to deploy it:
 
-First of all, you should have ```python 3.x``` and ```git``` in your PATH variable to work with this project.
+First of all, you should have ```python 3.x``` to work with this project. The recommended version of Python is ```3.6```.
 
-*Note for Windows users*: You should start a command line with administrator's privileges. 
+*Note for Windows users*: You should start a command line with administrator's privileges.
 
 First of all, clone the repository:
 

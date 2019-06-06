@@ -6,7 +6,7 @@
     },
     "FreqData":
     {
-        "lower_fb": 1.98899,
+        "lower_fb": 1.988,
         "upper_fb": 2.01,
         "max_freq": 6.0
     },
@@ -30,12 +30,13 @@
     },
     "OscillationParameters":
     {
-        "osc_amp": 2.0,
-        "osc_freq": 0.005
+        "osc_amp": 0.005,
+        "osc_freq": 2.000
     },
-    "WhiteNoise":
+    "Noise":
     {
-        "rnd_amp": 0.002
+        "rnd_amp": 0.002,
+        "snr": 45.0
     },
     "InfBusInitializer":
     {
