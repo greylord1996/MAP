@@ -1,18 +1,17 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'data/qt/main_window.ui'
+# Form implementation generated from reading ui file 'main_window.ui'
 #
-# Created by: PyQt5 UI code generator 5.12
+# Created by: PyQt5 UI code generator 5.9.2
 #
 # WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(800, 688)
+        MainWindow.resize(800, 727)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.verticalLayout_11 = QtWidgets.QVBoxLayout(self.centralwidget)
@@ -46,7 +45,7 @@ class Ui_MainWindow(object):
         self.lower_fb.setDecimals(3)
         self.lower_fb.setMaximum(9.999)
         self.lower_fb.setSingleStep(0.001)
-        self.lower_fb.setProperty("value", 1.99)
+        self.lower_fb.setProperty("value", 1.988)
         self.lower_fb.setObjectName("lower_fb")
         self.formLayout.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.lower_fb)
         self.label_upper_fb = QtWidgets.QLabel(self.centralwidget)
@@ -69,16 +68,6 @@ class Ui_MainWindow(object):
         self.max_freq.setProperty("value", 6.0)
         self.max_freq.setObjectName("max_freq")
         self.formLayout.setWidget(3, QtWidgets.QFormLayout.FieldRole, self.max_freq)
-        self.label_dt = QtWidgets.QLabel(self.centralwidget)
-        self.label_dt.setObjectName("label_dt")
-        self.formLayout.setWidget(4, QtWidgets.QFormLayout.LabelRole, self.label_dt)
-        self.dt = QtWidgets.QDoubleSpinBox(self.centralwidget)
-        self.dt.setDecimals(3)
-        self.dt.setMaximum(9.999)
-        self.dt.setSingleStep(0.001)
-        self.dt.setProperty("value", 0.005)
-        self.dt.setObjectName("dt")
-        self.formLayout.setWidget(4, QtWidgets.QFormLayout.FieldRole, self.dt)
         self.verticalLayout.addLayout(self.formLayout)
         self.verticalLayout_7.addLayout(self.verticalLayout)
         self.line_3 = QtWidgets.QFrame(self.centralwidget)
@@ -99,7 +88,7 @@ class Ui_MainWindow(object):
         self.osc_amp.setDecimals(3)
         self.osc_amp.setMaximum(9.999)
         self.osc_amp.setSingleStep(0.001)
-        self.osc_amp.setProperty("value", 2.0)
+        self.osc_amp.setProperty("value", 0.005)
         self.osc_amp.setObjectName("osc_amp")
         self.formLayout_4.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.osc_amp)
         self.label_osc_freq = QtWidgets.QLabel(self.centralwidget)
@@ -109,7 +98,7 @@ class Ui_MainWindow(object):
         self.osc_freq.setDecimals(3)
         self.osc_freq.setMaximum(9.999)
         self.osc_freq.setSingleStep(0.001)
-        self.osc_freq.setProperty("value", 0.005)
+        self.osc_freq.setProperty("value", 2.0)
         self.osc_freq.setObjectName("osc_freq")
         self.formLayout_4.setWidget(2, QtWidgets.QFormLayout.FieldRole, self.osc_freq)
         self.label_22 = QtWidgets.QLabel(self.centralwidget)
@@ -161,7 +150,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_6.setObjectName("verticalLayout_6")
         self.formLayout_5 = QtWidgets.QFormLayout()
         self.formLayout_5.setSizeConstraint(QtWidgets.QLayout.SetFixedSize)
-        self.formLayout_5.setContentsMargins(-1, -1, -1, 40)
+        self.formLayout_5.setContentsMargins(-1, -1, -1, 0)
         self.formLayout_5.setObjectName("formLayout_5")
         self.label_23 = QtWidgets.QLabel(self.centralwidget)
         self.label_23.setAlignment(QtCore.Qt.AlignCenter)
@@ -174,9 +163,20 @@ class Ui_MainWindow(object):
         self.rnd_amp.setDecimals(3)
         self.rnd_amp.setMaximum(9.999)
         self.rnd_amp.setSingleStep(0.001)
-        self.rnd_amp.setProperty("value", 0.02)
+        self.rnd_amp.setProperty("value", 0.002)
         self.rnd_amp.setObjectName("rnd_amp")
         self.formLayout_5.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.rnd_amp)
+        self.label_snr = QtWidgets.QLabel(self.centralwidget)
+        self.label_snr.setObjectName("label_snr")
+        self.formLayout_5.setWidget(2, QtWidgets.QFormLayout.LabelRole, self.label_snr)
+        self.snr = QtWidgets.QDoubleSpinBox(self.centralwidget)
+        self.snr.setDecimals(1)
+        self.snr.setMinimum(3.0)
+        self.snr.setMaximum(99.9)
+        self.snr.setSingleStep(0.1)
+        self.snr.setProperty("value", 45.0)
+        self.snr.setObjectName("snr")
+        self.formLayout_5.setWidget(2, QtWidgets.QFormLayout.FieldRole, self.snr)
         self.verticalLayout_6.addLayout(self.formLayout_5)
         self.verticalLayout_7.addLayout(self.verticalLayout_6)
         self.horizontalLayout.addLayout(self.verticalLayout_7)
@@ -336,7 +336,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_8.addWidget(self.line_7)
         self.verticalLayout_14 = QtWidgets.QVBoxLayout()
         self.verticalLayout_14.setSizeConstraint(QtWidgets.QLayout.SetFixedSize)
-        self.verticalLayout_14.setContentsMargins(-1, -1, -1, 40)
+        self.verticalLayout_14.setContentsMargins(-1, -1, -1, 0)
         self.verticalLayout_14.setObjectName("verticalLayout_14")
         self.formLayout_7 = QtWidgets.QFormLayout()
         self.formLayout_7.setSizeConstraint(QtWidgets.QLayout.SetFixedSize)
@@ -415,15 +415,15 @@ class Ui_MainWindow(object):
         self.label_lower_fb.setText(_translate("MainWindow", "lower_fb"))
         self.label_upper_fb.setText(_translate("MainWindow", "upper_fb"))
         self.label_max_freq.setText(_translate("MainWindow", "max_freq"))
-        self.label_dt.setText(_translate("MainWindow", "dt"))
         self.label_osc_amp.setText(_translate("MainWindow", "osc_amp"))
         self.label_osc_freq.setText(_translate("MainWindow", "osc_freq"))
         self.label_22.setText(_translate("MainWindow", "OscillationParameters"))
         self.label_ic_v1.setText(_translate("MainWindow", "ic_v1"))
         self.label_ic_t1.setText(_translate("MainWindow", "ic_t1"))
         self.label_27.setText(_translate("MainWindow", "InfBusInitializer"))
-        self.label_23.setText(_translate("MainWindow", "WhiteNoise"))
+        self.label_23.setText(_translate("MainWindow", "Noise"))
         self.label_rnd_amp.setText(_translate("MainWindow", "rnd_amp"))
+        self.label_snr.setText(_translate("MainWindow", "SNR"))
         self.label_opt_tol.setText(_translate("MainWindow", "opt_tol"))
         self.label_fun_tol.setText(_translate("MainWindow", "fun_tol"))
         self.label_stp_tol.setText(_translate("MainWindow", "stp_tol"))
@@ -445,6 +445,5 @@ class Ui_MainWindow(object):
         self.btn_run.setText(_translate("MainWindow", "Run"))
         self.btn_save.setText(_translate("MainWindow", "Save"))
         self.btn_exit.setText(_translate("MainWindow", "Exit"))
-
 
 from pyqtgraph import PlotWidget
