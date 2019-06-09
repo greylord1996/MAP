@@ -470,29 +470,6 @@ class CovarianceMatrix:
         return gamma_L
 
 
-    # DEPRECATED METHOD!
-    # def compute_and_invert(self, optimizing_gen_params):
-    #     """Computes the inverse of the covariance matrix at the given point.
-    #
-    #     Does exactly the same as 'compute' method but after computing
-    #     the covariance matrix this method inverts the obtained matrix
-    #     and returns it. See docstrings of the 'compute' method.
-    #
-    #     Args:
-    #         optimizing_gen_params (class OptimizingGeneratorParameters):
-    #             current parameters of a generator
-    #             (at the current step of an optimization routine)
-    #
-    #     Returns:
-    #         gamma_L^(-1) (numpy.array): inverted covariance matrix
-    #             evaluated at the given point (specified by
-    #             the 'optimizing_gen_params' argument of this method)
-    #     """
-    #     return sp.sparse.linalg.inv(sp.sparse.csc_matrix(
-    #         self.compute(optimizing_gen_params)
-    #     )).toarray()
-
-
     def compute_partial_derivatives(self, optimizing_gen_params):
         """Computes partial_derivatives of the covariance matrix.
 
@@ -544,43 +521,6 @@ class CovarianceMatrix:
         return gamma_L_partial_derivatives
 
 
-    # DEPRECATED METHOD!
-    # def compute_inverted_matrix_partial_derivatives(self, optimizing_gen_params):
-    #     """Computes partial_derivatives of the inverted covariance matrix.
-    #
-    #     Each element of the inverted covariance matrix
-    #     depends on 5 quantities:
-    #     D_Ya, Ef_a, M_Ya, X_Ya (4 generator parameters) and Omega_a.
-    #     But it is impossible to invert a big symbolic matrix
-    #     (by computational reasons). That is why
-    #     this method uses one math trick to compute partial_derivatives
-    #     of the inverted covariance matrix at the given point
-    #     without direct inverting symbolic covariance matrix.
-    #
-    #     Args:
-    #         optimizing_gen_params (class OptimizingGeneratorParameters):
-    #             current parameters of a generator
-    #             (at the current step of an optimization routine)
-    #
-    #     Returns:
-    #         inverted_gamma_L_partial_derivatives (dict): contains 4 keys:
-    #             'D_Ya' (numpy.array): matrix of partial derivatives at D_Ya
-    #             'Ef_a' (numpy.array): matrix of partial derivatives at Ef_a
-    #             'M_Ya' (numpy.array): matrix of partial derivatives at M_Ya
-    #             'X_Ya' (numpy.array): matrix of partial derivatives at X_Ya
-    #     """
-    #     inv_gamma_L = self.compute_and_invert(optimizing_gen_params)
-    #     gamma_L_partial_derivatives = (
-    #         self.compute_partial_derivatives(optimizing_gen_params)
-    #     )
-    #     return {
-    #         'D_Ya': -inv_gamma_L @ gamma_L_partial_derivatives['D_Ya'] @ inv_gamma_L,
-    #         'Ef_a': -inv_gamma_L @ gamma_L_partial_derivatives['Ef_a'] @ inv_gamma_L,
-    #         'M_Ya': -inv_gamma_L @ gamma_L_partial_derivatives['M_Ya'] @ inv_gamma_L,
-    #         'X_Ya': -inv_gamma_L @ gamma_L_partial_derivatives['X_Ya'] @ inv_gamma_L
-    #     }
-
-
 
 # @utils.singleton
 class ObjectiveFunction:
@@ -626,7 +566,7 @@ class ObjectiveFunction:
                 1 -- clarify generator parameters
                 2 -- find the source of forced oscillations
         """
-        if stage not in (1, 2):
+        if stage not in (1,):  # only stage1 is supported now
             raise ValueError('You should specify the stage (1 or 2) '
                              'for the objective function.')
         self._stage = stage
@@ -669,50 +609,6 @@ class ObjectiveFunction:
         )
 
 
-    # DEPRECATED METHOD!
-    # def compute_gradient(self, optimizing_gen_params):
-    #     """Computes gradient of the objective function at the given point.
-    #
-    #     Args:
-    #         optimizing_gen_params (class OptimizingGeneratorParameters):
-    #             current parameters of a generator
-    #             (at the current step of an optimization routine)
-    #
-    #     Returns:
-    #         gradient (numpy.array of 4 numbers) of the objective function
-    #             at optimizing generator parameters (D_Ya, Ef_a, M_Ya, X_Ya)
-    #             evaluated at the given point
-    #     """
-    #     curr_delta_params = (
-    #         optimizing_gen_params.as_array - self._gen_params_prior_mean
-    #     )
-    #
-    #     computed_R = self._R.compute(optimizing_gen_params)
-    #     computed_gamma_L = self._gamma_L.compute(optimizing_gen_params)
-    #     computed_R_partial_derivatives = (
-    #         self._R.compute_partial_derivatives(optimizing_gen_params)
-    #     )
-    #
-    #     # grad_f = grad_f1 + grad_f2 (see equation 40 in the paper)
-    #     grad_f1 = (
-    #         self._inv_gamma_g + np.transpose(self._inv_gamma_g)
-    #     ) @ curr_delta_params
-    #
-    #     intermediate_grad_f2 = (
-    #         np.linalg.solve(computed_gamma_L, computed_R) +
-    #         np.linalg.solve(np.transpose(computed_gamma_L), computed_R)
-    #     )
-    #     grad_f2 = np.array([
-    #         intermediate_grad_f2 @ computed_R_partial_derivatives['D_Ya'],
-    #         intermediate_grad_f2 @ computed_R_partial_derivatives['Ef_a'],
-    #         intermediate_grad_f2 @ computed_R_partial_derivatives['M_Ya'],
-    #         intermediate_grad_f2 @ computed_R_partial_derivatives['X_Ya'],
-    #     ])
-    #
-    #     grad_f = grad_f1 + grad_f2
-    #     return grad_f
-
-
     def compute_from_array(self, optimizing_gen_params):
         """Computes value of the objective function at the given point.
 
@@ -744,39 +640,4 @@ class ObjectiveFunction:
         ))
         print('### DEBUG: func_value =', func_value)
         return func_value
-
-
-    # DEPRECATED METHOD!
-    # def compute_gradient_from_array(self, optimizing_gen_params):
-    #     """Computes gradient of the objective function at the given point.
-    #
-    #     This method just calls self.compute_gradient method
-    #     transforming the sole argument from numpy.array to an instance
-    #     of class OptimizingGeneratorParameters. It is necessary
-    #     to have such method because optimizers want to give an instance
-    #     of numpy.array as an argument.
-    #
-    #     Args:
-    #         optimizing_gen_params (numpy.array of 4 numbers):
-    #             current values of optimizing generator parameters
-    #             (array of 4 numbers) at the current iteration
-    #             of an optimization routine
-    #
-    #     Returns:
-    #         gradient (numpy.array of 4 numbers) of the objective function
-    #             at optimizing generator parameters (D_Ya, Ef_a, M_Ya, X_Ya)
-    #             evaluated at the given point
-    #
-    #     Note:
-    #         Be cautious using this method! The order of parameters
-    #         is extremely important!
-    #     """
-    #     func_gradient = self.compute_gradient(OptimizingGeneratorParameters(
-    #         D_Ya=optimizing_gen_params[0],
-    #         Ef_a=optimizing_gen_params[1],
-    #         M_Ya=optimizing_gen_params[2],
-    #         X_Ya=optimizing_gen_params[3]
-    #     ))
-    #     # print('### DEBUG: gradient =', func_gradient)
-    #     return func_gradient
 

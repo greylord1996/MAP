@@ -1,5 +1,3 @@
-There are installers for Windows and Ubuntu/Debian ([see releases](https://github.com/greylord1996/MAP/releases)). You can just download appropriate installer and run it ignoring all steps below.
-
 ## How to deploy it:
 
 First of all, you should have ```python 3.x``` to work with this project. The recommended version of Python is ```3.6```.
