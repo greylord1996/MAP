@@ -414,8 +414,7 @@ class ObjectiveFunctionTests(unittest.TestCase):
             f1 = objective_function.ObjectiveFunction(
                 freq_data=correct_prepared_freq_data,
                 gen_params_prior_mean=gen_params_prior_mean,
-                gen_params_prior_std_dev=gen_params_prior_std_dev,
-                stage=1
+                gen_params_prior_std_dev=gen_params_prior_std_dev
             )
 
             self._check_covariance_matrix(

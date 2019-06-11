@@ -6,6 +6,9 @@ import objective_function
 # import settings
 import data
 
+import matplotlib.pyplot as plt
+import admittance_matrix
+import sympy
 
 
 def perturb_gen_params(true_gen_params):
@@ -67,19 +70,21 @@ def run_all_computations(initial_params):
         None (it is not clear now what should be returned)
     """
     data_holder = data.DataHolder(initial_params)
-    stage1_data = data_holder.get_data(stage=1)
+    # stage1_data = data_holder.get_data(stage=1)
+    stage2_data = data_holder.get_data(stage=2)
 
     # Perturb generator parameters (replace true parameters with prior)
     gen_params_prior_mean, gen_params_prior_std_dev = (
         perturb_gen_params(initial_params.generator_parameters)
     )  # now generator parameters are perturbed and uncertain
 
-    # f1 denotes the objective function which has prepared for stage1
+    plot_Im_psd(stage2_data, gen_params_prior_mean.as_array, is_xlabel=False)
+
+    # # f1 denotes the objective function which has prepared for stage1
     f1 = objective_function.ObjectiveFunction(
-        freq_data=stage1_data,
+        freq_data=stage2_data,
         gen_params_prior_mean=gen_params_prior_mean,
-        gen_params_prior_std_dev=gen_params_prior_std_dev,
-        stage=1
+        gen_params_prior_std_dev=gen_params_prior_std_dev
     )
 
     print(
@@ -97,7 +102,7 @@ def run_all_computations(initial_params):
         x0=gen_params_prior_mean.as_array,
         method='BFGS',
         options={
-            'maxiter': 40,
+            'maxiter': 30,
             'disp': True
         }
     )
@@ -106,12 +111,89 @@ def run_all_computations(initial_params):
     print('opt_message:', opt_res.message)
     print('theta_MAP1 =', opt_res.x)
 
+    plot_Im_psd(stage2_data, opt_res.x, is_xlabel=True)
+
     # It is not clear now what should be returned
     return None
 
 
 
+def plot_Im_psd(freq_data, gen_params, is_xlabel):
+    D_Ya, Ef_a, M_Ya, X_Ya, Omega_a = sympy.symbols(
+        'D_Ya Ef_a M_Ya X_Ya Omega_a',
+        real=True
+    )
 
+    matrix_Y = admittance_matrix.AdmittanceMatrix().Ys
+    Y11 = sympy.lambdify(args=[D_Ya, Ef_a, M_Ya, X_Ya, Omega_a], expr=matrix_Y[0, 0], modules='numpy')
+    Y12 = sympy.lambdify(args=[D_Ya, Ef_a, M_Ya, X_Ya, Omega_a], expr=matrix_Y[0, 1], modules='numpy')
+    # Y21 = sympy.lambdify(args=[D_Ya, Ef_a, M_Ya, X_Ya, Omega_a], expr=matrix_Y[1, 0], modules='numpy')
+    # Y22 = sympy.lambdify(args=[D_Ya, Ef_a, M_Ya, X_Ya, Omega_a], expr=matrix_Y[1, 1], modules='numpy')
+
+    predicted_Im = np.zeros(len(freq_data.freqs), dtype=np.complex64)
+    # predicted_Ia = np.zeros(len(stage2_data.freqs), dtype=np.complex64)
+    for i in range(len(freq_data.freqs)):
+        curr_Y11 = Y11(
+            D_Ya=gen_params[0],
+            Ef_a=gen_params[1],
+            M_Ya=gen_params[2],
+            X_Ya=gen_params[3],
+            Omega_a=2.0 * np.pi * freq_data.freqs[i]
+        )
+        curr_Y12 = Y12(
+            D_Ya=gen_params[0],
+            Ef_a=gen_params[1],
+            M_Ya=gen_params[2],
+            X_Ya=gen_params[3],
+            Omega_a=2.0 * np.pi * freq_data.freqs[i]
+        )
+        # curr_Y21 = Y21(
+        #     D_Ya=gen_params[0],
+        #     Ef_a=gen_params[1],
+        #     M_Ya=gen_params[2],
+        #     X_Ya=gen_params[3],
+        #     Omega_a=2.0 * np.pi * freq_data.freqs[i]
+        # )
+        # curr_Y22 = Y22(
+        #     D_Ya=gen_params[0],
+        #     Ef_a=gen_params[1],
+        #     M_Ya=gen_params[2],
+        #     X_Ya=gen_params[3],
+        #     Omega_a=2.0 * np.pi * freq_data.freqs[i]
+        # )
+
+        predicted_Im[i] = curr_Y11 * freq_data.Vm[i] + curr_Y12 * freq_data.Va[i]
+        # predicted_Ia[i] = curr_Y21*stage2_data.Vm[i] + curr_Y22*stage2_data.Va[i]
+
+    plt.rc('text', usetex=True)
+    plt.rc('font', family='serif')
+    plt.figure(figsize=(24, 8))
+
+    plt.plot(
+        freq_data.freqs,
+        (np.abs(freq_data.Im))**2,
+        color='black'
+    )
+    plt.plot(
+        freq_data.freqs,
+        (np.abs(predicted_Im))**2
+    )
+
+    plot_name = (
+        'gen_params=' +
+        str(gen_params[0]) + '_' + str(gen_params[1]) + '_' +
+        str(gen_params[2]) + '_' + str(gen_params[3])
+    )
+    plt.yscale('log')
+    plt.tick_params(axis='both', labelsize=50, direction='in', length=12, width=3, pad=12)
+    plt.yticks([0.001, 0.000001])
+    if is_xlabel:
+        plt.xlabel('Frequency (Hz)', fontsize=50)
+    plt.ylabel(r'$\tilde{\mathrm{I}}$ PSD', fontsize=50)
+    plt.legend(['Measured', 'Predicted'], loc='upper left', prop={'size': 50}, frameon=False)
+
+    plt.tight_layout()
+    plt.savefig(os.path.join('samples', plot_name + '.pdf'), dpi=180, format='pdf')
 
 
 
