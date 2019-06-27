@@ -70,18 +70,18 @@ def run_all_computations(initial_params):
         None (it is not clear now what should be returned)
     """
     data_holder = data.DataHolder(initial_params)
-    # stage1_data = data_holder.get_data(stage=1)
-    stage2_data = data_holder.get_data(stage=2)
+    # stage1_data = data_holder.get_data(remove_fo_band=True)
+    stage2_data = data_holder.get_data(remove_fo_band=False)
 
     # Perturb generator parameters (replace true parameters with prior)
     gen_params_prior_mean, gen_params_prior_std_dev = (
         perturb_gen_params(initial_params.generator_parameters)
     )  # now generator parameters are perturbed and uncertain
 
-    plot_Im_psd(stage2_data, gen_params_prior_mean.as_array, is_xlabel=False)
+    # plot_Im_psd(stage2_data, gen_params_prior_mean.as_array, is_xlabel=False)
 
-    # # f1 denotes the objective function which has prepared for stage1
-    f1 = objective_function.ObjectiveFunction(
+    # f denotes the objective function
+    f = objective_function.ObjectiveFunction(
         freq_data=stage2_data,
         gen_params_prior_mean=gen_params_prior_mean,
         gen_params_prior_std_dev=gen_params_prior_std_dev
@@ -89,7 +89,7 @@ def run_all_computations(initial_params):
 
     print(
         'true_gen_params: f(0.25, 1.00, 1.00, 0.01) =',
-        f1.compute_from_array([0.25, 1.00, 1.00, 0.01])
+        f.compute_from_array([0.25, 1.00, 1.00, 0.01])
     )
     print()
     print('######################################################')
@@ -98,7 +98,7 @@ def run_all_computations(initial_params):
     print()
 
     opt_res = sp.optimize.minimize(
-        fun=f1.compute_from_array,
+        fun=f.compute_from_array,
         x0=gen_params_prior_mean.as_array,
         method='BFGS',
         options={
@@ -111,7 +111,7 @@ def run_all_computations(initial_params):
     print('opt_message:', opt_res.message)
     print('theta_MAP1 =', opt_res.x)
 
-    plot_Im_psd(stage2_data, opt_res.x, is_xlabel=True)
+    # plot_Im_psd(stage2_data, opt_res.x, is_xlabel=True)
 
     # It is not clear now what should be returned
     return None

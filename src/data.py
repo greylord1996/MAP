@@ -317,7 +317,7 @@ class DataHolder:
         )
 
 
-    def get_data(self, stage):
+    def get_data(self, remove_fo_band):
         """Returns prepared data for stage1 or stage2.
 
         If you need data (in frequency domain) for stage1
@@ -327,22 +327,18 @@ class DataHolder:
         it has data in the forced oscillation band (FO band).
 
         Args:
-            stage (int): stage number (1 or 2)
-                1 -- clarify generator parameters
-                2 -- find the source of forced oscillations
+            remove_fo_band (bool): remove data
+                from forced oscillation band?
 
         Returns:
             freq_data (class FreqData): data in frequency domain
                 which has been prepared for stage1 or stage2
                 of the optimization routine
         """
-        if stage not in (1, 2):
-            raise ValueError('You should specify the stage (1 or 2) '
-                             'for the objective function.')
         freq_data = None
-        if stage == 1:
+        if remove_fo_band:
             freq_data = copy.copy(self._freq_data_after_remove_fo_band)
-        if stage == 2:
+        else:
             freq_data = copy.copy(self._freq_data_after_trim)
         return freq_data
 

@@ -410,32 +410,31 @@ class ObjectiveFunctionTests(unittest.TestCase):
                 )
             )
 
-            # f1 -- objective function to minimize (in stage1)
-            f1 = objective_function.ObjectiveFunction(
+            # f -- objective function to minimize
+            f = objective_function.ObjectiveFunction(
                 freq_data=correct_prepared_freq_data,
                 gen_params_prior_mean=gen_params_prior_mean,
                 gen_params_prior_std_dev=gen_params_prior_std_dev
             )
 
             self._check_covariance_matrix(
-                our_gamma_L=f1._gamma_L.compute(gen_params_prior_mean),
+                our_gamma_L=f._gamma_L.compute(gen_params_prior_mean),
                 test_dir=test_dir
             )
             self._check_objective_function_values(
-                func=f1,
+                func=f,
                 test_dir=test_dir
             )
 
             # just check that the following objects can be successfully computed
-            starting_point_R = f1._R.compute(gen_params_prior_mean)
-            starting_point_gamma_L = f1._gamma_L.compute(gen_params_prior_mean)
-
-            starting_point_R_partial_derivatives = (
-                f1._R.compute_partial_derivatives(gen_params_prior_mean)
-            )
-            starting_point_gamma_L_partial_derivatives = (
-                f1._gamma_L.compute_partial_derivatives(gen_params_prior_mean)
-            )
+            starting_point_R = f._R.compute(gen_params_prior_mean)
+            starting_point_gamma_L = f._gamma_L.compute(gen_params_prior_mean)
+            # starting_point_R_partial_derivatives = (
+            #     f._R.compute_partial_derivatives(gen_params_prior_mean)
+            # )
+            # starting_point_gamma_L_partial_derivatives = (
+            #     f._gamma_L.compute_partial_derivatives(gen_params_prior_mean)
+            # )
 
 
 
