@@ -97,19 +97,82 @@ def run_all_computations(initial_params):
     print('######################################################')
     print()
 
-    opt_res = sp.optimize.minimize(
-        fun=f.compute_from_array,
-        x0=gen_params_prior_mean.as_array,
-        method='BFGS',
-        options={
-            'maxiter': 30,
-            'disp': True
-        }
-    )
+    Nel = 10
+    N = 100 * 4
+    alpha = 0.8
+    beta = 0.7
+    q = 5
+    eps = 0.5 * 1e-2
+    mu = gen_params_prior_mean.as_array
+    sigma = 0.2 * np.ones(4)
+    mu_last = mu
+    sigma_last = sigma
+    X_best_overall = gen_params_prior_mean.as_array
+    S_best_overall = f.compute_from_array(X_best_overall)
+    S_target = f.compute_from_array([0.25, 1.0, 1.0, 0.01])
+    print("S_best_0 = ", S_best_overall)
+    print("S_target = ", S_target)
 
-    print('opt_success?', opt_res.success)
-    print('opt_message:', opt_res.message)
-    print('theta_MAP1 =', opt_res.x)
+    # S_best_overall = 10000
+    t = 0
+    SA = np.zeros(N)
+
+    while sigma.max() > eps:
+        t = t + 1
+        mu = alpha * mu + (1 - alpha) * mu_last
+        B_mod = beta - beta * (1 - 1 / t) ** q
+        # sigma = B_mod * sigma - (1 - B_mod) * sigma_last  # dynamic smoothing
+        sigma = alpha * sigma + (1 - alpha) * sigma_last
+        # X = np.ones((N, 1)) * mu + sp.randn(N, 4) * np.diag(np.repeat(sigma.max(), N))
+        X = sp.random.normal(mu, sigma, (N, 4))
+        # X = sp.random.uniform(mu, [0.3, 1.5, 1.5, 0.1], (N, 4))
+
+        for i in range(N):
+            x_batch = X[i]
+            #x_batch[0] = x_batch[0] * 2.0  ### upd
+            SA[i] = f.compute_from_array(x_batch)
+
+        S_sort = np.sort(SA)
+        print("S_sort = ", S_sort)
+        I_sort = np.argsort(SA)
+        print("I_sort = ", I_sort)
+
+        gam = S_sort[0]
+        S_best = S_sort[Nel]
+
+        if (S_best < S_best_overall):
+            S_best_overall = S_best
+            X_best_overall = X[I_sort[0]]
+
+        mu_last = mu
+        sigma_last = sigma
+        # Xel = X[I_sort[0]:I_sort[Nel], ]
+        temp_best = I_sort[0:Nel]
+        Xel = np.take(X, temp_best, axis=0)
+        print("Xel = ", Xel)
+        mu = np.mean(Xel, axis=0)
+        sigma = np.nanstd(Xel, axis=0)
+        print("sigma = ", sigma)
+
+    print("mu_last = ", mu)
+    print("sigma_last = ", sigma)
+    print("X_best = ", X_best_overall)
+    print("S_best_overall", S_best_overall)
+
+
+    # opt_res = sp.optimize.minimize(
+    #     fun=f.compute_from_array,
+    #     x0=gen_params_prior_mean.as_array,
+    #     method='BFGS',
+    #     options={
+    #         'maxiter': 30,
+    #         'disp': True
+    #     }
+    # )
+    #
+    # print('opt_success?', opt_res.success)
+    # print('opt_message:', opt_res.message)
+    # print('theta_MAP1 =', opt_res.x)
 
     # plot_Im_psd(stage2_data, opt_res.x, is_xlabel=True)
 
