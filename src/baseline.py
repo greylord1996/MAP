@@ -25,7 +25,7 @@ def perturb_gen_params(true_gen_params):
             perturbed_gen_params[1] (class OptimizingGeneratorParameters):
                 prior standard deviations of generator parameters
     """
-    deviation_fraction = 0.5  # 50% deviation
+    deviation_fraction = 10.0  # 1000% deviation
     perturbations = np.random.uniform(
         low=-deviation_fraction, high=deviation_fraction, size=4
     )
@@ -75,8 +75,10 @@ def run_all_computations(initial_params):
         perturb_gen_params(initial_params.generator_parameters)
     )  # now generator parameters are perturbed and uncertain
     print('PRIOR MEAN =', gen_params_prior_mean.as_array)
+    print('PRIOR STD =', gen_params_prior_std_dev.as_array)
 
-    # utils.plot_Im_psd(stage2_data, gen_params_prior_mean.as_array, is_xlabel=False)
+    # plot before parameters clarification
+    utils.plot_Im_psd(stage2_data, gen_params_prior_mean.as_array, is_xlabel=False)
 
     # f denotes the objective function
     f = objective_function.ObjectiveFunction(
@@ -97,7 +99,8 @@ def run_all_computations(initial_params):
         x0=gen_params_prior_mean.as_array
     )
 
-    # utils.plot_Im_psd(stage2_data, posterior_gen_params, is_xlabel=True)
+    # plot after parameters clarification
+    utils.plot_Im_psd(stage2_data, posterior_gen_params, is_xlabel=True)
 
     # It is not clear now what should be returned
     return None
@@ -105,15 +108,15 @@ def run_all_computations(initial_params):
 
 
 def minimize_objective_function(func, x0):
-    """"""
+    """TODO: write the docstring"""
     Nel = 10
     N = 100 * 4
     alpha = 0.8
     beta = 0.7
     q = 5
-    eps = 0.5 * 1e-2
+    eps = 1.0 * 1e-2
     mu = x0
-    sigma = 0.2 * np.ones(4)
+    sigma = 0.5 * np.ones(4)
     mu_last = mu
     sigma_last = sigma
     X_best_overall = x0
@@ -167,76 +170,5 @@ def minimize_objective_function(func, x0):
     print("sigma_last = ", sigma)
     print("X_best = ", X_best_overall)
     print("S_best_overall", S_best_overall)
-    return mu  # mu should be returned?
-
-
-
-
-
-# ----------------------------------------------------------------
-# ----------------------- Testing now ----------------------------
-# ----------------------------------------------------------------
-#
-import sys
-import os
-import os.path
-
-
-# WARNING! ONLY FOR TESTING!
-PATH_TO_THIS_FILE = os.path.abspath(os.path.dirname(__file__))
-sys.path.append(os.path.join(PATH_TO_THIS_FILE, '..', 'tests'))
-import our_data
-import correct_data
-
-TEST_DIR = os.path.join(PATH_TO_THIS_FILE, '..', 'tests', 'Rnd_Amp_0002')
-initial_params = our_data.get_initial_params(TEST_DIR)
-
-assert initial_params.generator_parameters.d_2 == 0.25
-assert initial_params.generator_parameters.e_2 == 1.00
-assert initial_params.generator_parameters.m_2 == 1.00
-assert initial_params.generator_parameters.x_d2 == 0.01
-assert initial_params.integration_settings.dt_step == 0.05
-assert initial_params.freq_data.max_freq == 6.0
-assert initial_params.freq_data.lower_fb == 1.988
-assert initial_params.freq_data.upper_fb == 2.01
-assert initial_params.oscillation_parameters.osc_freq == 2.000
-assert initial_params.oscillation_parameters.osc_amp == 0.005
-
-
-# correct_freq_data = correct_data.get_prepared_freq_data(TEST_DIR)
-# print('=================== DATA HAVE BEEN PREPARED ========================')
-#
-#
-# gen_params_prior_mean, gen_params_prior_std_dev = perturb_gen_params(
-#     initial_params.generator_parameters
-# )  # now generator parameters are perturbed and uncertain
-
-# f = objective_function.ObjectiveFunction(
-#     freq_data=correct_freq_data,
-#     gen_params_prior_mean=gen_params_prior_mean,
-#     gen_params_prior_std_dev=gen_params_prior_std_dev
-# )
-# print('f(0.25, 1.00, 1.00, 0.01) =', f.compute_from_array([0.25, 1.00, 1.00, 0.01]))
-
-
-# print()
-# print('######################################################')
-# print('### DEBUG: OPTIMIZATION ROUTINE IS STARTING NOW!!! ###')
-# print('######################################################')
-# print()
-#
-# opt_res = sp.optimize.minimize(
-#     fun=f1.compute_from_array,
-#     x0=gen_params_prior_mean.as_array,
-#     method='BFGS',
-#     options={
-#         'maxiter': 40,
-#         'disp': True
-#     }
-# )
-#
-# print('opt_success?', opt_res.success)
-# print('opt_message:', opt_res.message)
-# print('theta_MAP1 =', opt_res.x)
-
+    return X_best_overall  # what should be returned?
 
