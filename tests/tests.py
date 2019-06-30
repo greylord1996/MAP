@@ -362,11 +362,14 @@ class ObjectiveFunctionTests(unittest.TestCase):
         self.assertEqual(our_gamma_L.shape[0], correct_gamma_L['size_y'])
         self.assertEqual(our_gamma_L.shape[1], correct_gamma_L['size_x'])
 
+        self.assertEqual(our_gamma_L[0, 1], 0.0)
+        self.assertEqual(our_gamma_L[1, 0], 0.0)
+
         for coords, matrix_element in correct_gamma_L['values'].items():
             y_coord = int(coords.split(',')[0]) - 1
             x_coord = int(coords.split(',')[1]) - 1
             self.assertAlmostEqual(
-                our_gamma_L[y_coord][x_coord] / matrix_element, 1.0,
+                our_gamma_L[y_coord, x_coord] / matrix_element, 1.0,
                 places=10
             )
 

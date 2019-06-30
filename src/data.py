@@ -5,7 +5,7 @@ import scipy
 import scipy.signal
 
 import dynamic_equations_to_simulate
-import utils
+import singleton
 
 
 
@@ -243,7 +243,7 @@ class FreqData(Data):
 
 
 
-@utils.singleton
+# @singleton.singleton
 class DataHolder:
     """Wrapper for storing different prepared data from a generator.
 

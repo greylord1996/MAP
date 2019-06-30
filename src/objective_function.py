@@ -3,7 +3,7 @@ import scipy as sp
 import sympy
 
 import admittance_matrix
-import utils
+import singleton
 
 
 
@@ -44,26 +44,7 @@ class OptimizingGeneratorParameters:
 
 
 
-def _construct_gen_params_arrays(optimizing_gen_params, freq_data_points_n):
-    # constructing 4 arrays containing repeated values of optimizing_gen_params
-    return {
-        'D_Ya': np.array([
-            optimizing_gen_params.D_Ya for _ in range(freq_data_points_n)
-        ]),
-        'Ef_a': np.array([
-            optimizing_gen_params.Ef_a for _ in range(freq_data_points_n)
-        ]),
-        'M_Ya': np.array([
-            optimizing_gen_params.M_Ya for _ in range(freq_data_points_n)
-        ]),
-        'X_Ya': np.array([
-            optimizing_gen_params.X_Ya for _ in range(freq_data_points_n)
-        ])
-    }
-
-
-
-@utils.singleton
+# @singleton.singleton
 class ResidualVector:
     """Wrapper for calculations of R (residual vector).
 
@@ -77,17 +58,16 @@ class ResidualVector:
         _vector (numpy.array): preallocated buffer for vector R
         _subvectors (dict): subvectors views
         _subvectors_functions (dict): contains 4 keys:
-            'Mr', 'Mi', 'Pr', 'Pi'. Every key matches to function
-            for computing corresponding subvector of the vector R.
+            'Mr', 'Mi', 'Pr', 'Pi'. Every key matches to view
+            and function of corresponding subvector of the vector R.
     """
 
     def __init__(self, freq_data):
         """Prepares for computing the residual vector at any point.
 
-        Stores data in frequency domain and 4 compiled functions
-        (see sympy.lambdify) for further computing the vector R
-        at any 4-dimensional point (the number of parameters
-        which we optimize is equal to 4).
+        Stores data in frequency domain, 4 views
+        and 4 compiled functions (see sympy.lambdify)
+        for further computing the vector R at any point.
 
         Args:
             freq_data (class FreqData): data in frequency domain
@@ -96,10 +76,7 @@ class ResidualVector:
 
         self._vector = np.zeros(4 * len(freq_data.freqs))
         self._subvectors = dict()
-        self._init_subvectors()
-
-        self._subvectors_functions = dict()
-        self._init_subvectors_functions(self._get_sym_exprs())
+        self._init_subvectors(self._get_sym_exprs())
 
 
     def _get_sym_exprs(self):
@@ -129,24 +106,22 @@ class ResidualVector:
         }
 
 
-    def _init_subvectors(self):
+    def _init_subvectors(self, sym_exprs):
         # initializing Mr, Mi, Pr, Pi views
         subvector_size = len(self._freq_data.freqs)
-        self._subvectors['Mr'] = (
-            self._vector[0:subvector_size]
-        )
-        self._subvectors['Mi'] = (
-            self._vector[subvector_size:2*subvector_size]
-        )
-        self._subvectors['Pr'] = (
-            self._vector[2*subvector_size:3*subvector_size]
-        )
-        self._subvectors['Pi'] = (
-            self._vector[3*subvector_size:]
-        )
+        self._subvectors['Mr'] = {
+            'view': self._vector[0:subvector_size]
+        }
+        self._subvectors['Mi'] = {
+            'view': self._vector[subvector_size:2*subvector_size]
+        }
+        self._subvectors['Pr'] = {
+            'view': self._vector[2*subvector_size:3*subvector_size]
+        }
+        self._subvectors['Pi'] = {
+            'view': self._vector[3*subvector_size:]
+        }
 
-
-    def _init_subvectors_functions(self, sym_exprs):
         # initializing functions for computing elements of subvectors
         Vm, Va, Im, Ia = sympy.symbols('Vm Va Im Ia')
         D_Ya, Ef_a, M_Ya, X_Ya, Omega_a = sympy.symbols(
@@ -154,7 +129,7 @@ class ResidualVector:
             real=True
         )
         for subvector_name, subvector_expr in sym_exprs.items():
-            self._subvectors_functions[subvector_name] = sympy.lambdify(
+            self._subvectors[subvector_name]['function'] = sympy.lambdify(
                 args=[Vm, Va, Im, Ia, D_Ya, Ef_a, M_Ya, X_Ya, Omega_a],
                 expr=subvector_expr,
                 modules='numpy'
@@ -175,67 +150,64 @@ class ResidualVector:
 
         Returns:
             vector_R (numpy.array of (4K+4) numbers): residual vector
-                evaluated at the given 4-dimensional point
+                evaluated at the given point
         """
-        optimizing_gen_params_arrays = _construct_gen_params_arrays(
-            optimizing_gen_params=optimizing_gen_params,
-            freq_data_points_n=len(self._freq_data.freqs)
-        )
+        subvector_size = len(self._freq_data.freqs)
 
-        for subvector_name, subvector_function in (
-                self._subvectors_functions.items()):
-            self._subvectors[subvector_name][:] = subvector_function(
+        for subvector in self._subvectors.values():
+            subvector['view'][:] = subvector['function'](
                 Vm=self._freq_data.Vm,
                 Va=self._freq_data.Va,
                 Im=self._freq_data.Im,
                 Ia=self._freq_data.Ia,
-                D_Ya=optimizing_gen_params_arrays['D_Ya'],
-                Ef_a=optimizing_gen_params_arrays['Ef_a'],
-                M_Ya=optimizing_gen_params_arrays['M_Ya'],
-                X_Ya=optimizing_gen_params_arrays['X_Ya'],
+                D_Ya=np.array([optimizing_gen_params.D_Ya
+                               for _ in range(subvector_size)]),
+                Ef_a=np.array([optimizing_gen_params.Ef_a
+                               for _ in range(subvector_size)]),
+                M_Ya=np.array([optimizing_gen_params.M_Ya
+                               for _ in range(subvector_size)]),
+                X_Ya=np.array([optimizing_gen_params.X_Ya
+                               for _ in range(subvector_size)]),
                 Omega_a=2.0 * np.pi * self._freq_data.freqs
             )
 
-        vector_R = self._vector  # copying is not performed
+        vector_R = self._vector  # no copying
         return vector_R
 
 
 
-@utils.singleton
+# @singleton.singleton
 class CovarianceMatrix:
     """Wrapper for calculations of covariance matrix at any point.
 
     Attributes:
         _freqs (np.array): frequencies (points in frequency domain)
-        _matrix (np.array): preallocated buffer for covariance matrix
-        _blocks (dict): views of 16 blocks which compose gamma_L
-        _blocks_functions (dict): contains 12 keys:
+        _matrix (scipy.sparse.csr_matrix): preallocated buffer
+        _blocks (dict): contains 12 keys:
             'NrNr', 'NrQr', 'NrQi', 'NiNi', 'NiQr', 'NiQi',
             'QrQr', 'QiQi', 'QrNr', 'QrNi', 'QiNr', 'QiNi'.
-            Every key matches to function for computing
-            corresponding block of the gamma_L matrix.
+            Every key matches to block's position (its upper left
+            and bottom right angles) and function
+            of corresponding block of the covariance matrix.
     """
 
     def __init__(self, freq_data):
         """Prepares for computing the covariance matrix.
 
-        Stores data in frequency domain, 12 compiled functions
-        (see sympy.lambdify) for further computing the gamma_L matrix
-        at any 4-dimensional point (the number of parameters
-        which we optimize is equal to 4).
+        Stores data in frequency domain, 12 positions of blocks
+        and 12 compiled functions (see sympy.lambdify)
+        for further computing the covariance matrix at any point.
 
         Args:
             freq_data (class FreqData): data in frequency domain
         """
         self._freqs = freq_data.freqs
 
-        block_size = len(self._freqs)
-        self._matrix = np.zeros((4 * block_size, 4 * block_size))
         self._blocks = dict()
-        self._init_blocks()
+        self._init_blocks(self._get_sym_exprs(freq_data))
 
-        self._blocks_functions = dict()
-        self._init_blocks_functions(self._get_sym_exprs(freq_data))
+        self._matrix = None
+        self._init_matrix()
 
 
     def _get_sym_exprs(self, freq_data):
@@ -301,67 +273,93 @@ class CovarianceMatrix:
         return sym_exprs
 
 
-    def _init_blocks(self):
-        # initializing 12 views of blocks
+    def _init_blocks(self, sym_exprs):
         block_size = len(self._freqs)
 
         # blocks in the 1st line
-        self._blocks['NrNr'] = (
-            self._matrix[0:block_size, 0:block_size]
-        )
-        self._blocks['NrQr'] = (
-            self._matrix[0:block_size, 2*block_size:3*block_size]
-        )
-        self._blocks['NrQi'] = (
-            self._matrix[0:block_size, 3*block_size:]
-        )
+        self._blocks['NrNr'] = {
+            'upper_left': (0, 0),
+            'bottom_right': (block_size, block_size)
+        }
+        self._blocks['NrQr'] = {
+            'upper_left': (0, 2*block_size),
+            'bottom_right': (block_size, 3*block_size)
+        }
+
+        self._blocks['NrQi'] = {
+            'upper_left': (0, 3*block_size),
+            'bottom_right': (block_size, 4*block_size)
+        }
 
         # blocks in the 2nd line
-        self._blocks['NiNi'] = (
-            self._matrix[block_size:2*block_size, block_size:2*block_size]
-        )
-        self._blocks['NiQr'] = (
-            self._matrix[block_size:2*block_size, 2*block_size:3*block_size]
-        )
-        self._blocks['NiQi'] = (
-            self._matrix[block_size:2*block_size, 3*block_size:]
-        )
+        self._blocks['NiNi'] = {
+            'upper_left': (block_size, block_size),
+            'bottom_right': (2*block_size, 2*block_size)
+        }
+        self._blocks['NiQr'] = {
+            'upper_left': (block_size, 2*block_size),
+            'bottom_right': (2*block_size, 3*block_size)
+        }
+        self._blocks['NiQi'] = {
+            'upper_left': (block_size, 3*block_size),
+            'bottom_right': (2*block_size, 4*block_size)
+        }
 
         # blocks in the 3rd line
-        self._blocks['QrNr'] = (
-            self._matrix[2*block_size:3*block_size, 0:block_size]
-        )
-        self._blocks['QrNi'] = (
-            self._matrix[2*block_size:3*block_size, block_size:2*block_size]
-        )
-        self._blocks['QrQr'] = (
-            self._matrix[2*block_size:3*block_size, 2*block_size:3*block_size]
-        )
+        self._blocks['QrNr'] = {
+            'upper_left': (2*block_size, 0),
+            'bottom_right': (3*block_size, block_size)
+        }
+        self._blocks['QrNi'] = {
+            'upper_left': (2*block_size, block_size),
+            'bottom_right': (3*block_size, 2*block_size)
+        }
+        self._blocks['QrQr'] = {
+            'upper_left': (2*block_size, 2*block_size),
+            'bottom_right': (3*block_size, 3*block_size)
+        }
 
         # blocks in the 4th line
-        self._blocks['QiNr'] = (
-            self._matrix[3*block_size:, 0:block_size]
-        )
-        self._blocks['QiNi'] = (
-            self._matrix[3*block_size:, block_size:2*block_size]
-        )
-        self._blocks['QiQi'] = (
-            self._matrix[3*block_size:, 3*block_size:]
-        )
+        self._blocks['QiNr'] = {
+            'upper_left': (3*block_size, 0),
+            'bottom_right': (4*block_size, block_size)
+        }
+        self._blocks['QiNi'] = {
+            'upper_left': (3*block_size, block_size),
+            'bottom_right': (4*block_size, 2*block_size)
+        }
+        self._blocks['QiQi'] = {
+            'upper_left': (3*block_size, 3*block_size),
+            'bottom_right': (4*block_size, 4*block_size)
+        }
 
-
-    def _init_blocks_functions(self, sym_exprs):
         # initializing functions for computing elements of blocks
         D_Ya, Ef_a, M_Ya, X_Ya, Omega_a = sympy.symbols(
             'D_Ya Ef_a M_Ya X_Ya Omega_a',
             real=True
         )
         for block_name, block_expr in sym_exprs.items():
-            self._blocks_functions[block_name] = sympy.lambdify(
+            self._blocks[block_name]['function'] = sympy.lambdify(
                 args=[D_Ya, Ef_a, M_Ya, X_Ya, Omega_a],
                 expr=block_expr,
                 modules='numpy'
             )
+
+
+    def _init_matrix(self):
+        block_size = len(self._freqs)
+        matrix = np.zeros((4 * block_size, 4 * block_size))
+
+        for block_name, block in self._blocks.items():
+            y_block_begin = block['upper_left'][0]
+            y_block_end = block['bottom_right'][0]
+            x_block_begin = block['upper_left'][1]
+            x_block_end = block['bottom_right'][1]
+            matrix[range(y_block_begin, y_block_end),
+                   range(x_block_begin, x_block_end)] = np.ones(block_size)
+
+        assert np.count_nonzero(matrix) == 12*block_size
+        self._matrix = sp.sparse.csr_matrix(matrix)
 
 
     def compute(self, optimizing_gen_params):
@@ -369,7 +367,7 @@ class CovarianceMatrix:
 
         Computes the numerical value of the covariance matrix
         at the point specified by 'optimizing_gen_params'.
-        The obtained matrix will have sizes (4K+4)*(4K+4)
+        The obtained sparse matrix will have sizes (4K+4)*(4K+4)
         and contain only numbers (not symbols).
 
         Args:
@@ -378,43 +376,47 @@ class CovarianceMatrix:
                 (at the current step of an optimization routine)
 
         Returns:
-            gamma_L (numpy.array): the covariance matrix evaluated at the
-                4-dimensional point (specified by the 'optimizing_gen_params'
-                argument of this method)
+            gamma_L (scipy.sparse.csr_matrix): the covariance matrix
+                evaluated at the given point
         """
-        optimizing_gen_params_arrays = _construct_gen_params_arrays(
-            optimizing_gen_params=optimizing_gen_params,
-            freq_data_points_n=len(self._freqs)
-        )
+        block_size = len(self._freqs)
 
-        for block_name, block_function in self._blocks_functions.items():
-            np.fill_diagonal(
-                self._blocks[block_name],
-                block_function(
-                    D_Ya=optimizing_gen_params_arrays['D_Ya'],
-                    Ef_a=optimizing_gen_params_arrays['Ef_a'],
-                    M_Ya=optimizing_gen_params_arrays['M_Ya'],
-                    X_Ya=optimizing_gen_params_arrays['X_Ya'],
-                    Omega_a=2.0 * np.pi * self._freqs
-                )
+        for block in self._blocks.values():
+            block_diag = block['function'](
+                D_Ya=np.array([optimizing_gen_params.D_Ya
+                               for _ in range(block_size)]),
+                Ef_a=np.array([optimizing_gen_params.Ef_a
+                               for _ in range(block_size)]),
+                M_Ya=np.array([optimizing_gen_params.M_Ya
+                               for _ in range(block_size)]),
+                X_Ya=np.array([optimizing_gen_params.X_Ya
+                               for _ in range(block_size)]),
+                Omega_a=2.0 * np.pi * self._freqs
             )
 
-        gamma_L = self._matrix  # copying is not performed
+            y_block_begin = block['upper_left'][0]
+            y_block_end = block['bottom_right'][0]
+            x_block_begin = block['upper_left'][1]
+            x_block_end = block['bottom_right'][1]
+            self._matrix[range(y_block_begin, y_block_end),
+                         range(x_block_begin, x_block_end)] = block_diag
+
+        gamma_L = self._matrix  # no copying
         return gamma_L
 
 
 
-@utils.singleton
+# @singleton.singleton
 class ObjectiveFunction:
     """Wrapper for calculations of the objective function at any point.
 
     Attributes:
         _R (class ResidualVector): attribute to simplify
             calculations of vector R (residual vector)
-            at the current step of an optimization routine
+            at any point (that is for any parameters)
         _gamma_L (class CovarianceMatrix): attribute to simplify
             calculations of gamma_L (covariance matrix)
-            at the current step of an optimization routine
+            at any point (that is for any parameters)
         _gen_params_prior_mean (numpy.array):
             a starting point for an optimization routine
         _inv_gamma_g (numpy.array): inverted covariance matrix
@@ -469,7 +471,7 @@ class ObjectiveFunction:
         computed_R = self._R.compute(optimizing_gen_params)
         computed_gamma_L = self._gamma_L.compute(optimizing_gen_params)
         computed_inv_gamma_L_dot_R = sp.sparse.linalg.spsolve(
-            sp.sparse.csc_matrix(computed_gamma_L), computed_R
+            computed_gamma_L, computed_R
         )
 
         return (
