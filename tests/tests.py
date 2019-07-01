@@ -206,7 +206,7 @@ class FreqDataTests(unittest.TestCase):
                 places=13
             )
 
-        relative_precision = 7
+        relative_precision = 8
         for i in range(begin, end):
             self.assertAlmostEqual(
                 our_freq_data.Vm[i].real / correct_freq_data['Vm'][i].real,
@@ -370,7 +370,7 @@ class ObjectiveFunctionTests(unittest.TestCase):
             x_coord = int(coords.split(',')[1]) - 1
             self.assertAlmostEqual(
                 our_gamma_L[y_coord, x_coord] / matrix_element, 1.0,
-                places=10
+                places=13
             )
 
 
@@ -432,12 +432,6 @@ class ObjectiveFunctionTests(unittest.TestCase):
             # just check that the following objects can be successfully computed
             starting_point_R = f._R.compute(gen_params_prior_mean)
             starting_point_gamma_L = f._gamma_L.compute(gen_params_prior_mean)
-            # starting_point_R_partial_derivatives = (
-            #     f._R.compute_partial_derivatives(gen_params_prior_mean)
-            # )
-            # starting_point_gamma_L_partial_derivatives = (
-            #     f._gamma_L.compute_partial_derivatives(gen_params_prior_mean)
-            # )
 
 
 

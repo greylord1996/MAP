@@ -25,7 +25,7 @@ def perturb_gen_params(true_gen_params):
             perturbed_gen_params[1] (class OptimizingGeneratorParameters):
                 prior standard deviations of generator parameters
     """
-    deviation_fraction = 10.0  # 1000% deviation
+    deviation_fraction = 1000.0  # 100000% deviation
     perturbations = np.random.uniform(
         low=-deviation_fraction, high=deviation_fraction, size=4
     )
@@ -78,7 +78,7 @@ def run_all_computations(initial_params):
     print('PRIOR STD =', gen_params_prior_std_dev.as_array)
 
     # plot before parameters clarification
-    utils.plot_Im_psd(stage2_data, gen_params_prior_mean.as_array, is_xlabel=False)
+    # utils.plot_Im_psd(stage2_data, gen_params_prior_mean.as_array, is_xlabel=False)
 
     # f denotes the objective function
     f = objective_function.ObjectiveFunction(
@@ -94,13 +94,14 @@ def run_all_computations(initial_params):
     print('\n######################################################')
     print('### DEBUG: OPTIMIZATION ROUTINE IS STARTING NOW!!! ###')
     print('######################################################\n')
+
     posterior_gen_params = minimize_objective_function(
         func=f,
         x0=gen_params_prior_mean.as_array
     )
 
     # plot after parameters clarification
-    utils.plot_Im_psd(stage2_data, posterior_gen_params, is_xlabel=True)
+    # utils.plot_Im_psd(stage2_data, posterior_gen_params, is_xlabel=True)
 
     # It is not clear now what should be returned
     return None
@@ -114,7 +115,7 @@ def minimize_objective_function(func, x0):
     alpha = 0.8
     beta = 0.7
     q = 5
-    eps = 1.0 * 1e-2
+    eps = 0.5 * 1e-2
     mu = x0
     sigma = 0.5 * np.ones(4)
     mu_last = mu

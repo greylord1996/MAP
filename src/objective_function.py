@@ -56,8 +56,7 @@ class ResidualVector:
     Attributes:
         _freq_data (class FreqData): data in frequency domain
         _vector (numpy.array): preallocated buffer for vector R
-        _subvectors (dict): subvectors views
-        _subvectors_functions (dict): contains 4 keys:
+        _subvectors (dict): contains 4 keys:
             'Mr', 'Mi', 'Pr', 'Pi'. Every key matches to view
             and function of corresponding subvector of the vector R.
     """
@@ -132,7 +131,7 @@ class ResidualVector:
             self._subvectors[subvector_name]['function'] = sympy.lambdify(
                 args=[Vm, Va, Im, Ia, D_Ya, Ef_a, M_Ya, X_Ya, Omega_a],
                 expr=subvector_expr,
-                modules='numpy'
+                modules='numexpr'
             )
 
 
@@ -342,7 +341,7 @@ class CovarianceMatrix:
             self._blocks[block_name]['function'] = sympy.lambdify(
                 args=[D_Ya, Ef_a, M_Ya, X_Ya, Omega_a],
                 expr=block_expr,
-                modules='numpy'
+                modules='numexpr'
             )
 
 
@@ -350,7 +349,7 @@ class CovarianceMatrix:
         block_size = len(self._freqs)
         matrix = np.zeros((4 * block_size, 4 * block_size))
 
-        for block_name, block in self._blocks.items():
+        for block in self._blocks.values():
             y_block_begin = block['upper_left'][0]
             y_block_end = block['bottom_right'][0]
             x_block_begin = block['upper_left'][1]
