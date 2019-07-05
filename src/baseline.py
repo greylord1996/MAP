@@ -25,7 +25,7 @@ def perturb_gen_params(true_gen_params):
             perturbed_gen_params[1] (class OptimizingGeneratorParameters):
                 prior standard deviations of generator parameters
     """
-    deviation_fraction = 1000.0  # 100000% deviation
+    deviation_fraction = 0.5  # 50% deviation
     perturbations = np.random.uniform(
         low=-deviation_fraction, high=deviation_fraction, size=4
     )
@@ -78,7 +78,7 @@ def run_all_computations(initial_params):
     print('PRIOR STD =', gen_params_prior_std_dev.as_array)
 
     # plot before parameters clarification
-    # utils.plot_Im_psd(stage2_data, gen_params_prior_mean.as_array, is_xlabel=False)
+    utils.plot_Im_psd(stage2_data, gen_params_prior_mean.as_array, is_xlabel=False)
 
     # f denotes the objective function
     f = objective_function.ObjectiveFunction(
@@ -99,9 +99,10 @@ def run_all_computations(initial_params):
         func=f,
         x0=gen_params_prior_mean.as_array
     )
+    print('POSTERIOR:', posterior_gen_params)
 
     # plot after parameters clarification
-    # utils.plot_Im_psd(stage2_data, posterior_gen_params, is_xlabel=True)
+    utils.plot_Im_psd(stage2_data, posterior_gen_params, is_xlabel=True)
 
     # It is not clear now what should be returned
     return None
@@ -109,7 +110,10 @@ def run_all_computations(initial_params):
 
 
 def minimize_objective_function(func, x0):
-    """TODO: write the docstring"""
+    """TODO: write the docstring."""
+    param1_scaled_factor = 1.0
+    x0[0] /= param1_scaled_factor
+
     Nel = 10
     N = 100 * 4
     alpha = 0.8
@@ -122,9 +126,9 @@ def minimize_objective_function(func, x0):
     sigma_last = sigma
     X_best_overall = x0
     S_best_overall = func.compute_from_array(X_best_overall)
-    S_target = func.compute_from_array([0.25, 1.0, 1.0, 0.01])
-    print("S_best_0 = ", S_best_overall)
-    print("S_target = ", S_target)
+    # S_target = func.compute_from_array([0.25, 1.0, 1.0, 0.01])
+    # print("S_best_0 = ", S_best_overall)
+    # print("S_target = ", S_target)
 
     # S_best_overall = 10000
     t = 0
@@ -142,15 +146,19 @@ def minimize_objective_function(func, x0):
 
         for i in range(N):
             x_batch = X[i]
-            # x_batch[0] = x_batch[0] * 2.0  ### upd
-            SA[i] = func.compute_from_array(x_batch)
+            SA[i] = func.compute_from_array([
+                x_batch[0] * param1_scaled_factor,
+                x_batch[1],
+                x_batch[2],
+                x_batch[3]
+            ])
 
         S_sort = np.sort(SA)
         print("S_sort = ", S_sort)
         I_sort = np.argsort(SA)
         print("I_sort = ", I_sort)
 
-        gam = S_sort[0]
+        # gam = S_sort[0] -- not used?
         S_best = S_sort[Nel]
 
         if (S_best < S_best_overall):
@@ -171,5 +179,8 @@ def minimize_objective_function(func, x0):
     print("sigma_last = ", sigma)
     print("X_best = ", X_best_overall)
     print("S_best_overall", S_best_overall)
+
+    X_best_overall[0] *= param1_scaled_factor
+    print('ANSWER (after 1st param scaling):', X_best_overall)
     return X_best_overall  # what should be returned?
 

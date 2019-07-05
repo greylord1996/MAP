@@ -1,6 +1,7 @@
 import sys
 import os
 import os.path
+import time
 import json
 import unittest
 
@@ -384,6 +385,17 @@ class ObjectiveFunctionTests(unittest.TestCase):
                 func.compute_from_array(args_array) / correct_func_value, 1.0,
                 places=12
             )
+
+        start_time = time.time()
+        for i in range(100):
+            func.compute_from_array([0.11, 0.22, 0.33, 0.44])
+            func.compute_from_array([0.34, 0.82, 0.73, 0.02])
+            func.compute_from_array([0.47, 1.12, 1.33, 0.004])
+        finish_time = time.time()
+        average_f_time = (finish_time - start_time) / 300.0
+        print('\n============================================================')
+        print('AVERAGE TIME TO COMPUTE f:', average_f_time, 'seconds')
+        print('============================================================\n')
 
 
     def test_objective_function(self):

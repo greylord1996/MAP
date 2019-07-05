@@ -17,9 +17,12 @@ def plot_objective_function(initial_params):
     """Plots an objective for different SNR."""
     # Probably, you will need to comment or remove @utils.singleton
     # before classes ResidualVector, CovarianceMatrix and ObjectiveFunction
-    SNRS = (1, 3, 5, 7, 9)
+    initial_snr = initial_params.noise.snr
+    SNRS = (1, 3,)
     for snr in SNRS:
+        # WARNING! It affects the original initial_params
         initial_params.noise.snr = snr
+
         data_holder = data.DataHolder(initial_params)
         stage2_data = data_holder.get_data(remove_fo_band=False)
 
@@ -34,18 +37,23 @@ def plot_objective_function(initial_params):
             gen_params_prior_std_dev=gen_params_prior_std_dev
         )
 
-        thetas4 = 0.0001 * np.arange(start=1, stop=400, step=1)
-        f_values = np.zeros(len(thetas4))
+        thetas1 = 0.01 * np.arange(start=-175, stop=225, step=2)
+        f_values = np.zeros(len(thetas1))
 
         for i in range(len(f_values)):
-            f_values[i] = f.compute_from_array([0.25, 1.00, 1.00, thetas4[i]])
+            f_values[i] = f.compute_from_array([thetas1[i], 1.00, 1.00, 0.01])
 
-        plt.plot(thetas4, f_values, label='SNR=' + str(snr))
+        plt.plot(thetas1, f_values, label='SNR=' + str(snr) + ' (original f)')
 
-    plt.xlabel('theta_g4')
+        # for i in range(len(f_values)):
+        #     f_values[i] = f.compute_from_array([4*thetas1[i], 1.00, 1.00, 0.01])
+        #
+        # plt.plot(thetas1, f_values, label='SNR=' + str(snr) + ' (scaled f)')
+
+    plt.xlabel('theta_g1')
     plt.ylabel('objective function (f)')
-    plt.xticks([0.00, 0.01, 0.02, 0.03, 0.04])
-    plt.gca().get_xticklabels()[1].set_color("red")
+    plt.xticks([-2.0, -1.0, 0.25, 1.0, 2.0, 3.0])
+    plt.gca().get_xticklabels()[2].set_color("red")
     plt.legend()
     plt.tight_layout()
     plt.savefig(
@@ -56,6 +64,7 @@ def plot_objective_function(initial_params):
         dpi=180,
         format='pdf'
     )
+    initial_params.noise.snr = initial_snr
 
 
 
