@@ -289,7 +289,7 @@ class DataHolder:
         )
 
         # Apply white noise to simulated data in time domain
-        self._time_data_after_snr = copy.copy(self._initial_time_data)
+        self._time_data_after_snr = copy.deepcopy(self._initial_time_data)
         self._time_data_after_snr.apply_white_noise(
             snr=initial_params.noise.snr,
             d_coi=0.0
@@ -299,7 +299,7 @@ class DataHolder:
         self._freq_data_after_fft = FreqData(self._time_data_after_snr)
 
         # Trim data
-        self._freq_data_after_trim = copy.copy(self._freq_data_after_fft)
+        self._freq_data_after_trim = copy.deepcopy(self._freq_data_after_fft)
         self._freq_data_after_trim.remove_zero_frequency()
         self._freq_data_after_trim.trim(
             min_freq=0.0,
@@ -309,7 +309,7 @@ class DataHolder:
         # Remove data from forced oscillation band
         # (it is necessary only for running stage1, not stage2)
         self._freq_data_after_remove_fo_band = (
-            copy.copy(self._freq_data_after_trim)
+            copy.deepcopy(self._freq_data_after_trim)
         )
         self._freq_data_after_remove_fo_band.remove_data_from_fo_band(
             min_fo_freq=initial_params.freq_data.lower_fb,
@@ -337,8 +337,8 @@ class DataHolder:
         """
         freq_data = None
         if remove_fo_band:
-            freq_data = copy.copy(self._freq_data_after_remove_fo_band)
+            freq_data = copy.deepcopy(self._freq_data_after_remove_fo_band)
         else:
-            freq_data = copy.copy(self._freq_data_after_trim)
+            freq_data = copy.deepcopy(self._freq_data_after_trim)
         return freq_data
 

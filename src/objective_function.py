@@ -1,5 +1,10 @@
+import os
+import copy
+
 import numpy as np
 import scipy as sp
+import pathos.pools as pp
+import dill
 import sympy
 
 import admittance_matrix
@@ -44,7 +49,6 @@ class OptimizingGeneratorParameters:
 
 
 
-# @singleton.singleton
 class ResidualVector:
     """Wrapper for calculations of R (residual vector).
 
@@ -106,19 +110,22 @@ class ResidualVector:
 
 
     def _init_subvectors(self, sym_exprs):
-        # initializing Mr, Mi, Pr, Pi views
         subvector_size = len(self._freq_data.freqs)
         self._subvectors['Mr'] = {
-            'view': self._vector[0:subvector_size]
+            'begin': 0,
+            'end': subvector_size
         }
         self._subvectors['Mi'] = {
-            'view': self._vector[subvector_size:2*subvector_size]
+            'begin': subvector_size,
+            'end': 2 * subvector_size
         }
         self._subvectors['Pr'] = {
-            'view': self._vector[2*subvector_size:3*subvector_size]
+            'begin': 2 * subvector_size,
+            'end': 3 * subvector_size
         }
         self._subvectors['Pi'] = {
-            'view': self._vector[3*subvector_size:]
+            'begin': 3 * subvector_size,
+            'end': 4 * subvector_size
         }
 
         # initializing functions for computing elements of subvectors
@@ -154,20 +161,22 @@ class ResidualVector:
         subvector_size = len(self._freq_data.freqs)
 
         for subvector in self._subvectors.values():
-            subvector['view'][:] = subvector['function'](
-                Vm=self._freq_data.Vm,
-                Va=self._freq_data.Va,
-                Im=self._freq_data.Im,
-                Ia=self._freq_data.Ia,
-                D_Ya=np.array([optimizing_gen_params.D_Ya
-                               for _ in range(subvector_size)]),
-                Ef_a=np.array([optimizing_gen_params.Ef_a
-                               for _ in range(subvector_size)]),
-                M_Ya=np.array([optimizing_gen_params.M_Ya
-                               for _ in range(subvector_size)]),
-                X_Ya=np.array([optimizing_gen_params.X_Ya
-                               for _ in range(subvector_size)]),
-                Omega_a=2.0 * np.pi * self._freq_data.freqs
+            self._vector[subvector['begin']:subvector['end']] = (
+                subvector['function'](
+                    Vm=self._freq_data.Vm,
+                    Va=self._freq_data.Va,
+                    Im=self._freq_data.Im,
+                    Ia=self._freq_data.Ia,
+                    D_Ya=np.array([optimizing_gen_params.D_Ya
+                                   for _ in range(subvector_size)]),
+                    Ef_a=np.array([optimizing_gen_params.Ef_a
+                                   for _ in range(subvector_size)]),
+                    M_Ya=np.array([optimizing_gen_params.M_Ya
+                                   for _ in range(subvector_size)]),
+                    X_Ya=np.array([optimizing_gen_params.X_Ya
+                                   for _ in range(subvector_size)]),
+                    Omega_a=2.0 * np.pi * self._freq_data.freqs
+                )
             )
 
         vector_R = self._vector  # no copying
@@ -175,7 +184,6 @@ class ResidualVector:
 
 
 
-# @singleton.singleton
 class CovarianceMatrix:
     """Wrapper for calculations of covariance matrix at any point.
 
@@ -405,7 +413,6 @@ class CovarianceMatrix:
 
 
 
-# @singleton.singleton
 class ObjectiveFunction:
     """Wrapper for calculations of the objective function at any point.
 
@@ -450,6 +457,13 @@ class ObjectiveFunction:
             )
         )  # multiplied by gen_params_prior_mean.as_array (not 1.0)
 
+        dill.settings['recurse'] = True
+        cpu_count = os.cpu_count()
+        process_pool_size = (cpu_count - 0) if cpu_count > 1 else 1
+        self._funcs = [copy.deepcopy(self) for _ in range(process_pool_size)]
+        self._process_pool = pp.ProcessPool(process_pool_size)
+
+
 
     def compute(self, optimizing_gen_params):
         """Computes value of the objective function at the given point.
@@ -473,42 +487,63 @@ class ObjectiveFunction:
             computed_gamma_L, computed_R
         )
 
-        return (
+        func_value = (
             curr_delta_params @ self._inv_gamma_g @ curr_delta_params
             + computed_R @ computed_inv_gamma_L_dot_R
         )
+        # print('### DEBUG: func_value =', func_value,
+        #       'at the point =', optimizing_gen_params.as_array)
+        return func_value
 
 
     def compute_from_array(self, optimizing_gen_params):
-        """Computes value of the objective function at the given point.
+        """Computes the objective function at the given point(s).
 
         This method just calls self.compute method
         transforming the sole argument from numpy.array to an instance
-        of class OptimizingGeneratorParameters. It is necessary
-        to have such method because optimizers want to give an instance
-        of numpy.array as an argument.
+        or numpy.array of instances of class OptimizingGeneratorParameters.
+        It is necessary to have such method because optimizers
+        want to give an instance of numpy.array as an argument.
+        If optimizing_gen_params is a 2D numpy.array, computations
+        will be performed in parallel mode.
 
         Args:
-            optimizing_gen_params (numpy.array of 4 numbers):
+            optimizing_gen_params (numpy.array
+                with shape (4, ) or (points_n, 4)):
                 current values of optimizing generator parameters
-                at the current iteration of an optimization routine
 
         Returns:
-            func_value (numpy.float64) of the objective function
-                at the given point
+            func_value(s) (numpy.float64 or
+                numpy.array with shape (points_n, ))
+                of the objective function at the given point(s)
 
         Note:
             Be cautious using this method! The order of parameters
             is extremely important!
         """
-        print('\n### DEBUG: computing value of objective function', end=' ')
-        print('at the point =', optimizing_gen_params)
-        func_value = self.compute(OptimizingGeneratorParameters(
-            D_Ya=optimizing_gen_params[0],
-            Ef_a=optimizing_gen_params[1],
-            M_Ya=optimizing_gen_params[2],
-            X_Ya=optimizing_gen_params[3]
+        if len(optimizing_gen_params.shape) == 1:
+            return self.compute(OptimizingGeneratorParameters(
+                D_Ya=optimizing_gen_params[0],
+                Ef_a=optimizing_gen_params[1],
+                M_Ya=optimizing_gen_params[2],
+                X_Ya=optimizing_gen_params[3]
+            ))
+
+        assert len(optimizing_gen_params.shape) == 2
+        points_n = len(optimizing_gen_params)
+        optimizing_gen_params_arrays = np.array([
+            OptimizingGeneratorParameters(
+                D_Ya=optimizing_gen_params[i, 0],
+                Ef_a=optimizing_gen_params[i, 1],
+                M_Ya=optimizing_gen_params[i, 2],
+                X_Ya=optimizing_gen_params[i, 3]
+            ) for i in range(points_n)
+        ])
+
+        batches_n = len(self._funcs)
+        batches = np.array_split(optimizing_gen_params_arrays, batches_n)
+        return np.concatenate(self._process_pool.map(
+            lambda func, batch: np.array([func.compute(x) for x in batch]),
+            self._funcs, batches
         ))
-        print('### DEBUG: func_value =', func_value)
-        return func_value
 
