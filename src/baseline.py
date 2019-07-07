@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 import scipy as sp
 
@@ -67,6 +69,7 @@ def run_all_computations(initial_params):
     Returns:
         None (it is not clear now what should be returned)
     """
+    start_time = time.time()
     print('SNR =', initial_params.noise.snr)
     data_holder = data.DataHolder(initial_params)
     stage2_data = data_holder.get_data(remove_fo_band=False)
@@ -88,22 +91,24 @@ def run_all_computations(initial_params):
         gen_params_prior_std_dev=gen_params_prior_std_dev
     )
 
-    print(
-        'true_gen_params: f(0.25, 1.00, 1.00, 0.01) =',
-        f.compute_from_array(np.array([0.25, 1.00, 1.00, 0.01]))
-    )
     print('\n######################################################')
     print('### DEBUG: OPTIMIZATION ROUTINE IS STARTING NOW!!! ###')
     print('######################################################\n')
-
     posterior_gen_params = minimize_objective_function(
         func=f,
         x0=gen_params_prior_mean.as_array
     )
+    finish_time = time.time()
+
+    print('\n######################################################')
+    print('TIME =', finish_time - start_time, '(seconds)')
     print('POSTERIOR:', posterior_gen_params)
+    print('func value at prior =', f.compute_from_array(gen_params_prior_mean.as_array))
+    print('func value at posterior =', f.compute_from_array(posterior_gen_params))
+    print('func value at true gen_params =', f.compute_from_array(np.array([0.25, 1.00, 1.00, 0.01])))
 
     # plot after parameters clarification
-    utils.plot_Im_psd(stage2_data, posterior_gen_params, is_xlabel=True)
+    # utils.plot_Im_psd(stage2_data, posterior_gen_params, is_xlabel=True)
 
     # It is not clear now what should be returned
     return None
@@ -112,9 +117,6 @@ def run_all_computations(initial_params):
 
 def minimize_objective_function(func, x0):
     """TODO: write the docstring."""
-    param1_scaled_factor = 1.0
-    x0[0] /= param1_scaled_factor
-
     Nel = 10
     N = 100 * 4
     alpha = 0.8
@@ -134,7 +136,6 @@ def minimize_objective_function(func, x0):
     # S_best_overall = 10000
     t = 0
     # SA = np.zeros(N)
-    Z = np.zeros((N, 4))
 
     while sigma.max() > eps:
         t = t + 1
@@ -146,9 +147,7 @@ def minimize_objective_function(func, x0):
         X = sp.random.normal(mu, sigma, (N, 4))
         # X = sp.random.uniform(mu, [0.3, 1.5, 1.5, 0.1], (N, 4))
 
-        Z[:] = X
-        Z[:, 0] *= param1_scaled_factor
-        SA = func.compute_from_array(Z)
+        SA = func.compute_from_array(X)
 
         S_sort = np.sort(SA)
         print("S_sort = ", S_sort)
@@ -178,8 +177,5 @@ def minimize_objective_function(func, x0):
     print("sigma_last = ", sigma)
     print("X_best = ", X_best_overall)
     print("S_best_overall", S_best_overall)
-
-    X_best_overall[0] *= param1_scaled_factor
-    print('ANSWER (after 1st param scaling):', X_best_overall)
     return X_best_overall  # what should be returned?
 
