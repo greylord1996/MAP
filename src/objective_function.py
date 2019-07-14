@@ -459,7 +459,7 @@ class ObjectiveFunction:
 
         dill.settings['recurse'] = True
         cpu_count = os.cpu_count()
-        process_pool_size = (cpu_count - 0) if cpu_count > 1 else 1
+        process_pool_size = (cpu_count - 1) if cpu_count > 1 else 1
         self._funcs = [copy.deepcopy(self) for _ in range(process_pool_size)]
         self._process_pool = pp.ProcessPool(process_pool_size)
 
