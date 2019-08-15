@@ -171,7 +171,7 @@ class Ui_MainWindow(object):
         self.formLayout_5.setWidget(2, QtWidgets.QFormLayout.LabelRole, self.label_snr)
         self.snr = QtWidgets.QDoubleSpinBox(self.centralwidget)
         self.snr.setDecimals(1)
-        self.snr.setMinimum(3.0)
+        self.snr.setMinimum(1.0)
         self.snr.setMaximum(99.9)
         self.snr.setSingleStep(0.1)
         self.snr.setProperty("value", 45.0)

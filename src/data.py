@@ -5,7 +5,7 @@ import scipy
 import scipy.signal
 
 import dynamic_equations_to_simulate
-import utils
+import singleton
 
 
 
@@ -243,7 +243,7 @@ class FreqData(Data):
 
 
 
-@utils.singleton
+# @singleton.singleton
 class DataHolder:
     """Wrapper for storing different prepared data from a generator.
 
@@ -289,7 +289,7 @@ class DataHolder:
         )
 
         # Apply white noise to simulated data in time domain
-        self._time_data_after_snr = copy.copy(self._initial_time_data)
+        self._time_data_after_snr = copy.deepcopy(self._initial_time_data)
         self._time_data_after_snr.apply_white_noise(
             snr=initial_params.noise.snr,
             d_coi=0.0
@@ -299,7 +299,7 @@ class DataHolder:
         self._freq_data_after_fft = FreqData(self._time_data_after_snr)
 
         # Trim data
-        self._freq_data_after_trim = copy.copy(self._freq_data_after_fft)
+        self._freq_data_after_trim = copy.deepcopy(self._freq_data_after_fft)
         self._freq_data_after_trim.remove_zero_frequency()
         self._freq_data_after_trim.trim(
             min_freq=0.0,
@@ -309,7 +309,7 @@ class DataHolder:
         # Remove data from forced oscillation band
         # (it is necessary only for running stage1, not stage2)
         self._freq_data_after_remove_fo_band = (
-            copy.copy(self._freq_data_after_trim)
+            copy.deepcopy(self._freq_data_after_trim)
         )
         self._freq_data_after_remove_fo_band.remove_data_from_fo_band(
             min_fo_freq=initial_params.freq_data.lower_fb,
@@ -317,7 +317,7 @@ class DataHolder:
         )
 
 
-    def get_data(self, stage):
+    def get_data(self, remove_fo_band):
         """Returns prepared data for stage1 or stage2.
 
         If you need data (in frequency domain) for stage1
@@ -327,22 +327,18 @@ class DataHolder:
         it has data in the forced oscillation band (FO band).
 
         Args:
-            stage (int): stage number (1 or 2)
-                1 -- clarify generator parameters
-                2 -- find the source of forced oscillations
+            remove_fo_band (bool): remove data
+                from forced oscillation band?
 
         Returns:
             freq_data (class FreqData): data in frequency domain
                 which has been prepared for stage1 or stage2
                 of the optimization routine
         """
-        if stage not in (1, 2):
-            raise ValueError('You should specify the stage (1 or 2) '
-                             'for the objective function.')
         freq_data = None
-        if stage == 1:
-            freq_data = copy.copy(self._freq_data_after_remove_fo_band)
-        if stage == 2:
-            freq_data = copy.copy(self._freq_data_after_trim)
+        if remove_fo_band:
+            freq_data = copy.deepcopy(self._freq_data_after_remove_fo_band)
+        else:
+            freq_data = copy.deepcopy(self._freq_data_after_trim)
         return freq_data
 

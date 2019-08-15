@@ -13,11 +13,11 @@ import pyqtgraph
 import settings
 import designs.main_window
 import baseline
-import utils
+import singleton
 
 
 
-@utils.singleton
+@singleton.singleton
 class MainWindow(QtWidgets.QMainWindow, designs.main_window.Ui_MainWindow):
     """A singleton representing main window of the GUI app.
 
