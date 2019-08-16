@@ -50,10 +50,10 @@ def perturb_gen_params(true_gen_params):
     )
 
     # Just for testing -- remove in release
-    gen_params_prior_mean.D_Ya = 0.206552362540141
-    gen_params_prior_mean.Ef_a = 0.837172184078094
-    gen_params_prior_mean.M_Ya = 0.665441037484483
-    gen_params_prior_mean.X_Ya = 0.00771416811078329
+    # gen_params_prior_mean.D_Ya = 0.206552362540141
+    # gen_params_prior_mean.Ef_a = 0.837172184078094
+    # gen_params_prior_mean.M_Ya = 0.665441037484483
+    # gen_params_prior_mean.X_Ya = 0.00771416811078329
 
     return gen_params_prior_mean, gen_params_prior_std_dev
 
@@ -69,46 +69,63 @@ def run_all_computations(initial_params):
     Returns:
         None (it is not clear now what should be returned)
     """
-    start_time = time.time()
-    print('SNR =', initial_params.noise.snr)
-    data_holder = data.DataHolder(initial_params)
-    stage2_data = data_holder.get_data(remove_fo_band=False)
+    snrs = 1.0 * np.arange(start=1, stop=46, step=1)
+    priors = []
+    posteriors = []
 
-    # Perturb generator parameters (replace true parameters with prior)
-    gen_params_prior_mean, gen_params_prior_std_dev = (
-        perturb_gen_params(initial_params.generator_parameters)
-    )  # now generator parameters are perturbed and uncertain
-    print('PRIOR MEAN =', gen_params_prior_mean.as_array)
-    print('PRIOR STD =', gen_params_prior_std_dev.as_array)
+    for snr in snrs:
+        start_time = time.time()
+        initial_params.noise.snr = snr  # modifying original parameters!
+        print('SNR =', initial_params.noise.snr)
+        data_holder = data.DataHolder(initial_params)
+        stage2_data = data_holder.get_data(remove_fo_band=False)
 
-    # plot before parameters clarification
-    # utils.plot_Im_psd(stage2_data, gen_params_prior_mean.as_array, is_xlabel=False)
+        # Perturb generator parameters (replace true parameters with prior)
+        gen_params_prior_mean, gen_params_prior_std_dev = (
+            perturb_gen_params(initial_params.generator_parameters)
+        )  # now generator parameters are perturbed and uncertain
+        print('PRIOR MEAN =', gen_params_prior_mean.as_array)
+        print('PRIOR STD =', gen_params_prior_std_dev.as_array)
+        priors.append(gen_params_prior_mean.as_array)
 
-    # f denotes the objective function
-    f = objective_function.ObjectiveFunction(
-        freq_data=stage2_data,
-        gen_params_prior_mean=gen_params_prior_mean,
-        gen_params_prior_std_dev=gen_params_prior_std_dev
-    )
+        # plot before parameters clarification
+        # utils.plot_Im_psd(stage2_data, gen_params_prior_mean.as_array, is_xlabel=False)
 
-    print('\n######################################################')
-    print('### DEBUG: OPTIMIZATION ROUTINE IS STARTING NOW!!! ###')
-    print('######################################################\n')
-    posterior_gen_params = minimize_objective_function(
-        func=f,
-        x0=gen_params_prior_mean.as_array
-    )
-    finish_time = time.time()
+        # f denotes the objective function
+        f = objective_function.ObjectiveFunction(
+            freq_data=stage2_data,
+            gen_params_prior_mean=gen_params_prior_mean,
+            gen_params_prior_std_dev=gen_params_prior_std_dev
+        )
 
-    print('\n######################################################')
-    print('TIME =', finish_time - start_time, '(seconds)')
-    print('POSTERIOR:', posterior_gen_params)
-    print('func value at prior =', f.compute_from_array(gen_params_prior_mean.as_array))
-    print('func value at posterior =', f.compute_from_array(posterior_gen_params))
-    print('func value at true gen_params =', f.compute_from_array(np.array([0.25, 1.00, 1.00, 0.01])))
+        print('\n######################################################')
+        print('### DEBUG: OPTIMIZATION ROUTINE IS STARTING NOW!!! ###')
+        print('######################################################\n')
+        posterior_gen_params = minimize_objective_function(
+            func=f,
+            x0=gen_params_prior_mean.as_array
+        )
+        finish_time = time.time()
+
+        print('\n######################################################')
+        print('TIME =', finish_time - start_time, '(seconds)')
+        print('POSTERIOR:', posterior_gen_params)
+        posteriors.append(posterior_gen_params)
+        print('func value at prior =', f.compute_from_array(gen_params_prior_mean.as_array))
+        print('func value at posterior =', f.compute_from_array(posterior_gen_params))
+        print('func value at true gen_params =', f.compute_from_array(np.array([0.25, 1.00, 1.00, 0.01])))
+        print('\n\n######################################################\n\n')
 
     # plot after parameters clarification
     # utils.plot_Im_psd(stage2_data, posterior_gen_params, is_xlabel=True)
+
+    utils.plot_all_params_convergences(
+        param_names=["D", "E^{'}", "M", r"X_{\! d}^{'}"],
+        snrs=snrs,
+        priors=priors,
+        posteriors=posteriors,
+        true_values=[0.25, 1.00, 1.00, 0.01]
+    )
 
     # It is not clear now what should be returned
     return None
@@ -117,6 +134,9 @@ def run_all_computations(initial_params):
 
 def minimize_objective_function(func, x0):
     """TODO: write the docstring."""
+    params_dimension = len(x0)
+    assert params_dimension == 4
+
     Nel = 10
     N = 100 * 4
     alpha = 0.8
@@ -124,7 +144,8 @@ def minimize_objective_function(func, x0):
     q = 5
     eps = 0.5 * 1e-2
     mu = x0
-    sigma = 0.5 * np.ones(4)
+    sigma = 0.5 * np.ones(params_dimension)
+
     mu_last = mu
     sigma_last = sigma
     X_best_overall = x0
@@ -144,15 +165,15 @@ def minimize_objective_function(func, x0):
         # sigma = B_mod * sigma - (1 - B_mod) * sigma_last  # dynamic smoothing
         sigma = alpha * sigma + (1 - alpha) * sigma_last
         # X = np.ones((N, 1)) * mu + sp.randn(N, 4) * np.diag(np.repeat(sigma.max(), N))
-        X = sp.random.normal(mu, sigma, (N, 4))
+        X = sp.random.normal(mu, sigma, (N, params_dimension))
         # X = sp.random.uniform(mu, [0.3, 1.5, 1.5, 0.1], (N, 4))
 
         SA = func.compute_from_array(X)
 
         S_sort = np.sort(SA)
-        print("S_sort = ", S_sort)
+        # print("S_sort = ", S_sort)
         I_sort = np.argsort(SA)
-        print("I_sort = ", I_sort)
+        # print("I_sort = ", I_sort)
 
         # gam = S_sort[0] -- not used?
         S_best = S_sort[Nel]
@@ -166,7 +187,7 @@ def minimize_objective_function(func, x0):
         # Xel = X[I_sort[0]:I_sort[Nel], ]
         temp_best = I_sort[0:Nel]
         Xel = np.take(X, temp_best, axis=0)
-        print("Xel = ", Xel)
+        # print("Xel = ", Xel)
         mu = np.mean(Xel, axis=0)
         sigma = np.nanstd(Xel, axis=0)
         print('mu = ', mu)

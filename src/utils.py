@@ -152,3 +152,60 @@ def plot_Im_psd(freq_data, gen_params, is_xlabel):
         dpi=180, format='pdf'
     )
 
+
+
+def plot_all_params_convergences(param_names, snrs, priors, posteriors, true_values):
+    """Plots convergence of all parameters for different SNR."""
+    assert len(snrs) == len(priors) == len(posteriors)
+    assert len(param_names) == len(true_values)
+
+    # TODO: remove these asserts
+    assert len(param_names) == 4
+    assert true_values[0] == 0.25
+    assert true_values[1] == 1.00
+    assert true_values[2] == 1.00
+    assert true_values[3] == 0.01
+
+    params_n = len(param_names)
+    for param_idx in range(params_n):
+        _plot_param_convergence(
+            param_name=param_names[param_idx],
+            snrs=snrs,
+            priors=[prior[param_idx] for prior in priors],
+            posteriors=[posterior[param_idx] for posterior in posteriors],
+            true_value=true_values[param_idx],
+            ylim=(0.0, 2.0 * true_values[param_idx])
+        )
+
+
+
+def _plot_param_convergence(param_name, snrs, priors, posteriors, true_value, ylim):
+    # Plots convergence of a parameter for different SNR
+    assert len(snrs) == len(posteriors)
+    points_n = len(snrs)
+
+    # plt.rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
+    plt.rc('font', family='serif')
+    plt.rc('text', usetex=True)
+    plt.figure(figsize=(24, 12))
+
+    plt.plot(snrs, priors, label='prior', linewidth=4, marker='o', color='b')
+    plt.plot(snrs, posteriors, label='posterior', linewidth=4, marker='o', color='g')
+    plt.plot(snrs, [true_value for _ in range(points_n)], label='true', linewidth=4, linestyle='dashed', color='r')
+
+    plt.tick_params(axis='both', labelsize=50, direction='in', length=12, width=3, pad=12)
+    plt.yticks([0.0, 0.5 * true_value, 1.0 * true_value, 1.5 * true_value, 2.0 * true_value])
+    plt.ylim(ylim)
+
+    plt.xlabel('SNR', fontsize=50)
+    plt.ylabel('$' + param_name + '$', fontsize=50)
+    plt.legend(loc='upper right', prop={'size': 50}, frameon=True, ncol=3)
+
+    plt.tight_layout()
+    plt.savefig(
+        os.path.join(
+            os.path.abspath(os.path.dirname(__file__)),
+            '..', 'samples', 'convergence_different_SNR', param_name + '.pdf'
+        ),
+        dpi=180, format='pdf'
+    )
