@@ -10,16 +10,6 @@
         "upper_fb": 2.01,
         "max_freq": 6.0
     },
-    "OptimizerSettings":
-    {
-        "opt_tol": 1e-06,
-        "fun_tol": 1e-06,
-        "stp_tol": 1e-06,
-        "max_its": 1.0,
-        "sol_mtd": 3.0,
-        "opt_its": 50.0,
-        "opt_mcp": 0.01
-    },
     "GeneratorParameters":
     {
         "d_2": 0.25,
@@ -37,11 +27,6 @@
     {
         "rnd_amp": 0.002,
         "snr": 45.0
-    },
-    "InfBusInitializer":
-    {
-        "ic_v1": 1.0,
-        "ic_t1": 0.5
     }
 }
 

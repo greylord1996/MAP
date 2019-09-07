@@ -1,3 +1,6 @@
+"""Auxiliary functions to make some plots."""
+
+
 import os
 import os.path
 
@@ -9,12 +12,10 @@ import seaborn
 import data
 import admittance_matrix
 import objective_function
-import baseline
-
 
 
 def plot_objective_function(initial_params):
-    """Plots an objective for different SNR."""
+    """Plot an objective for different SNR."""
     initial_snr = initial_params.noise.snr
     SNRS = (1, 3)
     for snr in SNRS:
@@ -67,9 +68,8 @@ def plot_objective_function(initial_params):
     initial_params.noise.snr = initial_snr
 
 
-
 def plot_Im_psd(freq_data, gen_params, is_xlabel):
-    """Plots measured and predicted Im PSD."""
+    """Plot measured and predicted Im PSD."""
     D_Ya, Ef_a, M_Ya, X_Ya, Omega_a = sympy.symbols(
         'D_Ya Ef_a M_Ya X_Ya Omega_a',
         real=True
@@ -153,9 +153,8 @@ def plot_Im_psd(freq_data, gen_params, is_xlabel):
     )
 
 
-
 def plot_all_params_convergences(param_names, snrs, priors, posteriors, true_values):
-    """Plots convergence of all parameters for different SNR."""
+    """Plot convergence of all parameters for different SNR."""
     assert len(snrs) == len(priors) == len(posteriors)
     assert len(param_names) == len(true_values)
 
@@ -180,7 +179,7 @@ def plot_all_params_convergences(param_names, snrs, priors, posteriors, true_val
 
 
 def _plot_param_convergence(param_name, snrs, priors, posteriors, true_value, ylim):
-    # Plots convergence of a parameter for different SNR
+    # Plot convergence of a parameter for different SNR
     assert len(snrs) == len(posteriors)
     points_n = len(snrs)
 

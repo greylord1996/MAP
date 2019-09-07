@@ -1,344 +1,286 @@
+"""Classes to store data in time and frequency domain.
+
+This module defines two classes: TimeData and FreqData (to store data
+in time and frequency domain respectively). Both classes derive from
+the abstract class Data. Typically, TimeData holds initial data.
+White noise can be applied to these data. After that, the data should
+be transformed to frequency domain by DFT (Discrete Fourier Transform).
+Finally, additional preliminary operations are also possible (removing
+zero frequency, trimming data and removing some frequency bands).
+
+"""
+
 import abc
-import copy
 import numpy as np
-import scipy
+import scipy as sp
 import scipy.signal
-
-import dynamic_equations_to_simulate
-import singleton
-
 
 
 class Data(abc.ABC):
-    """Abstract class to hold the data.
+    """Abstract base class to hold data (in time or frequency domain).
 
-    This class contains only odd number of data points.
-    If input data contain even number of data points,
-    the last point will not be used.
+    This abstract class contains only odd number of data points.
+    If input data contain even number of data points, the last point
+    will not be used.
 
     Attributes:
-        Vm (np.array): voltage magnitudes depending on time or frequency
-        Va (np.array): voltage phases depending on time or frequency
-        Im (np.array): current magnitudes depending on time or frequency
-        Ia (np.array): current phases depending on time or frequency
+        inputs (numpy.ndarray): Input data (denoted as u in the paper)
+            with shape (n_inputs, n_data_points).
+        outputs (numpy.ndarray): Output data (denoted as y in the paper)
+            with shape (n_outputs, n_data_points).
     """
 
-    def __init__(self, Vm_data, Va_data, Im_data, Ia_data):
-        assert len(Vm_data) == len(Im_data)
-        assert len(Im_data) == len(Va_data)
-        assert len(Va_data) == len(Ia_data)
-        self.Vm = Vm_data
-        self.Va = Va_data
-        self.Im = Im_data
-        self.Ia = Ia_data
+    def __init__(self, inputs, outputs):
+        """Just save input and output data inside the class.
 
-        if len(self.Vm) % 2 == 0:
-            self.Vm = self.Vm[:-1]
-            self.Va = self.Va[:-1]
-            self.Im = self.Im[:-1]
-            self.Ia = self.Ia[:-1]
+        Args:
+            inputs (numpy.ndarray): Input data (see the 'inputs'
+                attribute of the class).
+            outputs (numpy.ndarray): Output data (see the 'outputs'
+                attribute of the class).
+        """
+        if not isinstance(inputs, np.ndarray):
+            raise TypeError('inputs must be an instance of a numpy.ndarray')
+        if not isinstance(outputs, np.ndarray):
+            raise TypeError('outputs must be an instance of a numpy.ndarray')
+        if inputs.shape[1] != outputs.shape[1]:
+            raise ValueError('Inconsistent number of data points'
+                             'in inputs and outputs')
+        if inputs.shape[1] < 10:
+            raise ValueError('Not enough points')
 
+        self.inputs = inputs
+        self.outputs = outputs
 
 
 class TimeData(Data):
-    """Represents data in time domain.
+    """Represent data in time domain.
 
     Attributes:
-        dt (float): time between two adjacent points in time domain
-        std_dev_Vm (float): standard deviation of voltage magnitude
-        std_dev_Im (float): standard deviation of voltage phase
-        std_dev_Va (float): standard deviation of current magnitude
-        std_dev_Ia (float): standard deviation of current phase
+        dt (float): Time between two adjacent points in time domain.
+        input_std_devs (numpy.ndarray): Array with shape (n_inputs,)
+            containing measurement noise of input data.
+        output_std_devs (numpy.ndarray): Array with shape (n_outputs,)
+            containing measurement noise of output data.
     """
 
-    def __init__(self, Vm_time_data, Va_time_data,
-                 Im_time_data, Ia_time_data, dt):
-        """Inits data in time domain.
+    def __init__(self, inputs, outputs, dt,
+                 input_std_devs=None, output_std_devs=None):
+        """Initialize data in time domain.
 
         Args:
-            Vm_time_data (np.array): time domain voltage magnitudes
-            Va_time_data (np.array): time domain voltage phases
-            Im_time_data (np.array): time domain current magnitudes
-            Ia_time_data (np.array): time domain current phases
-            dt (float): time step between signal data points
+            inputs (numpy.ndarray): Input data (see the 'inputs'
+                attribute of the base class 'Data').
+            outputs (numpy.ndarray): Output data (see the 'outputs'
+                attribute of the base class 'Data').
+            dt (float): time step between data points
+            input_std_devs (numpy.ndarray): Measurement noise
+                of input data (see the 'input_std_devs' attribute).
+            output_std_devs (numpy.ndarray): Measurement noise
+                of output data (see the 'output_std_devs' attribute).
         """
-        super().__init__(
-            Vm_data=Vm_time_data,
-            Va_data=Va_time_data,
-            Im_data=Im_time_data,
-            Ia_data=Ia_time_data
-        )
+        if input_std_devs is not None and len(inputs) != len(input_std_devs):
+            raise ValueError('Number of inputs must be equal'
+                             'to number of input standard deviations')
+        if output_std_devs is not None and len(outputs) != len(output_std_devs):
+            raise ValueError('Number of outputs must be equal'
+                             'to number of output standard deviations')
+
+        super().__init__(inputs, outputs)
+        if self.inputs.shape[1] % 2 == 0:
+            self.inputs = np.delete(self.inputs, -1, axis=1)
+            self.outputs = np.delete(self.outputs, -1, axis=1)
+
         self.dt = dt
+        self.input_std_devs = input_std_devs
+        self.output_std_devs = output_std_devs
 
-        self.std_dev_Vm = None
-        self.std_dev_Va = None
-        self.std_dev_Im = None
-        self.std_dev_Ia = None
+    def apply_white_noise(self, snr):
+        """Apply AWGN (Additive White Gaussian Noise) to storing data.
 
+        Initialize the 'input_std_devs' and 'output_std_devs'
+        attributes. Then, it slightly modifies both input and output
+        data by applying noise specified by the 'snr' argument.
+        If 'input_std_devs' and 'output_std_devs' attributes have been
+        already constructed, it is considered as an error.
 
-    def apply_white_noise(self, snr, d_coi):
-        """Applies Additive white Gaussian noise (AWGN) to storing data.
+        Note:
+            Be careful with the definition of SNR (Signal to Noise Ratio).
+            Should signal-mean be used when capturing the signal power?
+            In many cases, we don't care about steady state offset:
+            it is useless information. The signal that we care about
+            is the perturbation on top of steady state. Let's call that
+            our signal. For example, if we have voltage vector
+            x = V + dV, and we define our signal as dV, then
+            var(dV)/var(noise) is our SNR.
 
         Args:
-            snr (float): desired Signal to Noise Ratio (SNR) in dB (decibels)
-            d_coi (float): Center of inertia to subtract from angular data.
-                If there is no COI, just set it to 0.0.
+            snr (float): desired SNR (Signal to Noise Ratio)
+                specified in dB (decibels).
         """
-        assert len(self.Vm) == len(self.Va)
-        assert len(self.Va) == len(self.Im)
-        assert len(self.Im) == len(self.Ia)
-        pure_time_data_len = len(self.Vm)
+        assert self.inputs.shape[1] == self.outputs.shape[1]
+        if snr < 0.0:
+            raise ValueError('SNR can not be negative')
+        if self.input_std_devs is not None or self.output_std_devs is not None:
+            raise ValueError('Attempt to apply noise to data having initialized'
+                             'noise standard deviations. It is incorrect')
 
-        self.std_dev_Vm = np.std(self.Vm, ddof=1) / (10.0**(snr/20.0))
-        self.std_dev_Im = np.std(self.Im, ddof=1) / (10.0**(snr/20.0))
-        self.std_dev_Va = np.std(self.Va - d_coi, ddof=1) / (10.0**(snr/20.0))
-        self.std_dev_Ia = np.std(self.Ia - d_coi, ddof=1) / (10.0**(snr/20.0))
+        self.input_std_devs = np.zeros(self.inputs.shape[0])
+        self.output_std_devs = np.zeros(self.outputs.shape[0])
+        n_time_points = self.inputs.shape[1]
 
-        # Magnitude Data
-        self.Vm = self.Vm + np.multiply(
-            np.random.normal(loc=0.0, scale=1.0, size=pure_time_data_len),
-            self.std_dev_Vm
-        )
-        self.Im = self.Im + np.multiply(
-            np.random.normal(loc=0.0, scale=1.0, size=pure_time_data_len),
-            self.std_dev_Im
-        )
+        # applying white noise to inputs
+        for input_idx in range(len(self.input_std_devs)):
+            self.input_std_devs[input_idx] = np.std(
+                self.inputs[input_idx], ddof=1
+            ) / (10.0**(snr/20.0))
+            self.inputs[input_idx] += np.multiply(
+                np.random.normal(loc=0.0, scale=1.0, size=n_time_points),
+                self.input_std_devs[input_idx]
+            )
 
-        # Angle Data: Subtract out COI (might be 0.0)
-        self.Va = self.Va + np.multiply(
-            np.random.normal(loc=0.0, scale=1.0, size=pure_time_data_len),
-            self.std_dev_Va
-        )
-        self.Ia = self.Ia + np.multiply(
-            np.random.normal(loc=0.0, scale=1.0, size=pure_time_data_len),
-            self.std_dev_Ia
-        )
-
+        # applying white noise to outputs
+        for output_idx in range(len(self.output_std_devs)):
+            self.output_std_devs[output_idx] = np.std(
+                self.outputs[output_idx], ddof=1
+            ) / (10.0**(snr/20.0))
+            self.outputs[output_idx] += np.multiply(
+                np.random.normal(loc=0.0, scale=1.0, size=n_time_points),
+                self.output_std_devs[output_idx]
+            )
 
 
 class FreqData(Data):
-    """Represents data in frequency domain.
+    """Represent data in frequency domain.
 
     Attributes:
-        freqs (np.array): frequencies in frequency domain
-        std_w_Vm (float): standard deviation of voltage magnitude
-        std_w_Va (float): standard deviation of voltage phase
-        std_w_Im (float): standard deviation of current magnitude
-        std_w_Ia (float): standard deviation of current phase
+        freqs (np.ndarray): frequencies in frequency domain
+        input_std_devs (numpy.ndarray): Noise of input data.
+        output_std_devs (numpy.ndarray): Noise of output data.
     """
 
-    def __init__(self, time_data):
-        """Initializes data in frequency domain based on data in time domain.
+    def __init__(self, time_data, remove_zero_freq=True):
+        """Initialize data in frequency domain based on data in time domain.
 
         It takes (2K + 1) points in time domain (white noise
         has been already applied) and constructs (K + 1) points of data
         in frequency domain (applying Discrete Fourier transform).
+        After that, zero frequency can be excluded because in many cases
+        of signal processing steady state has no useful information.
 
         Args:
-            time_data (TimeData): holding data in time domain
+            time_data (TimeData): Data in time domain.
+            remove_zero_freq (bool, optional): whether to remove
+                zero frequency from data
         """
         dt = time_data.dt  # time step between signal data points
-        fs = 1.0 / dt  # sampling frequency
-        time_points_len = len(time_data.Vm)  # N = number of data points
-        assert time_points_len % 2 == 1  # Ensure that N is odd (N = 2K + 1)
+        fs = 1.0 / dt  # sampling frequency (in Hz)
+        n_time_points = time_data.inputs.shape[1]  # N = number of data points
+        assert n_time_points % 2 == 1  # Ensure that N is odd (N = 2K + 1)
 
-        # f_vec is the same as self.freqs (don't forget about the 2*pi factor!)
-        self.freqs = (fs / time_points_len *
-                      np.arange(0, (time_points_len + 1) / 2, 1))
+        # don't forget about the 2*pi factor!
+        self.freqs = (fs / n_time_points *
+                      np.arange(0, (n_time_points + 1) / 2, 1))
 
+        # perform DFT
         super().__init__(
-            Vm_data=self._apply_dft(time_data.Vm),
-            Va_data=self._apply_dft(time_data.Va),
-            Im_data=self._apply_dft(time_data.Im),
-            Ia_data=self._apply_dft(time_data.Ia)
+            inputs=np.array([
+                self._apply_dft(time_data.inputs[input_idx])
+                for input_idx in range(time_data.inputs.shape[0])
+            ]),
+            outputs=np.array([
+                self._apply_dft(time_data.outputs[output_idx])
+                for output_idx in range(time_data.outputs.shape[0])
+            ])
         )
 
-        self.std_w_Vm = time_data.std_dev_Vm * np.sqrt(2.0 / time_points_len)
-        self.std_w_Va = time_data.std_dev_Va * np.sqrt(2.0 / time_points_len)
-        self.std_w_Im = time_data.std_dev_Im * np.sqrt(2.0 / time_points_len)
-        self.std_w_Ia = time_data.std_dev_Ia * np.sqrt(2.0 / time_points_len)
+        # calculate epsilons (variables representing noise)
+        # in frequency domain based on epsilons in time domain
+        transform_factor = np.sqrt(2.0 / n_time_points)
+        self.input_std_devs = time_data.input_std_devs * transform_factor
+        self.output_std_devs = time_data.output_std_devs * transform_factor
 
+        # zero frequency amplitude can be too large
+        # compared to amplitudes at other frequencies
+        if remove_zero_freq:
+            self.freqs = self.freqs[1:]
+            self.inputs = np.delete(self.inputs, 0, axis=1)
+            self.outputs = np.delete(self.outputs, 0, axis=1)
 
     def _apply_dft(self, time_points):
-        # Apply FFT to each array of data (Vm, Va, Im, Ia)
-        time_points_len = len(time_points)
-        assert time_points_len % 2 == 1
+        # apply DFT to an array representing one time series
+        assert len(time_points.shape) == 1
+        n_time_points = len(time_points)
+        assert n_time_points % 2 == 1
 
-        window = scipy.signal.windows.hann(time_points_len)
+        window = sp.signal.windows.hann(n_time_points)
         windowed_time_points = np.multiply(
             window,
             scipy.signal.detrend(data=time_points, type='constant')
         )
 
-        freq_points = np.fft.fft(windowed_time_points / time_points_len)
-        freq_points_len = (time_points_len + 1) // 2
+        freq_points = np.fft.fft(windowed_time_points / n_time_points)
+        freq_points_len = (n_time_points + 1) // 2
         freq_points = freq_points[0:freq_points_len]
 
-        # Amplitude of DC = (1/N) * |F(0)|, other amplitudes = (2/N) * |F(k)|
-        freq_points[1:] *= 2.0  # Double all but DC
+        # steady component = (1/N) * |F(0)|, other amplitudes = (2/N) * |F(k)|
+        freq_points[1:] *= 2.0  # Double all except for DC
 
-        # We have removed DC by using detrend function
-        freq_points[0] = 0.0  # Zero DC
+        # we have removed steady component by using the 'detrend' function
+        freq_points[0] = 0.0
 
         return freq_points
 
-
-    def remove_zero_frequency(self):
-        """Removes the first point from each array of data (Vm, Va, Im, Ia).
-
-        After applying DFT the first numbers of each array (Vm, Va, Im, Ia)
-        are equal to 0 (due to applying detrend function).
-        It can be convenient to remove these zeros, that is to exclude
-        the first number from each array. Zero frequency also should be
-        excluded from the array of frequencies (self.freqs).
-        """
-        self.freqs = self.freqs[1:]
-        self.Vm = self.Vm[1:]
-        self.Va = self.Va[1:]
-        self.Im = self.Im[1:]
-        self.Ia = self.Ia[1:]
-
-
     def trim(self, min_freq, max_freq):
-        """Removes all data which are not located in [min_freq; max_freq].
+        """Remove all data which are not located at [min_freq; max_freq].
 
-        Leaves only those data which are located in [min_freq; max_freq].
-        This method implies that frequencies in self.freqs are sorted
-        in ascending order.
+        Note:
+            This method implies that frequencies in self.freqs
+            are sorted in ascending order.
 
         Args:
             min_freq (float): minimum remaining frequency in the data
             max_freq (float): maximum remaining frequency in the data
         """
-        begin = np.searchsorted(self.freqs, min_freq, side='left')
-        end = np.searchsorted(self.freqs, max_freq, side='right')
+        assert len(self.freqs) == self.inputs.shape[1] == self.outputs.shape[1]
+        if min_freq < 0.0:
+            raise ValueError('min_freq can not be negative')
+        if min_freq > max_freq:
+            raise ValueError('min_freq must be less than max_freq')
+
+        begin = (np.searchsorted(self.freqs, min_freq, side='left')
+                 if min_freq is not None else 0)
+        end = (np.searchsorted(self.freqs, max_freq, side='right')
+               if max_freq is not None else len(self.freqs))
 
         self.freqs = self.freqs[begin:end]
-        self.Vm = self.Vm[begin:end]
-        self.Va = self.Va[begin:end]
-        self.Im = self.Im[begin:end]
-        self.Ia = self.Ia[begin:end]
+        self.inputs = np.delete(
+            self.inputs,
+            list(range(begin)) + list(range(end, self.inputs.shape[1])),
+            axis=1
+        )
+        self.outputs = np.delete(
+            self.outputs,
+            list(range(begin)) + list(range(end, self.outputs.shape[1])),
+            axis=1
+        )
 
+    def remove_band(self, min_freq, max_freq):
+        """Remove all data which are located at [min_freq; max_freq].
 
-    def remove_data_from_fo_band(self, min_fo_freq, max_fo_freq):
-        """Removes data which are located in a forced oscillation band.
-
-        Removes the range [min_fo_freq; max_fo_freq] of frequencies
-        where the forced oscillation has significant effect. Moreover,
-        it removes corresponding data from frequency data (Vm, Va, Im, Ia).
+        Note:
+            This method implies that frequencies in self.freqs
+            are sorted in ascending order.
 
         Args:
-            min_fo_freq (float): begin forced oscillation band
-            max_fo_freq (float): end forced oscillation band
+            min_freq (float): begin of frequency band
+            max_freq (float): end of frequency band
         """
-        begin = np.searchsorted(self.freqs, min_fo_freq, side='left')
-        end = np.searchsorted(self.freqs, max_fo_freq, side='right')
+        begin = np.searchsorted(self.freqs, min_freq, side='left')
+        end = np.searchsorted(self.freqs, max_freq, side='right')
         removing_indexes = np.arange(begin, end)
 
         self.freqs = np.delete(self.freqs, removing_indexes)
-        self.Vm = np.delete(self.Vm, removing_indexes)
-        self.Va = np.delete(self.Va, removing_indexes)
-        self.Im = np.delete(self.Im, removing_indexes)
-        self.Ia = np.delete(self.Ia, removing_indexes)
-
-
-
-# @singleton.singleton
-class DataHolder:
-    """Wrapper for storing different prepared data from a generator.
-
-    Attributes:
-        _initial_time_data (class TimeData): initial data in time domain
-        _time_data_after_snr (class TimeData): data in time domain
-            after applying white noise (specified by SNR)
-        _freq_data_after_fft (class FreqData): data after FFT
-        _freq_data_after_trim (class FreqData): data (in frequency domain)
-            after removing zero frequency and trimming data
-            (for stage2 of the optimization routine)
-        _freq_data_after_remove_fo_band (class FreqData): data
-            (in frequency domain) after excluding data from FO band
-            (for stage1 of the optimization routine)
-
-    Note:
-        All attributes are private. Don't use them outside this class.
-        Communicate with an instance of this class only via
-        its public methods.
-    """
-
-    def __init__(self, initial_params):
-        """Prepares different data for the optimization routine.
-
-        Args:
-            initial_params (class Settings): all configuration parameters
-                (should be obtained from GUI)
-        """
-        # Simulate data in time domain (initial data)
-        ode_solver_object = dynamic_equations_to_simulate.OdeSolver(
-            noise=initial_params.noise,
-            gen_param=initial_params.generator_parameters,
-            osc_param=initial_params.oscillation_parameters,
-            integr_param=initial_params.integration_settings
-        )
-        ode_solver_object.simulate_time_data()
-        self._initial_time_data = TimeData(
-            Vm_time_data=ode_solver_object.Vc1_abs,
-            Va_time_data=ode_solver_object.Vc1_angle,
-            Im_time_data=ode_solver_object.Ig_abs,
-            Ia_time_data=ode_solver_object.Ig_angle,
-            dt=ode_solver_object.dt
-        )
-
-        # Apply white noise to simulated data in time domain
-        self._time_data_after_snr = copy.deepcopy(self._initial_time_data)
-        self._time_data_after_snr.apply_white_noise(
-            snr=initial_params.noise.snr,
-            d_coi=0.0
-        )
-
-        # Moving from time domain to frequency domain
-        self._freq_data_after_fft = FreqData(self._time_data_after_snr)
-
-        # Trim data
-        self._freq_data_after_trim = copy.deepcopy(self._freq_data_after_fft)
-        self._freq_data_after_trim.remove_zero_frequency()
-        self._freq_data_after_trim.trim(
-            min_freq=0.0,
-            max_freq=initial_params.freq_data.max_freq
-        )
-
-        # Remove data from forced oscillation band
-        # (it is necessary only for running stage1, not stage2)
-        self._freq_data_after_remove_fo_band = (
-            copy.deepcopy(self._freq_data_after_trim)
-        )
-        self._freq_data_after_remove_fo_band.remove_data_from_fo_band(
-            min_fo_freq=initial_params.freq_data.lower_fb,
-            max_fo_freq=initial_params.freq_data.upper_fb
-        )
-
-
-    def get_data(self, remove_fo_band):
-        """Returns prepared data for stage1 or stage2.
-
-        If you need data (in frequency domain) for stage1
-        of the optimization routine, shallow copy of
-        self._freq_data_after_remove_fo_band will be returned.
-        Data for stage2 are the same except for
-        it has data in the forced oscillation band (FO band).
-
-        Args:
-            remove_fo_band (bool): remove data
-                from forced oscillation band?
-
-        Returns:
-            freq_data (class FreqData): data in frequency domain
-                which has been prepared for stage1 or stage2
-                of the optimization routine
-        """
-        freq_data = None
-        if remove_fo_band:
-            freq_data = copy.deepcopy(self._freq_data_after_remove_fo_band)
-        else:
-            freq_data = copy.deepcopy(self._freq_data_after_trim)
-        return freq_data
+        self.inputs = np.delete(self.inputs, removing_indexes, axis=1)
+        self.outputs = np.delete(self.outputs, removing_indexes, axis=1)
 
