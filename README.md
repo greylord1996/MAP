@@ -12,7 +12,7 @@ First of all, clone the repository:
 Create a new virtual environment:
 
     # on Linux:
-    python3 -m venv mapenv
+    python -m venv mapenv
     # on Windows:
     python -m venv mapenv
 
@@ -33,7 +33,7 @@ Install required dependencies:
 Finally, run *src/main.py*:
 
     # on Linux:
-    python3 src/main.py
+    python src/main.py
     # on Windows:
     python src\main.py
 
