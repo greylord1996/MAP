@@ -1,15 +1,14 @@
 """Admittance matrix of a system which relates input and output data.
 
-An admittance matrix relates input and output data of an abstract
-dynamical system (in frequency domain). These relations should be
+An admittance matrix (denoted as Y) relates input and output data of an
+abstract dynamical system in frequency domain. These relations should be
 defined inside a class and be available as 'data' property. Due to some
 implementation details, parameters of the describing system and
 frequency variable must be accessible via 'params' and 'omega'
 properties respectively.
 
-This is an example of a module which should be created by a user of the
-framework. A wrapper around admittance matrix (denoted as Y) of a system
-should be defined here.
+Such module should be created by a user of the framework. That is,
+a wrapper around admittance matrix of a system should be defined here.
 
 """
 

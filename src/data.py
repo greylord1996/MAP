@@ -1,4 +1,4 @@
-"""Classes to store data in time and frequency domain.
+"""Classes to store data in time and frequency domains.
 
 This module defines two classes: TimeData and FreqData (to store data
 in time and frequency domain respectively). Both classes derive from
@@ -40,14 +40,14 @@ class Data(abc.ABC):
                 attribute of the class).
         """
         if not isinstance(inputs, np.ndarray):
-            raise TypeError('inputs must be an instance of a numpy.ndarray')
+            raise TypeError('inputs must be an instance of a numpy.ndarray.')
         if not isinstance(outputs, np.ndarray):
-            raise TypeError('outputs must be an instance of a numpy.ndarray')
+            raise TypeError('outputs must be an instance of a numpy.ndarray.')
         if inputs.shape[1] != outputs.shape[1]:
             raise ValueError('Inconsistent number of data points'
-                             'in inputs and outputs')
+                             'in inputs and outputs.')
         if inputs.shape[1] < 10:
-            raise ValueError('Not enough points')
+            raise ValueError('Not enough points.')
 
         self.inputs = inputs
         self.outputs = outputs
@@ -81,10 +81,10 @@ class TimeData(Data):
         """
         if input_std_devs is not None and len(inputs) != len(input_std_devs):
             raise ValueError('Number of inputs must be equal'
-                             'to number of input standard deviations')
+                             'to number of input standard deviations.')
         if output_std_devs is not None and len(outputs) != len(output_std_devs):
             raise ValueError('Number of outputs must be equal'
-                             'to number of output standard deviations')
+                             'to number of output standard deviations.')
 
         super().__init__(inputs, outputs)
         if self.inputs.shape[1] % 2 == 0:
@@ -120,10 +120,10 @@ class TimeData(Data):
         """
         assert self.inputs.shape[1] == self.outputs.shape[1]
         if snr < 0.0:
-            raise ValueError('SNR can not be negative')
+            raise ValueError('SNR can not be negative.')
         if self.input_std_devs is not None or self.output_std_devs is not None:
             raise ValueError('Attempt to apply noise to data having initialized'
-                             'noise standard deviations. It is incorrect')
+                             'noise standard deviations. It is incorrect.')
 
         self.input_std_devs = np.zeros(self.inputs.shape[0])
         self.output_std_devs = np.zeros(self.outputs.shape[0])
@@ -244,9 +244,9 @@ class FreqData(Data):
         """
         assert len(self.freqs) == self.inputs.shape[1] == self.outputs.shape[1]
         if min_freq < 0.0:
-            raise ValueError('min_freq can not be negative')
+            raise ValueError('min_freq can not be negative.')
         if min_freq > max_freq:
-            raise ValueError('min_freq must be less than max_freq')
+            raise ValueError('min_freq must be less than max_freq.')
 
         begin = (np.searchsorted(self.freqs, min_freq, side='left')
                  if min_freq is not None else 0)

@@ -13,9 +13,7 @@ def minimize(func, x0):
         x0 (numpy.ndarray): Starting point (typically, prior parameters).
 
     Returns:
-        x_min (numpy.ndarray): Found minimum (of course, it is not
-            guaranteed that the obtained point is the absolute minimum
-            of the objective function).
+        x_min (numpy.ndarray): Found minimum.
     """
     params_dimension = len(x0)
     Nel = 10

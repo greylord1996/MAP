@@ -297,9 +297,9 @@ class ObjectiveFunction:
     def compute(self, sys_params):
         """Compute the objective function at the given point(s).
 
-        This method just calls self._compute method.
-        If optimizing_gen_params is a 2D numpy.array, computations
-        will be performed in parallel mode.
+        This method just calls self._compute method. If the argument is
+        a 2D numpy.ndarray, computations will be performed in parallel
+        mode.
 
         Note:
             Remember that the order of parameters is extremely important.

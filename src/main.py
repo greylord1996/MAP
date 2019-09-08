@@ -1,10 +1,12 @@
+import copy
+
 import numpy as np
 from generator import admittance_matrix
 from generator import dynamic_equations_to_simulate
 
 import bayesian_framework as bf
 import data
-# import utils
+import utils
 
 
 def get_time_data():
@@ -44,37 +46,40 @@ def get_time_data():
 
 def main():
     time_data = get_time_data()
-    freq_data = bf.prepare_data(
-        time_data=time_data, snr=45.0,
-        remove_zero_freq=True, min_freq=0.0, max_freq=6.0
-    )
 
     true_params = np.array([0.25, 1.00, 1.00, 0.01])
     prior_params_std = np.array([0.5, 0.5, 0.5, 0.5])
-    prior_params = bf.perturb_params(true_params, prior_params_std)
-    print('PRIOR PARAMS =', prior_params)
-    print('PRIOR PARAMS STD =', prior_params_std)
 
-    # plot before parameters clarification
-    # utils.plot_Im_psd(stage2_data, gen_params_prior_mean.as_array, is_xlabel=False)
+    snrs = 1.0 * np.arange(1, 45, 1)
+    priors = np.zeros((len(snrs), len(true_params)))
+    posteriors = np.zeros((len(snrs), len(true_params)))
+    for snr_idx in range(len(snrs)):
+        freq_data = bf.prepare_data(
+            time_data=copy.deepcopy(time_data), snr=snrs[snr_idx],
+            remove_zero_freq=True, min_freq=0.0, max_freq=6.0
+        )
 
-    posterior_params = bf.compute_posterior_params(
-        freq_data=freq_data,
-        admittance_matrix=admittance_matrix.AdmittanceMatrix(),
-        prior_params=prior_params,
-        prior_params_std=prior_params_std
-    )
-    print('POSTERIOR PARAMS:', posterior_params)
+        prior_params = bf.perturb_params(true_params, prior_params_std)
+        posterior_params = bf.compute_posterior_params(
+            freq_data=freq_data,
+            admittance_matrix=admittance_matrix.AdmittanceMatrix(),
+            prior_params=prior_params,
+            prior_params_std=prior_params_std
+        )
 
-    # plot after parameters clarification
-    # utils.plot_Im_psd(stage2_data, posterior_gen_params, is_xlabel=True)
-    # utils.plot_all_params_convergences(
-    #     param_names=["D", "E^{'}", "M", r"X_{\! d}^{'}"],
-    #     snrs=snrs,
-    #     priors=priors,
-    #     posteriors=posteriors,
-    #     true_values=[0.25, 1.00, 1.00, 0.01]
-    # )
+        priors[snr_idx] = prior_params
+        posteriors[snr_idx] = posterior_params
+
+    param_names = ["D", "E^{'}", "M", r"X_{\! d}^{'}"]
+    for param_idx in range(len(param_names)):
+        utils.plot_param_convergence(
+            snrs=snrs,
+            prior_values=priors[:, param_idx],
+            posterior_values=posteriors[:, param_idx],
+            true_value=true_params[param_idx],
+            param_name=param_names[param_idx],
+            ylim=(0.0, 2.0 * true_params[param_idx])
+        )
 
 
 if __name__ == '__main__':
