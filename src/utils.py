@@ -74,7 +74,7 @@ def plot_measurements_and_predictions(freqs, measurements, predictions,
     plt.savefig(
         os.path.join(
             os.path.abspath(os.path.dirname(__file__)),
-            '..', 'samples', 'predictions', out_file_name + '.pdf'
+            '..', 'graphics', 'predictions_output_data', out_file_name + '.pdf'
         ),
         dpi=180, format='pdf'
     )
@@ -119,7 +119,7 @@ def plot_param_convergence(snrs, prior_values, posterior_values, true_value,
     plt.savefig(
         os.path.join(
             os.path.abspath(os.path.dirname(__file__)),
-            '..', 'samples', 'convergences_different_SNR', param_name + '.pdf'
+            '..', 'graphics', 'convergences_different_SNR', param_name + '.pdf'
         ),
         dpi=180, format='pdf'
     )
@@ -144,7 +144,7 @@ def plot_param_convergence(snrs, prior_values, posterior_values, true_value,
 #     plt.savefig(
 #         os.path.join(
 #             os.path.abspath(os.path.dirname(__file__)),
-#             '..', 'samples', 'vary_theta_g1.pdf'
+#             '..', 'graphics', 'vary_theta_g1.pdf'
 #         ),
 #         dpi=180,
 #         format='pdf'
