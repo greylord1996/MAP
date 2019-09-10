@@ -291,7 +291,7 @@ class ObjectiveFunction:
         return (
             curr_delta_params @ self._inv_gamma_g @ curr_delta_params
             + computed_R @ computed_inv_gamma_L_dot_R
-            # + np.log(np.linalg.det(computed_gamma_L))
+            # + np.log(np.linalg.det(computed_gamma_L.toarray()))
         )
 
     def compute(self, sys_params):

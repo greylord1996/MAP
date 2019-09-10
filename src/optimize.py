@@ -17,11 +17,11 @@ def minimize(func, x0):
     """
     params_dimension = len(x0)
     Nel = 10
-    N = 100 * 4
+    N = 750
     alpha = 0.8
     beta = 0.7
     q = 5
-    eps = 0.5 * 1e-2
+    eps = 5 * 1e-3
     mu = x0
     sigma = 0.5 * np.ones(params_dimension)
 

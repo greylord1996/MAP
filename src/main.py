@@ -48,11 +48,12 @@ def main():
     time_data = get_time_data()
 
     true_params = np.array([0.25, 1.00, 1.00, 0.01])
-    prior_params_std = np.array([0.5, 0.5, 0.5, 0.5])
+    n_params = len(true_params)
+    prior_params_std = np.array([0.5 for _ in range(n_params)])
 
     snrs = 1.0 * np.arange(1, 45, 1)
-    priors = np.zeros((len(snrs), len(true_params)))
-    posteriors = np.zeros((len(snrs), len(true_params)))
+    priors = np.zeros((len(snrs), n_params))
+    posteriors = np.zeros((len(snrs), n_params))
     for snr_idx in range(len(snrs)):
         freq_data = bf.prepare_data(
             time_data=copy.deepcopy(time_data), snr=snrs[snr_idx],
@@ -70,16 +71,14 @@ def main():
         priors[snr_idx] = prior_params
         posteriors[snr_idx] = posterior_params
 
-    param_names = ["D", "E^{'}", "M", r"X_{\! d}^{'}"]
-    for param_idx in range(len(param_names)):
-        utils.plot_param_convergence(
-            snrs=snrs,
-            prior_values=priors[:, param_idx],
-            posterior_values=posteriors[:, param_idx],
-            true_value=true_params[param_idx],
-            param_name=param_names[param_idx],
-            ylim=(0.0, 2.0 * true_params[param_idx])
-        )
+    utils.plot_params_convergences(
+        snrs=snrs,
+        prior_values=priors,
+        posterior_values=posteriors,
+        true_values=true_params,
+        params_names=["D", "E^{'}", "M", r"X_{\! d}^{'}"],
+        ylims=np.array([[0.0, 2.0 * true_params[i]] for i in range(n_params)])
+    )
 
 
 if __name__ == '__main__':
