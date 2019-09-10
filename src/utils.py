@@ -47,7 +47,6 @@ def plot_measurements_and_predictions(freqs, measurements, predictions,
                                       out_file_name, yscale=None, yticks=None,
                                       xlabel=None, ylabel=None):
     """Plot measured and predicted data."""
-
     plt.rc('text', usetex=True)
     plt.rc('font', family='serif')
     plt.figure(figsize=(24, 8))
@@ -58,16 +57,16 @@ def plot_measurements_and_predictions(freqs, measurements, predictions,
     if yscale is not None:
         plt.yscale(yscale)
     plt.tick_params(
-        axis='both', labelsize=50, direction='in', length=12, width=3, pad=12
+        axis='both', labelsize=60, direction='in', length=12, width=3, pad=12
     )
     plt.yticks(yticks)
     if xlabel is not None:
-        plt.xlabel(xlabel, fontsize=50)
+        plt.xlabel(xlabel, fontsize=60)
     if ylabel is not None:
-        plt.ylabel(ylabel, fontsize=50)
+        plt.ylabel(ylabel, fontsize=60)
     plt.legend(
         ['Measured', 'Predicted'],
-        loc='upper right', prop={'size': 50}, frameon=False
+        loc='upper right', prop={'size': 60}, frameon=True, ncol=2
     )
 
     plt.tight_layout()
@@ -80,46 +79,58 @@ def plot_measurements_and_predictions(freqs, measurements, predictions,
     )
 
 
-def plot_param_convergence(snrs, prior_values, posterior_values, true_value,
-                           param_name, ylim):
+def plot_params_convergences(snrs, prior_values, posterior_values,
+                             true_values, params_names, ylims):
     """Plot convergence of one parameter for different SNR."""
-    assert len(snrs) == len(posterior_values)
+    assert len(snrs) == len(posterior_values) == len(prior_values)
+    assert (prior_values.shape[1] == posterior_values.shape[1]
+            == len(true_values) == len(params_names) == len(ylims))
+    assert ylims.shape[1] == 2
+
     n_points = len(snrs)
+    n_params = len(true_values)
 
     plt.rc('font', family='serif')
     plt.rc('text', usetex=True)
-    plt.figure(figsize=(24, 12))
+    fig, axes = plt.subplots(n_params, 1, figsize=(24, 12 * n_params))
 
-    plt.plot(
-        snrs, prior_values,
-        label='prior', linewidth=4, marker='o', color='b'
-    )
-    plt.plot(
-        snrs, posterior_values,
-        label='posterior', linewidth=4, marker='o', color='g'
-    )
-    plt.plot(
-        snrs, [true_value for _ in range(n_points)],
-        label='true', linewidth=4, linestyle='dashed', color='r'
-    )
+    for param_idx in range(n_params):
+        ax = axes[param_idx]
+        ax.plot(
+            snrs, prior_values[:, param_idx],
+            label='prior', linewidth=4, marker='o', color='b'
+        )
+        ax.plot(
+            snrs, posterior_values[:, param_idx],
+            label='posterior', linewidth=4, marker='o', color='g'
+        )
+        ax.plot(
+            snrs, [true_values[param_idx] for _ in range(n_points)],
+            label='true', linewidth=4, linestyle='dashed', color='r'
+        )
 
-    plt.tick_params(
-        axis='both', labelsize=50, direction='in', length=12, width=3, pad=12
-    )
-    n_ticks = 5
-    step = (ylim[1] - ylim[0]) / (n_ticks - 1)
-    plt.yticks(np.arange(ylim[0], ylim[1], step))
-    plt.ylim(ylim)
+        ax.tick_params(
+            axis='both', labelsize=60, direction='in',
+            length=12, width=3, pad=12
+        )
+        n_ticks = 5
+        y_min = ylims[param_idx][0]
+        y_max = ylims[param_idx][1]
+        step = (y_max - y_min) / (n_ticks - 1)
+        ax.set_yticks(np.arange(y_min, y_max + step, step))
+        ax.set_ylim(ylims[param_idx])
 
-    plt.xlabel('SNR', fontsize=50)
-    plt.ylabel('$' + param_name + '$', fontsize=50)
-    plt.legend(loc='upper right', prop={'size': 50}, frameon=True, ncol=3)
+        ax.set_xlabel('SNR', fontsize=60)
+        param_name = params_names[param_idx]
+        ax.set_ylabel('$' + param_name + '$', labelpad=20, fontsize=60)
+        ax.legend(loc='upper right', prop={'size': 60}, frameon=True, ncol=3)
 
-    plt.tight_layout()
+    fig.tight_layout()
     plt.savefig(
         os.path.join(
             os.path.abspath(os.path.dirname(__file__)),
-            '..', 'graphics', 'convergences_different_SNR', param_name + '.pdf'
+            '..', 'graphics', 'convergences_different_SNR',
+            'params_convergences.pdf'
         ),
         dpi=180, format='pdf'
     )
