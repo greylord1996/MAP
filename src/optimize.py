@@ -1,4 +1,4 @@
-"""Implementation of cross-entropy optimization method."""
+"""Implementation of the cross-entropy optimization method."""
 
 
 import numpy as np
@@ -17,18 +17,18 @@ def minimize(func, x0):
     """
     params_dimension = len(x0)
     Nel = 10
-    N = 750
+    N = 450
     alpha = 0.8
-    beta = 0.7
-    q = 5
-    eps = 5 * 1e-3
+    # beta = 0.7
+    # q = 5
+    eps = 5.0 * 1e-3
     mu = x0
     sigma = 0.5 * np.ones(params_dimension)
 
     mu_last = mu
     sigma_last = sigma
-    X_best_overall = x0
-    S_best_overall = func.compute(X_best_overall)
+    # X_best_overall = x0
+    # S_best_overall = func.compute(X_best_overall)
     # S_target = func.compute_from_array([0.25, 1.0, 1.0, 0.01])
     # print("S_best_0 = ", S_best_overall)
     # print("S_target = ", S_target)
@@ -40,7 +40,7 @@ def minimize(func, x0):
     while sigma.max() > eps:
         t = t + 1
         mu = alpha * mu + (1 - alpha) * mu_last
-        B_mod = beta - beta * (1 - 1 / t) ** q
+        # B_mod = beta - beta * (1 - 1 / t) ** q
         # sigma = B_mod * sigma - (1 - B_mod) * sigma_last  # dynamic smoothing
         sigma = alpha * sigma + (1 - alpha) * sigma_last
         # X = np.ones((N, 1)) * mu + sp.randn(N, 4) * np.diag(np.repeat(sigma.max(), N))
@@ -49,17 +49,17 @@ def minimize(func, x0):
 
         SA = func.compute(X)
 
-        S_sort = np.sort(SA)
+        # S_sort = np.sort(SA)
         # print("S_sort = ", S_sort)
         I_sort = np.argsort(SA)
         # print("I_sort = ", I_sort)
 
         # gam = S_sort[0] -- not used?
-        S_best = S_sort[Nel]
+        # S_best = S_sort[Nel]
 
-        if S_best < S_best_overall:
-            S_best_overall = S_best
-            X_best_overall = X[I_sort[0]]
+        # if S_best < S_best_overall:
+        #     S_best_overall = S_best
+        #     X_best_overall = X[I_sort[0]]
 
         mu_last = mu
         sigma_last = sigma
@@ -69,15 +69,15 @@ def minimize(func, x0):
         # print("Xel = ", Xel)
         mu = np.mean(Xel, axis=0)
         sigma = np.nanstd(Xel, axis=0)
+
         print('mu = ', mu)
-        print("sigma = ", sigma)
-        print()
+        print("sigma = ", sigma, '\n')
 
-    print("mu_last = ", mu)
-    print("sigma_last = ", sigma)
-    print("X_best = ", X_best_overall)
-    print("S_best_overall", S_best_overall)
+    # print("mu_last = ", mu)
+    # print("sigma_last = ", sigma)
+    # print("X_best = ", X_best_overall)
+    # print("S_best_overall", S_best_overall)
 
-    x_min = X_best_overall
-    return x_min  # what should be returned?
+    x_min = mu
+    return x_min
 

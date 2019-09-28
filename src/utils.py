@@ -7,7 +7,6 @@ import os.path
 import numpy as np
 import sympy
 import matplotlib.pyplot as plt
-import seaborn
 
 
 def predict_outputs(admittance_matrix, sys_params, freqs, inputs):
@@ -109,6 +108,7 @@ def plot_params_convergences(snrs, prior_values, posterior_values,
             label='true', linewidth=4, linestyle='dashed', color='r'
         )
 
+        ax.grid(alpha=0.75)
         ax.tick_params(
             axis='both', labelsize=60, direction='in',
             length=12, width=3, pad=12
@@ -119,6 +119,7 @@ def plot_params_convergences(snrs, prior_values, posterior_values,
         step = (y_max - y_min) / (n_ticks - 1)
         ax.set_yticks(np.arange(y_min, y_max + step, step))
         ax.set_ylim(ylims[param_idx])
+        ax.set_xticks(range(0, n_points + 1, 5))
 
         ax.set_xlabel('SNR', fontsize=60)
         param_name = params_names[param_idx]
