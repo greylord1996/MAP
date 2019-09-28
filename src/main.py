@@ -1,6 +1,5 @@
-import copy
-
 import numpy as np
+
 from generator import admittance_matrix
 from generator import dynamic_equations_to_simulate
 
@@ -51,12 +50,13 @@ def main():
     n_params = len(true_params)
     prior_params_std = np.array([0.5 for _ in range(n_params)])
 
-    snrs = 1.0 * np.arange(1, 45, 1)
+    snrs = 1.0 * np.arange(1, 25, 1)
     priors = np.zeros((len(snrs), n_params))
     posteriors = np.zeros((len(snrs), n_params))
     for snr_idx in range(len(snrs)):
+        print('!!!', time_data.inputs[1][77])
         freq_data = bf.prepare_data(
-            time_data=copy.deepcopy(time_data), snr=snrs[snr_idx],
+            time_data=time_data, snr=snrs[snr_idx],
             remove_zero_freq=True, min_freq=0.0, max_freq=6.0
         )
 

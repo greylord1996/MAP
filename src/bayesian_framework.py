@@ -15,6 +15,7 @@ for more details.
 
 """
 
+import copy
 
 import numpy as np
 
@@ -87,12 +88,14 @@ def prepare_data(time_data, snr=None, remove_zero_freq=True,
     if min_freq > max_freq:
         raise ValueError('min_freq must be less than max_freq.')
 
+    time_data_copy = copy.deepcopy(time_data)
+
     if snr is not None:
-        time_data.apply_white_noise(snr)
+        time_data_copy.apply_white_noise(snr)
     elif time_data.input_std_devs is None or time_data.output_std_devs is None:
         raise ValueError('Noise is not specified.')
 
-    freq_data = data.FreqData(time_data, remove_zero_freq)
+    freq_data = data.FreqData(time_data_copy, remove_zero_freq)
     freq_data.trim(min_freq, max_freq)
     return freq_data
 
