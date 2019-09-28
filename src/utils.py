@@ -65,7 +65,7 @@ def plot_measurements_and_predictions(freqs, measurements, predictions,
         plt.ylabel(ylabel, fontsize=60)
     plt.legend(
         ['Measured', 'Predicted'],
-        loc='upper right', prop={'size': 60}, frameon=True, ncol=2
+        loc='upper left', prop={'size': 50}, frameon=False, ncol=1
     )
 
     plt.tight_layout()

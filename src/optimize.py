@@ -17,7 +17,7 @@ def minimize(func, x0):
     """
     params_dimension = len(x0)
     Nel = 10
-    N = 450
+    N = 750
     alpha = 0.8
     # beta = 0.7
     # q = 5
