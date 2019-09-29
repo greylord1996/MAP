@@ -7,7 +7,6 @@ import os.path
 import numpy as np
 import sympy
 import matplotlib.pyplot as plt
-import seaborn
 
 
 def predict_outputs(admittance_matrix, sys_params, freqs, inputs):
@@ -51,8 +50,8 @@ def plot_measurements_and_predictions(freqs, measurements, predictions,
     plt.rc('font', family='serif')
     plt.figure(figsize=(24, 8))
 
-    plt.plot(freqs, measurements, color='black')
-    plt.plot(freqs, predictions, color='blue')
+    plt.plot(freqs, measurements, label='Measured', color='black')
+    plt.plot(freqs, predictions, label='Predicted', color='b')
 
     if yscale is not None:
         plt.yscale(yscale)
@@ -64,10 +63,8 @@ def plot_measurements_and_predictions(freqs, measurements, predictions,
         plt.xlabel(xlabel, fontsize=60)
     if ylabel is not None:
         plt.ylabel(ylabel, fontsize=60)
-    plt.legend(
-        ['Measured', 'Predicted'],
-        loc='upper right', prop={'size': 60}, frameon=True, ncol=2
-    )
+    plt.grid(alpha=0.75)
+    plt.legend(loc='upper left', prop={'size': 50}, frameon=False, ncol=1)
 
     plt.tight_layout()
     plt.savefig(
@@ -109,6 +106,7 @@ def plot_params_convergences(snrs, prior_values, posterior_values,
             label='true', linewidth=4, linestyle='dashed', color='r'
         )
 
+        ax.grid(alpha=0.75)
         ax.tick_params(
             axis='both', labelsize=60, direction='in',
             length=12, width=3, pad=12
@@ -119,6 +117,7 @@ def plot_params_convergences(snrs, prior_values, posterior_values,
         step = (y_max - y_min) / (n_ticks - 1)
         ax.set_yticks(np.arange(y_min, y_max + step, step))
         ax.set_ylim(ylims[param_idx])
+        ax.set_xticks(range(0, n_points + 1, 5))
 
         ax.set_xlabel('SNR', fontsize=60)
         param_name = params_names[param_idx]

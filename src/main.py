@@ -1,8 +1,9 @@
+import time
+
 import numpy as np
 
 from generator import admittance_matrix
 from generator import dynamic_equations_to_simulate
-
 import bayesian_framework as bf
 import data
 import utils
@@ -50,27 +51,35 @@ def main():
     n_params = len(true_params)
     prior_params_std = np.array([0.5 for _ in range(n_params)])
 
-    snrs = 1.0 * np.arange(1, 25, 1)
+    snrs = 1.0 * np.arange(1, 26, 1)
+    optimization_time = np.zeros(len(snrs))
     priors = np.zeros((len(snrs), n_params))
     posteriors = np.zeros((len(snrs), n_params))
     for snr_idx in range(len(snrs)):
-        print('!!!', time_data.inputs[1][77])
-        freq_data = bf.prepare_data(
+        print('\n######################################################')
+        print('SNR =', snrs[snr_idx])
+        freq_data = bf.prepare_freq_data(
             time_data=time_data, snr=snrs[snr_idx],
             remove_zero_freq=True, min_freq=0.0, max_freq=6.0
         )
 
         prior_params = bf.perturb_params(true_params, prior_params_std)
+        start_time = time.time()
         posterior_params = bf.compute_posterior_params(
             freq_data=freq_data,
             admittance_matrix=admittance_matrix.AdmittanceMatrix(),
             prior_params=prior_params,
             prior_params_std=prior_params_std
         )
-
+        end_time = time.time()
+        optimization_time[snr_idx] = end_time - start_time
         priors[snr_idx] = prior_params
         posteriors[snr_idx] = posterior_params
+        print('optimization time =', optimization_time[snr_idx], 'seconds')
+        print('######################################################\n')
 
+    print('optimization time mean =', optimization_time.mean(), '(seconds)')
+    print('optimization time std  =', optimization_time.std(), '(seconds)')
     utils.plot_params_convergences(
         snrs=snrs,
         prior_values=priors,
