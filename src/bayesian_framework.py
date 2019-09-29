@@ -59,8 +59,8 @@ def perturb_params(true_params, dev_fractions):
     return perturbed_params
 
 
-def prepare_data(time_data, snr=None, remove_zero_freq=True,
-                 min_freq=None, max_freq=None):
+def prepare_freq_data(time_data, snr=None, remove_zero_freq=True,
+                      min_freq=None, max_freq=None):
     """Transform data from time domain to frequency domain.
 
     Args:
@@ -135,15 +135,15 @@ def compute_posterior_params(freq_data, admittance_matrix,
         prior_params_std=prior_params_std
     )
 
-    print('\n######################################################')
-    print('### DEBUG: OPTIMIZATION ROUTINE IS STARTING NOW!!! ###')
-    print('######################################################\n')
+    # print('\n######################################################')
+    # print('### DEBUG: OPTIMIZATION ROUTINE IS STARTING NOW!!! ###')
+    # print('######################################################\n')
     posterior_params = optimize.minimize(func=obj_func, x0=prior_params)
     print('prior =', prior_params)
     print('posterior =', posterior_params)
     # WARNING! True parameters can be different! Remove the next line!
     print('f(true_params) =', obj_func.compute(np.array([0.25, 1., 1., 0.01])))
     print('f(posterior) =', obj_func.compute(posterior_params))
-    print('\n######################################################')
+    # print('\n######################################################')
     return posterior_params
 

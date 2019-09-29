@@ -43,8 +43,8 @@ def minimize(func, x0):
         mu = np.mean(Xel, axis=0)
         sigma = np.nanstd(Xel, axis=0)
 
-        print('mu = ', mu)
-        print("sigma = ", sigma, '\n')
+        # print('mu = ', mu)
+        # print("sigma = ", sigma, '\n')
 
     x_min = mu
     return x_min

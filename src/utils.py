@@ -50,8 +50,8 @@ def plot_measurements_and_predictions(freqs, measurements, predictions,
     plt.rc('font', family='serif')
     plt.figure(figsize=(24, 8))
 
-    plt.plot(freqs, measurements, color='black')
-    plt.plot(freqs, predictions, color='blue')
+    plt.plot(freqs, measurements, label='Measured', color='black')
+    plt.plot(freqs, predictions, label='Predicted', color='b')
 
     if yscale is not None:
         plt.yscale(yscale)
@@ -63,10 +63,8 @@ def plot_measurements_and_predictions(freqs, measurements, predictions,
         plt.xlabel(xlabel, fontsize=60)
     if ylabel is not None:
         plt.ylabel(ylabel, fontsize=60)
-    plt.legend(
-        ['Measured', 'Predicted'],
-        loc='upper left', prop={'size': 50}, frameon=False, ncol=1
-    )
+    plt.grid(alpha=0.75)
+    plt.legend(loc='upper left', prop={'size': 50}, frameon=False, ncol=1)
 
     plt.tight_layout()
     plt.savefig(
