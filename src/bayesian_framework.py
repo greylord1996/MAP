@@ -45,17 +45,8 @@ def perturb_params(true_params, dev_fractions):
     if true_params.shape != dev_fractions.shape:
         raise ValueError('Number of system parameters is not equal'
                          'to number of deviation fractions.')
-
     perturbations = np.random.uniform(low=-dev_fractions, high=dev_fractions)
     perturbed_params = (1.0 + perturbations) * true_params
-
-    # Just for testing -- remove in release
-    # assert len(true_params) == 4
-    # perturbed_params[0] = 0.206552362540141
-    # perturbed_params[1] = 0.837172184078094
-    # perturbed_params[2] = 0.665441037484483
-    # perturbed_params[3] = 0.00771416811078329
-
     return perturbed_params
 
 
@@ -142,8 +133,8 @@ def compute_posterior_params(freq_data, admittance_matrix,
     print('prior =', prior_params)
     print('posterior =', posterior_params)
     # WARNING! True parameters can be different! Remove the next line!
-    print('f(true_params) =', obj_func.compute(np.array([0.25, 1., 1., 0.01])))
-    print('f(posterior) =', obj_func.compute(posterior_params))
+    # print('f(true_params) =', obj_func.compute(np.array([0.25, 1., 1., 0.01])))
+    # print('f(posterior) =', obj_func.compute(posterior_params))
     # print('\n######################################################')
     return posterior_params
 

@@ -64,23 +64,6 @@ def main():
         )
 
         prior_params = bf.perturb_params(true_params, prior_params_std)
-
-        if snrs[snr_idx] % 5 == 0:
-            prior_predictions = utils.predict_outputs(
-                admittance_matrix.AdmittanceMatrix(),
-                prior_params,
-                freq_data.freqs,
-                freq_data.inputs
-            )
-            utils.plot_measurements_and_predictions(
-                freq_data.freqs[:250],
-                (np.abs(freq_data.outputs[0][:250])) ** 2,
-                (np.abs(prior_predictions[0][:250])) ** 2,
-                'prior_SNR=' + str(snrs[snr_idx]),
-                yscale='log', yticks=[0.001, 0.000001],
-                xlabel=None, ylabel=r'$\tilde{\mathrm{I}}$ PSD'
-            )
-
         start_time = time.time()
         posterior_params = bf.compute_posterior_params(
             freq_data=freq_data,
@@ -90,24 +73,6 @@ def main():
         )
         end_time = time.time()
         optimization_time[snr_idx] = end_time - start_time
-
-        if snrs[snr_idx] % 5 == 0:
-            posterior_predictions = utils.predict_outputs(
-                admittance_matrix.AdmittanceMatrix(),
-                posterior_params,
-                freq_data.freqs,
-                freq_data.inputs
-            )
-            assert len(freq_data.freqs) == 600
-            utils.plot_measurements_and_predictions(
-                freq_data.freqs[:250],
-                (np.abs(freq_data.outputs[0][:250])) ** 2,
-                (np.abs(posterior_predictions[0][:250])) ** 2,
-                'posterior_SNR=' + str(snrs[snr_idx]),
-                yscale='log', yticks=[0.001, 0.000001],
-                xlabel='Frequency (Hz)', ylabel=r'$\tilde{\mathrm{I}}$ PSD'
-            )
-
         priors[snr_idx] = prior_params
         posteriors[snr_idx] = posterior_params
         print('optimization time =', optimization_time[snr_idx], 'seconds')
