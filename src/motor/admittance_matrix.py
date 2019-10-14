@@ -5,15 +5,19 @@ defined inside a class and be available as 'data' property. Due to some
 implementation details, parameters of the describing system and
 frequency variable must be accessible via 'params' and 'omega'
 properties respectively.
+
 Such module should be created by a user of the framework. That is,
 a wrapper around admittance matrix of a system should be defined here.
+
 """
 
 import sympy as sp
 import numpy as np
 
+
 class AdmittanceMatrix:
-    """Admittance matrix of a generator.
+    """Admittance matrix of a motor.
+
     Attributes:
         _params (list): Contains sympy.symbols which are parameters of
             a dynamical system (that is described by an admittance matrix).
@@ -24,13 +28,13 @@ class AdmittanceMatrix:
 
     def __init__(self):
         """Define relations between input and output data."""
-        j = sp.I
-
         R, X, H, omega = sp.symbols(
             'R X H omega', real=True
         )
-
+        j = sp.I
         s = j * omega
+        self._params = [R, X, H]
+        self._omega = omega
 
         omega_e_0, p_e_0, q_e_0, sigma_0 = sp.symbols('omega_e_0 p_e_0 q_e_0 sigma_0')
         beta = 2 * H * omega_e_0 * s + (omega_e_0 * R * (R ** 2 - sigma_0 ** 2 * X ** 2) * p_e_0) / (

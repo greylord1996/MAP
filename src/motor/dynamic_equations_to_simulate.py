@@ -132,21 +132,3 @@ class OdeSolver:
         self.id = self.I.real
         self.iq = self.I.imag
 
-
-ode_solver_object = OdeSolver(
-    noise={
-        'rnd_amp': 0.002,
-        'snr': 45.0
-    },
-    osc_param={
-        'osc_amp': 0.000,
-        'osc_freq': 0.0
-    },
-    integr_param={
-        'df_length': 200.0,
-        'dt_step': 0.001
-    }
-)
-
-ode_solver_object.simulate()
-ode_solver_object.show_results_in_test_mode()

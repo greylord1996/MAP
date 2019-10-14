@@ -2,14 +2,17 @@ import time
 
 import numpy as np
 
-from generator import admittance_matrix
-from generator import dynamic_equations_to_simulate
+# from generator import admittance_matrix
+# from generator import dynamic_equations_to_simulate
+from motor import admittance_matrix
+from motor import dynamic_equations_to_simulate
+
 import bayesian_framework as bf
 import data
 import utils
 
 
-def get_time_data():
+def get_generator_time_data():
     """Simulate generator's data in time domain."""
     ode_solver_object = dynamic_equations_to_simulate.OdeSolver(
         noise={
@@ -44,10 +47,46 @@ def get_time_data():
     return data.TimeData(inputs, outputs, dt=ode_solver_object.dt)
 
 
-def main():
-    time_data = get_time_data()
+def get_motor_time_data():
+    """Simulate motor's data in time domain."""
+    ode_solver_object = dynamic_equations_to_simulate.OdeSolver(
+        noise={
+            'rnd_amp': 0.002,
+            'snr': 45.0
+        },
+        osc_param={
+            'osc_amp': 0.000,
+            'osc_freq': 0.0
+        },
+        integr_param={
+            'df_length': 200.0,
+            'dt_step': 0.001
+        }
+    )
+    ode_solver_object.simulate()
+    # ode_solver_object.show_results_in_test_mode()
 
-    true_params = np.array([0.25, 1.00, 1.00, 0.01])
+    inputs = np.array([
+        ode_solver_object.V1t,
+        ode_solver_object.T1t
+    ])
+    outputs = np.array([
+        np.abs(ode_solver_object.I),
+        np.angle(ode_solver_object.I)
+    ])
+    print('!!! inputs.shape =', inputs.shape)
+    print('!!! outputs.shape =', outputs.shape)
+
+    assert ode_solver_object.dt == 0.001
+    return data.TimeData(inputs, outputs, dt=ode_solver_object.dt)
+
+
+
+def main():
+    time_data = get_motor_time_data()
+
+    # true_params = np.array([0.25, 1.00, 1.00, 0.01])
+    true_params = np.array([0.08, 0.2, 0.5])
     n_params = len(true_params)
     prior_params_std = np.array([0.5 for _ in range(n_params)])
 
@@ -85,7 +124,8 @@ def main():
         prior_values=priors,
         posterior_values=posteriors,
         true_values=true_params,
-        params_names=["D", "E^{'}", "M", r"X_{\! d}^{'}"],
+        # params_names=["D", "E^{'}", "M", r"X_{\! d}^{'}"],
+        params_names=["R", "X", "H"],
         ylims=np.array([[0.0, 2.0 * true_params[i]] for i in range(n_params)])
     )
 
