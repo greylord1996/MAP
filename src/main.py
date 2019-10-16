@@ -40,6 +40,7 @@ def get_generator_time_data():
         ode_solver_object.Vc1_abs,
         ode_solver_object.Vc1_angle
     ])
+
     outputs = np.array([
         ode_solver_object.Ig_abs,
         ode_solver_object.Ig_angle
@@ -65,14 +66,14 @@ def get_motor_time_data():
     )
     ode_solver_object.simulate()
     # ode_solver_object.show_results_in_test_mode()
-
+    print("ode_solver_object.V1t = ", ode_solver_object.vt)
     inputs = np.array([
-        ode_solver_object.V1t,
-        ode_solver_object.T1t
+        ode_solver_object.vt,
+        ode_solver_object.tt
     ])
     outputs = np.array([
-        np.abs(ode_solver_object.I),
-        np.angle(ode_solver_object.I)
+        ode_solver_object.id,
+        ode_solver_object.iq
     ])
     print('!!! inputs.shape =', inputs.shape)
     print('!!! outputs.shape =', outputs.shape)

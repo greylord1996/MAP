@@ -131,4 +131,6 @@ class OdeSolver:
         self.I = self.V1t(self.t_vec) / (self.R / self.sigma + j * self.X)
         self.id = self.I.real
         self.iq = self.I.imag
+        self.vt = self.V1t(self.t_vec)
+        self.tt = self.T1t(self.t_vec)
 
