@@ -134,3 +134,8 @@ class OdeSolver:
         self.vt = self.V1t(self.t_vec)
         self.tt = self.T1t(self.t_vec)
 
+        self.T1t_to_simulate = self.T1t.y + self.osc_param['osc_amp'] * np.sin(2 * np.pi * self.osc_param['osc_freq'] * self.test_length)
+        self.Vc1 = self.V1t.y * np.exp(j * self.T1t_to_simulate)
+        self.vc1_real = self.Vc1.real
+        self.vc1_image = self.Vc1.image
+
