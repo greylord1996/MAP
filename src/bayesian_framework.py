@@ -132,9 +132,11 @@ def compute_posterior_params(freq_data, admittance_matrix,
     posterior_params = optimize.minimize(func=obj_func, x0=prior_params)
     print('prior =', prior_params)
     print('posterior =', posterior_params)
-    # WARNING! True parameters can be different! Remove the next line!
-    # print('f(true_params) =', obj_func.compute(np.array([0.25, 1., 1., 0.01])))
-    # print('f(posterior) =', obj_func.compute(posterior_params))
+
+    # WARNING! True parameters can be different! Remove the next 2 lines!
+    print('f(true_params) =', obj_func.compute(np.array([0.08, 0.2, 0.5])))
+    print('f(posterior) =', obj_func.compute(posterior_params))
+
     # print('\n######################################################')
     return posterior_params
 

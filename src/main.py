@@ -66,10 +66,10 @@ def get_motor_time_data():
     )
     ode_solver_object.simulate()
     # ode_solver_object.show_results_in_test_mode()
-    print("ode_solver_object.V1t = ", ode_solver_object.vt)
+    # print("ode_solver_object.V1t = ", ode_solver_object.vt)
     inputs = np.array([
-        ode_solver_object.vt,
-        ode_solver_object.tt
+        ode_solver_object.vc1_real,
+        ode_solver_object.vc1_imag
     ])
     outputs = np.array([
         ode_solver_object.id,
