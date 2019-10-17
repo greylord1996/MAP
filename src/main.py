@@ -37,13 +37,13 @@ def get_generator_time_data():
     )
     ode_solver_object.simulate_time_data()
     inputs = np.array([
-        ode_solver_object.Vc1_abs,
-        ode_solver_object.Vc1_angle
+        ode_solver_object.vt,
+        ode_solver_object.tt
     ])
 
     outputs = np.array([
-        ode_solver_object.Ig_abs,
-        ode_solver_object.Ig_angle
+        ode_solver_object.id,
+        ode_solver_object.iq
     ])
     return data.TimeData(inputs, outputs, dt=ode_solver_object.dt)
 
