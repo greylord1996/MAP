@@ -22,6 +22,7 @@ import numpy as np
 import objective_function
 import data
 import optimize
+import utils
 
 
 def perturb_params(true_params, dev_fractions):
@@ -92,7 +93,8 @@ def prepare_freq_data(time_data, snr=None, remove_zero_freq=True,
 
 
 def compute_posterior_params(freq_data, admittance_matrix,
-                             prior_params, prior_params_std):
+                             prior_params, prior_params_std,
+                             true_params, problem_name):
     """Calculate posterior parameters employing Bayesian approach.
 
     Args:
@@ -133,9 +135,10 @@ def compute_posterior_params(freq_data, admittance_matrix,
     print('prior =', prior_params)
     print('posterior =', posterior_params)
 
-    # WARNING! True parameters can be different! Remove the next 2 lines!
-    print('f(true_params) =', obj_func.compute(np.array([0.08, 0.2, 0.5])))
+    # WARNING! True parameters shouldn't be known inside this function!
+    print('f(true_params) =', obj_func.compute(true_params))
     print('f(posterior) =', obj_func.compute(posterior_params))
+    utils.plot_objective_function(obj_func, true_params, problem_name)
 
     # print('\n######################################################')
     return posterior_params

@@ -43,7 +43,8 @@ def predict_outputs(admittance_matrix, sys_params, freqs, inputs):
 
 
 def plot_measurements_and_predictions(freqs, measurements, predictions,
-                                      out_file_name, yscale=None, yticks=None,
+                                      problem_name, out_file_name,
+                                      yscale=None, yticks=None,
                                       xlabel=None, ylabel=None):
     """Plot measured and predicted data."""
     plt.rc('text', usetex=True)
@@ -70,14 +71,17 @@ def plot_measurements_and_predictions(freqs, measurements, predictions,
     plt.savefig(
         os.path.join(
             os.path.abspath(os.path.dirname(__file__)),
-            '..', 'graphics', 'predictions_output_data', out_file_name + '.pdf'
+            '..', 'graphics', problem_name, 'predictions_output_data',
+            out_file_name + '.pdf'
         ),
         dpi=180, format='pdf'
     )
+    plt.close('all')
 
 
 def plot_params_convergences(snrs, prior_values, posterior_values,
-                             true_values, params_names, ylims):
+                             true_values, params_names,
+                             problem_name, ylims):
     """Plot convergence of one parameter for different SNR."""
     assert len(snrs) == len(posterior_values) == len(prior_values)
     assert (prior_values.shape[1] == posterior_values.shape[1]
@@ -128,35 +132,48 @@ def plot_params_convergences(snrs, prior_values, posterior_values,
     plt.savefig(
         os.path.join(
             os.path.abspath(os.path.dirname(__file__)),
-            '..', 'graphics', 'convergences_different_SNR',
+            '..', 'graphics', problem_name, 'convergences_different_SNR',
             'params_convergences.pdf'
         ),
         dpi=180, format='pdf'
     )
+    plt.close(fig)
 
 
-# def plot_objective_function(obj_func, true_params):
-#     """Plot the objective function."""
-#     thetas1 = 0.01 * np.arange(start=1, stop=50, step=1)
-#     f_values = np.zeros(len(thetas1))
-#     for i in range(len(f_values)):
-#         f_values[i] = f.compute(np.array([
-#             thetas1[i], 1.00, 1.00, 0.01
-#         ]))
-#     plt.plot(thetas1, f_values, label='SNR=' + str(snr) + ' (original f)')
-#
-#     plt.xlabel('theta_g1')
-#     plt.ylabel('objective function (f)')
-#     # plt.xticks([0.0, 0.1, 0.2, 0.25, 0.3, 0.4, 0.5])
-#     # plt.gca().get_xticklabels()[3].set_color("red")
-#     plt.legend()
-#     plt.tight_layout()
-#     plt.savefig(
-#         os.path.join(
-#             os.path.abspath(os.path.dirname(__file__)),
-#             '..', 'graphics', 'vary_theta_g1.pdf'
-#         ),
-#         dpi=180,
-#         format='pdf'
-#     )
+def plot_objective_function(obj_func, true_params,
+                            problem_name, param_names=None):
+    """Make 1-D plots of the objective function."""
+    n_params = len(true_params)
+    n_points = 500
+    fig, axes = plt.subplots(n_params, 1, figsize=(16, 4 * n_params))
+
+    for param_idx in range(n_params):
+        true_param = true_params[param_idx]
+        args = np.tile(true_params, (n_points, 1))
+        args[:, param_idx] = 1.0 * np.linspace(
+            start=-true_param, stop=3*true_param, num=n_points
+        )
+        obj_func_values = obj_func.compute(args)
+        param_name = (
+            param_names[param_idx] if param_names is not None
+            else 'param' + str(param_idx)
+        )
+
+        ax = axes[param_idx]
+        ax.set_title(param_name, fontsize=20)
+        ax.plot(args[:, param_idx], obj_func_values)
+        ax.axvline(true_param, alpha=0.75, color='red')
+        ax.set_xlabel(param_name)
+        ax.set_ylabel("objective function's values")
+
+    plt.tight_layout()
+    plt.savefig(
+        os.path.join(
+            os.path.abspath(os.path.dirname(__file__)),
+            '..', 'graphics', problem_name, 'vary_params.pdf'
+        ),
+        dpi=180,
+        format='pdf'
+    )
+    plt.close(fig)
 

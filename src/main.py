@@ -84,6 +84,7 @@ def get_motor_time_data():
 
 
 def main():
+    problem_name = 'motor'  # 'generator'
     time_data = get_motor_time_data()
 
     # true_params = np.array([0.25, 1.00, 1.00, 0.01])
@@ -91,7 +92,7 @@ def main():
     n_params = len(true_params)
     prior_params_std = np.array([0.5 for _ in range(n_params)])
 
-    snrs = 1.0 * np.arange(1, 26, 1)
+    snrs = 1.0 * np.arange(45, 46, 1)
     optimization_time = np.zeros(len(snrs))
     priors = np.zeros((len(snrs), n_params))
     posteriors = np.zeros((len(snrs), n_params))
@@ -109,7 +110,9 @@ def main():
             freq_data=freq_data,
             admittance_matrix=admittance_matrix.AdmittanceMatrix(),
             prior_params=prior_params,
-            prior_params_std=prior_params_std
+            prior_params_std=prior_params_std,
+            true_params=true_params,
+            problem_name=problem_name
         )
         end_time = time.time()
         optimization_time[snr_idx] = end_time - start_time
@@ -127,6 +130,7 @@ def main():
         true_values=true_params,
         # params_names=["D", "E^{'}", "M", r"X_{\! d}^{'}"],
         params_names=["R", "X", "H"],
+        problem_name=problem_name,
         ylims=np.array([[0.0, 2.0 * true_params[i]] for i in range(n_params)])
     )
 
