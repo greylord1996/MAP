@@ -177,3 +177,53 @@ def plot_objective_function(obj_func, true_params,
     )
     plt.close(fig)
 
+
+def plot_admittance_matrix(matrix_Y, true_params, problem_name, max_freq=6.0):
+    assert matrix_Y.data.shape == (2, 2)
+    assert len(true_params) == 3
+    assert len(matrix_Y.params) == 3
+    for param_idx in range(len(matrix_Y.params)):
+        assert ['R', 'X', 'H'][param_idx] == matrix_Y.params[param_idx].name
+        assert true_params[param_idx] == [0.08, 0.2, 0.5][param_idx]
+
+    plt.rc('font', family='serif')
+    plt.rc('text', usetex=True)
+    n_outputs = matrix_Y.data.shape[0]  # y size
+    n_inputs = matrix_Y.data.shape[1]   # x size
+    fig, axes = plt.subplots(
+        n_outputs, n_inputs,
+        figsize=(4 * n_inputs, 4 * n_outputs)
+    )
+
+    for x_plot_idx in range(n_inputs):
+        for y_plot_idx in range(n_outputs):
+            component = matrix_Y.data[y_plot_idx, x_plot_idx]
+            component = component.subs(matrix_Y.params[0], true_params[0])
+            component = component.subs(matrix_Y.params[1], true_params[1])
+            component = component.subs(matrix_Y.params[2], true_params[2])
+            omega_values = np.linspace(0, max_freq, num=int(max_freq * 1000))
+            Y_values = np.zeros(len(omega_values))
+            for arg_idx in range(len(omega_values)):
+                Y_values[arg_idx] = component.subs(
+                    matrix_Y.omega, -sympy.I * omega_values[arg_idx]
+                ).evalf()
+
+            ax = axes[y_plot_idx, x_plot_idx]
+            ax.plot(omega_values, Y_values)
+            ax.set_title('$Y_{' + str(y_plot_idx + 1) + str(x_plot_idx + 1) + '}$')
+            ax.set_xlabel(r'$\Omega$ (Hz)')
+            ax.set_ylabel(
+                '$Y_{' + str(y_plot_idx + 1) + str(x_plot_idx + 1) + '}' + '(-j \Omega)$'
+            )
+
+    plt.tight_layout()
+    plt.savefig(
+        os.path.join(
+            os.path.abspath(os.path.dirname(__file__)),
+            '..', 'graphics', problem_name, 'admittance_matrix.pdf'
+        ),
+        dpi=180,
+        format='pdf'
+    )
+    plt.close(fig)
+

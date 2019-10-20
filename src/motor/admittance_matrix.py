@@ -11,8 +11,8 @@ a wrapper around admittance matrix of a system should be defined here.
 
 """
 
-import sympy as sp
 import numpy as np
+import sympy
 
 
 class AdmittanceMatrix:
@@ -28,15 +28,15 @@ class AdmittanceMatrix:
 
     def __init__(self):
         """Define relations between input and output data."""
-        R, X, H, omega = sp.symbols(
+        R, X, H, omega = sympy.symbols(
             'R X H omega', real=True
         )
-        j = sp.I
+        j = sympy.I
         s = j * omega
-        self._params = [R, X, H]
+        self._params = [R, X, H]  # do not change the order
         self._omega = omega
 
-        omega_e_0, p_e_0, q_e_0, sigma_0 = sp.symbols('omega_e_0 p_e_0 q_e_0 sigma_0')
+        omega_e_0, p_e_0, q_e_0, sigma_0 = sympy.symbols('omega_e_0 p_e_0 q_e_0 sigma_0')
         beta = 2 * H * omega_e_0 * s + (omega_e_0 * R * (R ** 2 - sigma_0 ** 2 * X ** 2) * p_e_0) / (
                     sigma_0 * (R ** 2 + sigma_0 ** 2 * X ** 2))
 
@@ -46,7 +46,7 @@ class AdmittanceMatrix:
         Y_qd = -q_e_0 + (4 * omega_e_0 * X) / (sigma_0 * beta)
         Y_qq = 1 - ((2 * X) * (2 * H * (sigma_0 - 1) * s ** 2 + s)) / (sigma_0 * beta)
 
-        matr = sp.Matrix([[Y_dd, Y_dq], [Y_qd, Y_qq]])
+        matr = sympy.Matrix([[Y_dd, Y_dq], [Y_qd, Y_qq]])
         matr = matr.subs(omega_e_0, 2 * np.pi * 50)
         matr = matr.subs(p_e_0, 1)
         matr = matr.subs(sigma_0, 0.04)

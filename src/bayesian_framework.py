@@ -138,7 +138,7 @@ def compute_posterior_params(freq_data, admittance_matrix,
     # WARNING! True parameters shouldn't be known inside this function!
     print('f(true_params) =', obj_func.compute(true_params))
     print('f(posterior) =', obj_func.compute(posterior_params))
-    utils.plot_objective_function(obj_func, true_params, problem_name)
+    utils.plot_objective_function(obj_func, true_params, problem_name, param_names=['R', 'X', 'H'])
 
     # print('\n######################################################')
     return posterior_params

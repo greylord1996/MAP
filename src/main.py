@@ -89,6 +89,9 @@ def main():
 
     # true_params = np.array([0.25, 1.00, 1.00, 0.01])
     true_params = np.array([0.08, 0.2, 0.5])
+
+    utils.plot_admittance_matrix(admittance_matrix.AdmittanceMatrix(), true_params, problem_name, max_freq=6.0)
+
     n_params = len(true_params)
     prior_params_std = np.array([0.5 for _ in range(n_params)])
 
