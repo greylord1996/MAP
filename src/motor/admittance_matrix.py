@@ -37,18 +37,23 @@ class AdmittanceMatrix:
         self._omega = omega
 
         omega_e_0, p_e_0, q_e_0, sigma_0 = sympy.symbols('omega_e_0 p_e_0 q_e_0 sigma_0')
-        beta = 2 * H * omega_e_0 * s + (omega_e_0 * R * (R ** 2 - sigma_0 ** 2 * X ** 2) * p_e_0) / (
+        beta = 2 * H * omega_e_0 * s + (omega_e_0 * (R ** 2 - sigma_0 ** 2 * X ** 2) * p_e_0) / (
                     sigma_0 * (R ** 2 + sigma_0 ** 2 * X ** 2))
 
-        Y_dd = 1 - (2 * omega_e_0 * (R ** 2 - sigma_0 ** 2 * X ** 2)) / (sigma_0 ** 2 * R * beta)
-        Y_dq = q_e_0 + ((2 * H * (sigma_0 - 1) * s ** 2 + s) * (R ** 2 - sigma_0 ** 2 * X ** 2)) / (
-                    sigma_0 ** 2 * R * beta)
-        Y_qd = -q_e_0 + (4 * omega_e_0 * X) / (sigma_0 * beta)
-        Y_qq = 1 - ((2 * X) * (2 * H * (sigma_0 - 1) * s ** 2 + s)) / (sigma_0 * beta)
+        Y_dd = p_e_0 * (1 - (2 * omega_e_0 * R * (R ** 2 - sigma_0 ** 2 * X ** 2)) / (
+                    beta * ((R ** 2 + sigma_0 ** 2 * X ** 2) ** 2)))
+
+        Y_dq = q_e_0 + ((R * (R ** 2 - sigma_0 ** 2 * X ** 2)) / ((R ** 2 + sigma_0 ** 2 * X ** 2) ** 2)) * (
+                    (2 * H * (1 - sigma_0) * s ** 2 + p_e_0 * s) / (beta))
+
+        Y_qd = -q_e_0 + ((2 * sigma_0 * R ** 2 * X) / ((R ** 2 + sigma_0 ** 2 * X ** 2) ** 2)) * (
+                    (2 * omega_e_0 * p_e_0) / (beta))
+        Y_qq = p_e_0 - ((2 * sigma_0 * R ** 2 * X) / ((R ** 2 + sigma_0 ** 2 * X ** 2) ** 2)) * (
+                    (2 * H * (1 - sigma_0) * s ** 2 + p_e_0 * s) / (beta))
 
         matr = sympy.Matrix([[Y_dd, Y_dq], [Y_qd, Y_qq]])
         matr = matr.subs(omega_e_0, 2 * np.pi * 50)
-        matr = matr.subs(p_e_0, 1)
+        matr = matr.subs(p_e_0, 0.49504950495049505)
         matr = matr.subs(sigma_0, 0.04)
         matr = matr.subs(q_e_0, 0.04950495049504951)
         self._admittance_matrix = matr
