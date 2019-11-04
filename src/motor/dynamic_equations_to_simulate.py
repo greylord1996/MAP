@@ -33,7 +33,7 @@ class OdeSolver:
         self.R = 0.08
         self.z = None
         self.X = 0.2
-        self.Pm = 1.0
+        self.Pm = 0.5
         self.we_0 = 2 * np.pi * 50
         self.H = 0.5
         self.sigma0 = 0.04
