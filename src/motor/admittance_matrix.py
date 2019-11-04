@@ -52,10 +52,7 @@ class AdmittanceMatrix:
                     (2 * H * (1 - sigma_0) * s ** 2 + p_e_0 * s) / (beta))
 
         matr = sympy.Matrix([[Y_dd, Y_dq], [Y_qd, Y_qq]])
-
-        # matr = matr.subs(omega_e_0, 2 * np.pi * 50)
-        matr = matr.subs(omega_e_0, 50.0)
-
+        matr = matr.subs(omega_e_0, 2 * np.pi * 50)
         matr = matr.subs(p_e_0, 0.49504950495049505)
         matr = matr.subs(sigma_0, 0.04)
         matr = matr.subs(q_e_0, 0.04950495049504951)

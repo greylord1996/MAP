@@ -179,7 +179,7 @@ class FreqData(Data):
         assert n_time_points % 2 == 1  # Ensure that N is odd (N = 2K + 1)
 
         # don't forget about the 2*pi factor!
-        self.freqs = (fs / n_time_points *
+        self.freqs = 2 * np.pi * (fs / n_time_points *
                       np.arange(0, (n_time_points + 1) / 2, 1))
 
         # perform DFT

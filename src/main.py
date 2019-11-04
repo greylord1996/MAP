@@ -90,7 +90,11 @@ def main():
     # true_params = np.array([0.25, 1.00, 1.00, 0.01])
     true_params = np.array([0.08, 0.2, 0.5])
 
-    utils.plot_admittance_matrix(admittance_matrix.AdmittanceMatrix(), true_params, problem_name, max_freq=6.0)
+    utils.plot_admittance_matrix(
+        admittance_matrix.AdmittanceMatrix(),
+        true_params, problem_name,
+        max_freq=(6.0 * 2 * np.pi)
+    )
 
     n_params = len(true_params)
     prior_params_std = np.repeat(0.5, n_params)
@@ -104,7 +108,7 @@ def main():
         print('SNR =', snrs[snr_idx])
         freq_data = bf.prepare_freq_data(
             time_data=time_data, snr=snrs[snr_idx],
-            remove_zero_freq=True, min_freq=0.0, max_freq=6.0
+            remove_zero_freq=True, min_freq=0.0, max_freq=(6.0 * 2 * np.pi)
         )
 
         prior_params = bf.perturb_params(true_params, prior_params_std)

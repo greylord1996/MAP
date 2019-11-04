@@ -178,7 +178,7 @@ def plot_objective_function(obj_func, true_params,
     plt.close(fig)
 
 
-def plot_admittance_matrix(matrix_Y, true_params, problem_name, max_freq=6.0):
+def plot_admittance_matrix(matrix_Y, true_params, problem_name, max_freq):
     assert matrix_Y.data.shape == (2, 2)
     assert len(true_params) == 3
     assert len(matrix_Y.params) == 3
@@ -211,7 +211,7 @@ def plot_admittance_matrix(matrix_Y, true_params, problem_name, max_freq=6.0):
             ax = axes[y_plot_idx, x_plot_idx]
             ax.plot(omega_values, Y_values)
             ax.set_title('$Y_{' + str(y_plot_idx + 1) + str(x_plot_idx + 1) + '}$')
-            ax.set_xlabel(r'$\Omega$ (Hz)')
+            ax.set_xlabel(r'$\Omega$ (rad/s)')
             ax.set_ylabel(
                 '$Y_{' + str(y_plot_idx + 1) + str(x_plot_idx + 1) + '}' + '(-j \Omega)$'
             )

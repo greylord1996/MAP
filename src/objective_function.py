@@ -100,7 +100,7 @@ class ResidualVector:
                 *self._freq_data.inputs,
                 *self._freq_data.outputs,
                 *repeated_sys_params,
-                2.0 * np.pi * self._freq_data.freqs
+                self._freq_data.freqs
             )
 
         vector_R = self._vector  # no copying
@@ -228,7 +228,7 @@ class CovarianceMatrix:
             for column_idx in range(len(self._exprs[0])):
                 block_diag = self._exprs[row_idx][column_idx](
                     *repeated_sys_params,
-                    2.0 * np.pi * self._freqs
+                    self._freqs
                 )
                 y_block_begin = row_idx * block_size
                 y_block_end = (row_idx + 1) * block_size
