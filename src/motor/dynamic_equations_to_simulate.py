@@ -33,7 +33,7 @@ class OdeSolver:
         self.R = 0.08
         self.z = None
         self.X = 0.2
-        self.Pm = 0.5
+        self.Pm = 0.495
         self.we_0 = 2 * np.pi * 50
         self.H = 0.5
         self.sigma0 = 0.04
@@ -129,9 +129,9 @@ class OdeSolver:
         self.I_0 = 1 / ((self.R / self.sigma0) + j * self.X)
         self.qe0 = 0 - self.I_0.imag
         self.I = self.V1t(self.t_vec) / (self.R / self.sigma + j * self.X)
-        self.id = self.I.real
-        self.iq = self.I.imag
-        self.vt = self.V1t(self.t_vec)
+        self.id = self.I.real - self.I_0.real
+        self.iq = self.I.imag - self.I_0.imag
+        self.vt = self.V1t(self.t_vec) - 1.0
         self.tt = self.T1t(self.t_vec)
 
         self.T1t_to_simulate = self.T1t.y + self.osc_param['osc_amp'] * np.sin(2 * np.pi * self.osc_param['osc_freq'] * self.test_length)
