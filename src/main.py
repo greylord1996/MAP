@@ -93,7 +93,7 @@ def main():
     utils.plot_admittance_matrix(admittance_matrix.AdmittanceMatrix(), true_params, problem_name, max_freq=6.0)
 
     n_params = len(true_params)
-    prior_params_std = np.array([0.5 for _ in range(n_params)])
+    prior_params_std = np.repeat(0.5, n_params)
 
     snrs = 1.0 * np.arange(45, 46, 1)
     optimization_time = np.zeros(len(snrs))
