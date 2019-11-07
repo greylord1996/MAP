@@ -70,10 +70,12 @@ def plot_measurements_and_predictions(freqs, measurements, predictions,
     plt.savefig(
         os.path.join(
             os.path.abspath(os.path.dirname(__file__)),
-            '..', 'graphics', 'predictions_output_data', out_file_name + '.pdf'
+            '..', 'graphics', 'predictions_output_data',
+            out_file_name + '.pdf'
         ),
         dpi=180, format='pdf'
     )
+    plt.close('all')
 
 
 def plot_params_convergences(snrs, prior_values, posterior_values,
@@ -133,30 +135,92 @@ def plot_params_convergences(snrs, prior_values, posterior_values,
         ),
         dpi=180, format='pdf'
     )
+    plt.close(fig)
 
 
-# def plot_objective_function(obj_func, true_params):
-#     """Plot the objective function."""
-#     thetas1 = 0.01 * np.arange(start=1, stop=50, step=1)
-#     f_values = np.zeros(len(thetas1))
-#     for i in range(len(f_values)):
-#         f_values[i] = f.compute(np.array([
-#             thetas1[i], 1.00, 1.00, 0.01
-#         ]))
-#     plt.plot(thetas1, f_values, label='SNR=' + str(snr) + ' (original f)')
-#
-#     plt.xlabel('theta_g1')
-#     plt.ylabel('objective function (f)')
-#     # plt.xticks([0.0, 0.1, 0.2, 0.25, 0.3, 0.4, 0.5])
-#     # plt.gca().get_xticklabels()[3].set_color("red")
-#     plt.legend()
-#     plt.tight_layout()
-#     plt.savefig(
-#         os.path.join(
-#             os.path.abspath(os.path.dirname(__file__)),
-#             '..', 'graphics', 'vary_theta_g1.pdf'
-#         ),
-#         dpi=180,
-#         format='pdf'
-#     )
+def plot_objective_function(obj_func, true_params, param_names=None):
+    """Make 1-D plots of the objective function."""
+    n_params = len(true_params)
+    n_points = 500
+    fig, axes = plt.subplots(n_params, 1, figsize=(16, 4 * n_params))
+
+    for param_idx in range(n_params):
+        true_param = true_params[param_idx]
+        args = np.tile(true_params, (n_points, 1))
+        args[:, param_idx] = 1.0 * np.linspace(
+            start=-true_param, stop=3*true_param, num=n_points
+        )
+        obj_func_values = obj_func.compute(args)
+        param_name = (
+            param_names[param_idx] if param_names is not None
+            else 'param' + str(param_idx)
+        )
+
+        ax = axes[param_idx]
+        ax.set_title(param_name, fontsize=20)
+        ax.plot(args[:, param_idx], obj_func_values)
+        ax.axvline(true_param, alpha=0.75, color='red')
+        ax.set_xlabel(param_name)
+        ax.set_ylabel("objective function's values")
+
+    plt.tight_layout()
+    plt.savefig(
+        os.path.join(
+            os.path.abspath(os.path.dirname(__file__)),
+            '..', 'graphics', 'vary_params.pdf'
+        ),
+        dpi=180,
+        format='pdf'
+    )
+    plt.close(fig)
+
+
+def plot_admittance_matrix(matrix_Y, true_params, max_freq):
+    assert matrix_Y.data.shape == (2, 2)
+    assert len(true_params) == 3
+    assert len(matrix_Y.params) == 3
+    for param_idx in range(len(matrix_Y.params)):
+        assert ['R', 'X', 'H'][param_idx] == matrix_Y.params[param_idx].name
+        assert true_params[param_idx] == [0.08, 0.2, 0.5][param_idx]
+
+    plt.rc('font', family='serif')
+    plt.rc('text', usetex=True)
+    n_outputs = matrix_Y.data.shape[0]  # y size
+    n_inputs = matrix_Y.data.shape[1]   # x size
+    fig, axes = plt.subplots(
+        n_outputs, n_inputs,
+        figsize=(4 * n_inputs, 4 * n_outputs)
+    )
+
+    for x_plot_idx in range(n_inputs):
+        for y_plot_idx in range(n_outputs):
+            component = matrix_Y.data[y_plot_idx, x_plot_idx]
+            component = component.subs(matrix_Y.params[0], true_params[0])
+            component = component.subs(matrix_Y.params[1], true_params[1])
+            component = component.subs(matrix_Y.params[2], true_params[2])
+            omega_values = np.linspace(0, max_freq, num=int(max_freq * 1000))
+            Y_values = np.zeros(len(omega_values))
+            for arg_idx in range(len(omega_values)):
+                Y_values[arg_idx] = component.subs(
+                    matrix_Y.omega, -sympy.I * omega_values[arg_idx]
+                ).evalf()
+
+            ax = axes[y_plot_idx, x_plot_idx]
+            ax.plot(omega_values, Y_values)
+            ax.set_title('$Y_{' + str(y_plot_idx + 1) + str(x_plot_idx + 1) + '}$')
+            ax.set_xlabel(r'$\Omega$ (rad/s)')
+            ax.set_ylabel(
+                '$Y_{' + str(y_plot_idx + 1) + str(x_plot_idx + 1) + '}' + '(-j \Omega)$'
+            )
+
+    plt.tight_layout()
+    plt.savefig(
+        os.path.join(
+            os.path.abspath(os.path.dirname(__file__)),
+            '..', 'graphics', 'admittance_matrix.pdf'
+        ),
+        dpi=180,
+        format='pdf'
+    )
+    plt.close(fig)
 

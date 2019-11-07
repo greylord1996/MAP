@@ -1,6 +1,6 @@
-## How to deploy it:
+## Manage dependencies:
 
-First of all, you should have ```python 3.x``` to work with this project. The recommended version of Python is ```3.6```.
+First of all, you should have ```python 3.x``` to work with this project. The recommended Python version is ```3.6``` or greater.
 
 *Note for Windows users*: You should start a command line with administrator's privileges.
 
@@ -26,9 +26,9 @@ Activate the environment:
 Install required dependencies:
 
     # on Linux:
-    pip install --upgrade pip -r requirements.txt
+    pip install -r requirements.txt
     # on Windows:
-    python -m pip install --upgrade pip -r requirements.txt
+    python -m pip install -r requirements.txt
 
 Finally, run *src/main.py*:
 
