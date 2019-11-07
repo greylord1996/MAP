@@ -26,9 +26,9 @@ Activate the environment:
 Install required dependencies:
 
     # on Linux:
-    pip install --upgrade pip -r requirements.txt
+    pip install -r requirements.txt
     # on Windows:
-    python -m pip install --upgrade pip -r requirements.txt
+    python -m pip install -r requirements.txt
 
 Finally, run *src/main.py*:
 

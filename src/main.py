@@ -13,8 +13,7 @@ def get_time_data():
     """Simulate generator's data in time domain."""
     ode_solver_object = dynamic_equations_to_simulate.OdeSolver(
         noise={
-            'rnd_amp': 0.002,
-            'snr': 45.0
+            'rnd_amp': 0.002
         },
         gen_param={
             'd_2': 0.25,
@@ -49,9 +48,9 @@ def main():
 
     true_params = np.array([0.25, 1.00, 1.00, 0.01])
     n_params = len(true_params)
-    prior_params_std = np.array([0.5 for _ in range(n_params)])
+    prior_params_std = np.repeat(0.5, n_params)
 
-    snrs = 1.0 * np.arange(1, 26, 1)
+    snrs = 1.0 * np.arange(1, 21, 1)
     optimization_time = np.zeros(len(snrs))
     priors = np.zeros((len(snrs), n_params))
     posteriors = np.zeros((len(snrs), n_params))

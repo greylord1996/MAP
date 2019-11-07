@@ -17,7 +17,7 @@ def minimize(func, x0):
     """
     params_dimension = len(x0)
     Nel = 10
-    N = 750
+    N = 500
     alpha = 0.8
     eps = 5.0 * 1e-3
     mu = x0
