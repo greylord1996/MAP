@@ -1,6 +1,6 @@
-## How to deploy it:
+## Manage dependencies:
 
-First of all, you should have ```python 3.x``` to work with this project. The recommended version of Python is ```3.6```.
+First of all, you should have ```python 3.x``` to work with this project. The recommended Python version is ```3.6``` or greater.
 
 *Note for Windows users*: You should start a command line with administrator's privileges.
 
